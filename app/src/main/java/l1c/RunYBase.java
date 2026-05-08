@@ -65,15 +65,15 @@ public class RunYBase {
     private static final String HISTORY_FILE = "history.xml";
     // =================================
 
-    // ========== ЦВЕТА 1С (белый фон + жёлтые акценты) ==========
+    // ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
     private static final Color COLOR_BG = new Color(255, 255, 255);       // Белый фон
-    private static final Color COLOR_BUTTON_BG = new Color(255, 210, 80); // Жёлтые кнопки
-    private static final Color COLOR_BUTTON_FG = Color.BLACK;             // Чёрный текст на кнопках
-    private static final Color COLOR_ACCENT = new Color(220, 160, 20);    // Жёлто-оранжевый для рамок
-    private static final Color COLOR_TEXT_FG = new Color(0, 0, 0);        // Чёрный текст
-    private static final Color COLOR_INPUT_BG = new Color(255, 255, 255); // Белый фон полей ввода
-    private static final Color COLOR_OUTPUT_BG = new Color(250, 250, 250);// Светло-серый фон для вывода
-    private static final Color COLOR_PANEL_BG = new Color(255, 255, 255); // Белый фон панелей
+    private static final Color COLOR_BUTTON_BG = new Color(230, 200, 120); // Приглушённый жёлто-песочный
+    private static final Color COLOR_BUTTON_FG = Color.BLACK;              // Чёрный текст на кнопках
+    private static final Color COLOR_ACCENT = new Color(200, 160, 70);     // Приглушённый для рамок
+    private static final Color COLOR_TEXT_FG = new Color(0, 0, 0);         // Чёрный текст
+    private static final Color COLOR_INPUT_BG = new Color(255, 255, 255);  // Белый фон полей ввода
+    private static final Color COLOR_OUTPUT_BG = new Color(250, 250, 250); // Светло-серый фон для вывода
+    private static final Color COLOR_PANEL_BG = new Color(255, 255, 255);  // Белый фон панелей
     // =================================
 
     private static JComboBox<String> addressComboBox;
@@ -86,6 +86,36 @@ public class RunYBase {
     private static ButtonGroup modeGroup;
     private static JTextArea debugArea;
     private static DefaultComboBoxModel<String> historyModel;
+
+    // Вспомогательный метод для создания объёмной кнопки
+    private static JButton createButton(String text) {
+        JButton button = new JButton(text);
+        button.setBackground(COLOR_BUTTON_BG);
+        button.setForeground(COLOR_BUTTON_FG);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createRaisedBevelBorder(),  // Объёмный эффект
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)  // Внутренние отступы
+        ));
+        button.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        
+        // Эффект нажатия
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                button.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLoweredBevelBorder(),
+                    BorderFactory.createEmptyBorder(2, 10, 2, 10)
+                ));
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                button.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createRaisedBevelBorder(),
+                    BorderFactory.createEmptyBorder(2, 10, 2, 10)
+                ));
+            }
+        });
+        return button;
+    }
 
     public static void main(String[] args) {
         // Загружаем историю из XML-файла в домашней папке
@@ -107,8 +137,8 @@ public class RunYBase {
         inputPanel.setBackground(COLOR_BG);
 
         JLabel addressLabel = new JLabel("Адрес БД:");
-        // addressLabel.setForeground(COLOR_ACCENT);
-        // addressLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        addressLabel.setForeground(COLOR_TEXT_FG);
+        addressLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         inputPanel.add(addressLabel);
 
         historyModel = new DefaultComboBoxModel<>();
@@ -122,12 +152,7 @@ public class RunYBase {
         addressComboBox.setToolTipText("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\"");
         inputPanel.add(addressComboBox);
 
-        JButton button = new JButton("Сформировать");
-        button.setBackground(COLOR_BUTTON_BG);
-        button.setForeground(COLOR_BUTTON_FG);
-        button.setFocusPainted(false);
-        button.setBorder(new LineBorder(COLOR_ACCENT, 1));
-        button.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        JButton button = createButton("Сформировать");
         button.addActionListener(e -> handleButtonClick());
         inputPanel.add(button);
 
@@ -139,7 +164,7 @@ public class RunYBase {
         modePanel.setBackground(COLOR_PANEL_BG);
 
         JLabel modeLabel = new JLabel("Режим запуска:");
-//        modeLabel.setForeground(COLOR_ACCENT);
+        modeLabel.setForeground(COLOR_TEXT_FG);
         modeLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         modePanel.add(modeLabel);
 
@@ -174,11 +199,16 @@ public class RunYBase {
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
         //#endregion
 
-        // Заголовки для вывода
-        JLabel label86 = new JLabel("Команда для 32-битной платформы (x86):");
-        // label86.setForeground(COLOR_ACCENT);
-        // label86.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        panel.add(label86);
+// Заголовки для вывода
+JLabel label86 = new JLabel("Команда для 32-битной платформы (x86):");
+// label86.setAlignmentX(Component.LEFT_ALIGNMENT);
+// label86.setForeground(COLOR_TEXT_FG);
+// label86.setFont(new Font("Segoe UI", Font.BOLD, 11));
+//panel.add(label86);
+JPanel header86Panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+header86Panel.setBackground(COLOR_BG);
+header86Panel.add(label86);
+panel.add(header86Panel);
 
         // Блок для x86
         JPanel p86 = new JPanel(new BorderLayout(5, 0));
@@ -188,26 +218,17 @@ public class RunYBase {
         outputArea86.setFont(new Font("Consolas", Font.PLAIN, 11));
         // outputArea86.setBackground(COLOR_OUTPUT_BG);
         // outputArea86.setForeground(COLOR_TEXT_FG);
-        //outputArea86.setBorder(new LineBorder(COLOR_ACCENT, 1));
-        p86.add(new JScrollPane(outputArea86), BorderLayout.CENTER);
+        // outputArea86.setBorder(new LineBorder(COLOR_ACCENT, 1));
+       p86.add(new JScrollPane(outputArea86), BorderLayout.CENTER);
+
 
         JPanel buttonPanel86 = new JPanel(new GridLayout(2, 1, 5, 5));
         buttonPanel86.setBackground(COLOR_BG);
         
-        JButton copy86 = new JButton("Copy");
-        copy86.setBackground(COLOR_BUTTON_BG);
-        copy86.setForeground(COLOR_BUTTON_FG);
-        copy86.setFocusPainted(false);
-        copy86.setBorder(new LineBorder(COLOR_ACCENT, 1));
-        copy86.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        JButton copy86 = createButton("Copy");
         copy86.addActionListener(e -> copyToClipboard(outputArea86.getText()));
         
-        JButton run86 = new JButton("Run");
-        run86.setBackground(COLOR_BUTTON_BG);
-        run86.setForeground(COLOR_BUTTON_FG);
-        run86.setFocusPainted(false);
-        run86.setBorder(new LineBorder(COLOR_ACCENT, 1));
-        run86.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        JButton run86 = createButton("Run");
         run86.addActionListener(e -> runCommand(outputArea86.getText(), "x86"));
         
         buttonPanel86.add(copy86);
@@ -219,9 +240,14 @@ public class RunYBase {
 
         // Заголовки для x64
         JLabel label64 = new JLabel("Команда для 64-битной платформы (x64):");
-        // label64.setForeground(COLOR_ACCENT);
-        // label64.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        panel.add(label64);
+        //label64.setForeground(COLOR_TEXT_FG);
+        //label64.setFont(new Font("Segoe UI", Font.BOLD, 11));
+JPanel header64Panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+header64Panel.setBackground(COLOR_BG);
+header64Panel.add(label64);
+panel.add(header64Panel);
+
+//panel.add(label64);
 
         // Блок для x64
         JPanel p64 = new JPanel(new BorderLayout(5, 0));
@@ -237,20 +263,10 @@ public class RunYBase {
         JPanel buttonPanel64 = new JPanel(new GridLayout(2, 1, 5, 5));
         buttonPanel64.setBackground(COLOR_BG);
         
-        JButton copy64 = new JButton("Copy");
-        copy64.setBackground(COLOR_BUTTON_BG);
-        copy64.setForeground(COLOR_BUTTON_FG);
-        copy64.setFocusPainted(false);
-        copy64.setBorder(new LineBorder(COLOR_ACCENT, 1));
-        copy64.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        JButton copy64 = createButton("Copy");
         copy64.addActionListener(e -> copyToClipboard(outputArea.getText()));
         
-        JButton run64 = new JButton("Run");
-        run64.setBackground(COLOR_BUTTON_BG);
-        run64.setForeground(COLOR_BUTTON_FG);
-        run64.setFocusPainted(false);
-        run64.setBorder(new LineBorder(COLOR_ACCENT, 1));
-        run64.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        JButton run64 = createButton("Run");
         run64.addActionListener(e -> runCommand(outputArea.getText(), "x64"));
         
         buttonPanel64.add(copy64);
@@ -261,7 +277,7 @@ public class RunYBase {
         if (SHOW_DEBUG_PANEL) {
             panel.add(Box.createRigidArea(new Dimension(0, 10)));
             JLabel debugLabel = new JLabel("Отладка (вывод команды и ошибок):");
-            debugLabel.setForeground(COLOR_ACCENT);
+            debugLabel.setForeground(COLOR_TEXT_FG);
             debugLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
             panel.add(debugLabel);
             
