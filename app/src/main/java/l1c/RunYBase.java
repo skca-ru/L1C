@@ -59,6 +59,7 @@ public class RunYBase {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        //#region ОбластьАдресаБД
         JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         inputPanel.add(new JLabel("Введите адрес:"));
 
@@ -71,16 +72,15 @@ public class RunYBase {
         addressComboBox.setPreferredSize(new Dimension(450, 25));
         addressComboBox.setToolTipText("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\"");
         inputPanel.add(addressComboBox);
+
+        JButton button = new JButton("Сформировать");
+        button.addActionListener(e -> handleButtonClick());
+        inputPanel.add(button, BorderLayout.EAST);
+
         panel.add(inputPanel);
+        //#endregion
 
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
-
-        // JPanel hintPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        // hintPanel.add(new JLabel("Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";"));
-        // hintPanel.setFont(new Font("Arial", Font.ITALIC, 10));
-        // panel.add(hintPanel);
-
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        //panel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         modePanel.add(new JLabel("Режим запуска:"));
@@ -107,10 +107,10 @@ public class RunYBase {
         panel.add(modePanel);
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        JButton button = new JButton("Сформировать");
-        button.addActionListener(e -> handleButtonClick());
+        // JButton button = new JButton("Сформировать");
+        // button.addActionListener(e -> handleButtonClick());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.add(button);
+//        buttonPanel.add(button);
         panel.add(buttonPanel);
 
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
