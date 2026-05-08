@@ -39,6 +39,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
+import javax.swing.border.LineBorder;
 import javax.swing.text.JTextComponent;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -54,16 +55,25 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-
-
 public class RunYBase {
-    
+
     // ========== НАСТРОЙКИ ==========
     private static final boolean SHOW_DEBUG_PANEL = false;
     private static final boolean SHOW_RUN_MESSAGE = true;
     private static final int MAX_HISTORY_SIZE = 20;
     private static final String HISTORY_DIR = ".1c_launcher";
     private static final String HISTORY_FILE = "history.xml";
+    // =================================
+
+    // ========== ЦВЕТА 1С (белый фон + жёлтые акценты) ==========
+    private static final Color COLOR_BG = new Color(255, 255, 255);       // Белый фон
+    private static final Color COLOR_BUTTON_BG = new Color(255, 210, 80); // Жёлтые кнопки
+    private static final Color COLOR_BUTTON_FG = Color.BLACK;             // Чёрный текст на кнопках
+    private static final Color COLOR_ACCENT = new Color(220, 160, 20);    // Жёлто-оранжевый для рамок
+    private static final Color COLOR_TEXT_FG = new Color(0, 0, 0);        // Чёрный текст
+    private static final Color COLOR_INPUT_BG = new Color(255, 255, 255); // Белый фон полей ввода
+    private static final Color COLOR_OUTPUT_BG = new Color(250, 250, 250);// Светло-серый фон для вывода
+    private static final Color COLOR_PANEL_BG = new Color(255, 255, 255); // Белый фон панелей
     // =================================
 
     private static JComboBox<String> addressComboBox;
@@ -81,18 +91,25 @@ public class RunYBase {
         // Загружаем историю из XML-файла в домашней папке
         loadHistoryFromXml();
 
-        JFrame frame = new JFrame("Построитель команды запуска 1С " + "Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
+        JFrame frame = new JFrame("Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(950, SHOW_DEBUG_PANEL ? 700 : 500);
+        frame.getContentPane().setBackground(COLOR_BG);
         frame.setLayout(new FlowLayout());
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panel.setBackground(COLOR_BG);
 
         //#region ОбластьАдресаБД
         JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        inputPanel.add(new JLabel("Адрес БД:"));
+        inputPanel.setBackground(COLOR_BG);
+
+        JLabel addressLabel = new JLabel("Адрес БД:");
+        // addressLabel.setForeground(COLOR_ACCENT);
+        // addressLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        inputPanel.add(addressLabel);
 
         historyModel = new DefaultComboBoxModel<>();
         for (String addr : getHistoryList()) {
@@ -100,26 +117,44 @@ public class RunYBase {
         }
         addressComboBox = new JComboBox<>(historyModel);
         addressComboBox.setEditable(true);
-        addressComboBox.setPreferredSize(new Dimension(450, 25));
+        addressComboBox.setPreferredSize(new Dimension(400, 28));
+        addressComboBox.setBackground(COLOR_INPUT_BG);
         addressComboBox.setToolTipText("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\"");
         inputPanel.add(addressComboBox);
 
         JButton button = new JButton("Сформировать");
+        button.setBackground(COLOR_BUTTON_BG);
+        button.setForeground(COLOR_BUTTON_FG);
+        button.setFocusPainted(false);
+        button.setBorder(new LineBorder(COLOR_ACCENT, 1));
+        button.setFont(new Font("Segoe UI", Font.BOLD, 11));
         button.addActionListener(e -> handleButtonClick());
-        inputPanel.add(button, BorderLayout.EAST);
+        inputPanel.add(button);
 
         panel.add(inputPanel);
         //#endregion
 
-        //panel.add(Box.createRigidArea(new Dimension(0, 10)));
-
+        //#region Режим запуска
         JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        modePanel.add(new JLabel("Режим запуска:"));
+        modePanel.setBackground(COLOR_PANEL_BG);
+
+        JLabel modeLabel = new JLabel("Режим запуска:");
+//        modeLabel.setForeground(COLOR_ACCENT);
+        modeLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        modePanel.add(modeLabel);
 
         designerRadio = new JRadioButton("Конфигуратор", true);
         thinRadio = new JRadioButton("Тонкий клиент");
         thickOrdinaryRadio = new JRadioButton("Толстый клиент (Обычное приложение)");
         thickManagedRadio = new JRadioButton("Толстый клиент (Управляемое приложение)");
+
+        // Настройка цвета радиокнопок
+        JRadioButton[] radios = {designerRadio, thinRadio, thickOrdinaryRadio, thickManagedRadio};
+        for (JRadioButton rb : radios) {
+            rb.setBackground(COLOR_PANEL_BG);
+            rb.setForeground(COLOR_TEXT_FG);
+            rb.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        }
 
         modeGroup = new ButtonGroup();
         modeGroup.add(designerRadio);
@@ -128,38 +163,53 @@ public class RunYBase {
         modeGroup.add(thickManagedRadio);
 
         modePanel.add(designerRadio);
-        modePanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        modePanel.add(Box.createRigidArea(new Dimension(15, 0)));
         modePanel.add(thinRadio);
-        modePanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        modePanel.add(Box.createRigidArea(new Dimension(15, 0)));
         modePanel.add(thickOrdinaryRadio);
-        modePanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        modePanel.add(Box.createRigidArea(new Dimension(15, 0)));
         modePanel.add(thickManagedRadio);
 
         panel.add(modePanel);
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
+        //#endregion
 
-        // JButton button = new JButton("Сформировать");
-        // button.addActionListener(e -> handleButtonClick());
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-//        buttonPanel.add(button);
-        panel.add(buttonPanel);
-
-        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+        // Заголовки для вывода
+        JLabel label86 = new JLabel("Команда для 32-битной платформы (x86):");
+        // label86.setForeground(COLOR_ACCENT);
+        // label86.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        panel.add(label86);
 
         // Блок для x86
-        panel.add(new JLabel("Команда для 32-битной платформы (x86):"));
         JPanel p86 = new JPanel(new BorderLayout(5, 0));
+        p86.setBackground(COLOR_BG);
         outputArea86 = new JTextArea(4, 85);
         outputArea86.setEditable(false);
-        outputArea86.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        outputArea86.setBackground(new Color(245, 245, 245));
+        outputArea86.setFont(new Font("Consolas", Font.PLAIN, 11));
+        // outputArea86.setBackground(COLOR_OUTPUT_BG);
+        // outputArea86.setForeground(COLOR_TEXT_FG);
+        //outputArea86.setBorder(new LineBorder(COLOR_ACCENT, 1));
         p86.add(new JScrollPane(outputArea86), BorderLayout.CENTER);
 
         JPanel buttonPanel86 = new JPanel(new GridLayout(2, 1, 5, 5));
+        buttonPanel86.setBackground(COLOR_BG);
+        
         JButton copy86 = new JButton("Copy");
+        copy86.setBackground(COLOR_BUTTON_BG);
+        copy86.setForeground(COLOR_BUTTON_FG);
+        copy86.setFocusPainted(false);
+        copy86.setBorder(new LineBorder(COLOR_ACCENT, 1));
+        copy86.setFont(new Font("Segoe UI", Font.BOLD, 10));
         copy86.addActionListener(e -> copyToClipboard(outputArea86.getText()));
+        
         JButton run86 = new JButton("Run");
+        run86.setBackground(COLOR_BUTTON_BG);
+        run86.setForeground(COLOR_BUTTON_FG);
+        run86.setFocusPainted(false);
+        run86.setBorder(new LineBorder(COLOR_ACCENT, 1));
+        run86.setFont(new Font("Segoe UI", Font.BOLD, 10));
         run86.addActionListener(e -> runCommand(outputArea86.getText(), "x86"));
+        
         buttonPanel86.add(copy86);
         buttonPanel86.add(run86);
         p86.add(buttonPanel86, BorderLayout.EAST);
@@ -167,20 +217,42 @@ public class RunYBase {
 
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
 
+        // Заголовки для x64
+        JLabel label64 = new JLabel("Команда для 64-битной платформы (x64):");
+        // label64.setForeground(COLOR_ACCENT);
+        // label64.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        panel.add(label64);
+
         // Блок для x64
-        panel.add(new JLabel("Команда для 64-битной платформы (x64):"));
         JPanel p64 = new JPanel(new BorderLayout(5, 0));
+        p64.setBackground(COLOR_BG);
         outputArea = new JTextArea(4, 85);
         outputArea.setEditable(false);
-        outputArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        outputArea.setBackground(new Color(245, 245, 245));
+        outputArea.setFont(new Font("Consolas", Font.PLAIN, 11));
+        // outputArea.setBackground(COLOR_OUTPUT_BG);
+        // outputArea.setForeground(COLOR_TEXT_FG);
+        // outputArea.setBorder(new LineBorder(COLOR_ACCENT, 1));
         p64.add(new JScrollPane(outputArea), BorderLayout.CENTER);
 
         JPanel buttonPanel64 = new JPanel(new GridLayout(2, 1, 5, 5));
+        buttonPanel64.setBackground(COLOR_BG);
+        
         JButton copy64 = new JButton("Copy");
+        copy64.setBackground(COLOR_BUTTON_BG);
+        copy64.setForeground(COLOR_BUTTON_FG);
+        copy64.setFocusPainted(false);
+        copy64.setBorder(new LineBorder(COLOR_ACCENT, 1));
+        copy64.setFont(new Font("Segoe UI", Font.BOLD, 10));
         copy64.addActionListener(e -> copyToClipboard(outputArea.getText()));
+        
         JButton run64 = new JButton("Run");
+        run64.setBackground(COLOR_BUTTON_BG);
+        run64.setForeground(COLOR_BUTTON_FG);
+        run64.setFocusPainted(false);
+        run64.setBorder(new LineBorder(COLOR_ACCENT, 1));
+        run64.setFont(new Font("Segoe UI", Font.BOLD, 10));
         run64.addActionListener(e -> runCommand(outputArea.getText(), "x64"));
+        
         buttonPanel64.add(copy64);
         buttonPanel64.add(run64);
         p64.add(buttonPanel64, BorderLayout.EAST);
@@ -188,11 +260,17 @@ public class RunYBase {
 
         if (SHOW_DEBUG_PANEL) {
             panel.add(Box.createRigidArea(new Dimension(0, 10)));
-            panel.add(new JLabel("Отладка (вывод команды и ошибок):"));
+            JLabel debugLabel = new JLabel("Отладка (вывод команды и ошибок):");
+            debugLabel.setForeground(COLOR_ACCENT);
+            debugLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            panel.add(debugLabel);
+            
             debugArea = new JTextArea(8, 85);
             debugArea.setEditable(false);
-            debugArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
-            debugArea.setBackground(new Color(255, 245, 230));
+            debugArea.setFont(new Font("Consolas", Font.PLAIN, 11));
+            debugArea.setBackground(COLOR_OUTPUT_BG);
+            debugArea.setForeground(COLOR_TEXT_FG);
+            debugArea.setBorder(new LineBorder(COLOR_ACCENT, 1));
             JScrollPane debugScroll = new JScrollPane(debugArea);
             panel.add(debugScroll);
         } else {
@@ -207,7 +285,7 @@ public class RunYBase {
         frame.getRootPane().getActionMap().put("closeWindow", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                saveHistoryToXml(); // сохраняем перед выходом
+                saveHistoryToXml();
                 System.exit(0);
             }
         });
@@ -263,15 +341,13 @@ public class RunYBase {
         } catch (ParserConfigurationException | SAXException | IOException e) {
             System.err.println("Ошибка загрузки истории из XML. Будет создан новый файл.");
             e.printStackTrace();
-            // Если файл повреждён, пересоздаём его с пустой историей
             createDefaultHistoryFile(path);
         }
         return list;
     }
 
     private static void loadHistoryFromXml() {
-        // данные уже загружены через getHistoryList(), вызываемого из main перед созданием модели
-        // всё уже готово
+        // данные уже загружены через getHistoryList()
     }
 
     private static void createDefaultHistoryFile(Path path) {
@@ -283,7 +359,6 @@ public class RunYBase {
             Element root = doc.createElement("history");
             doc.appendChild(root);
 
-            // Комментарий (в XML комментарии - отдельная конструкция)
             root.appendChild(doc.createComment(
                     " Файл истории адресов баз 1С.\n" +
                             " Содержит последние использованные адреса для быстрого выбора.\n" +
@@ -293,8 +368,6 @@ public class RunYBase {
 
             Element addresses = doc.createElement("addresses");
             root.appendChild(addresses);
-
-            // Пустой список - не добавляем ни одного элемента address
 
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
@@ -312,9 +385,7 @@ public class RunYBase {
 
     private static void addToHistory(String address) {
         if (address == null || address.isEmpty()) return;
-        // Удаляем старый дубликат
         historyModel.removeElement(address);
-        // Добавляем в начало
         historyModel.insertElementAt(address, 0);
         while (historyModel.getSize() > MAX_HISTORY_SIZE) {
             historyModel.removeElementAt(historyModel.getSize() - 1);
@@ -364,41 +435,35 @@ public class RunYBase {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Остальной код (без изменений, кроме небольших правок)
-    // -----------------------------------------------------------------
     private static boolean isDatabaseAddress(String text) {
-    if (text == null || text.isEmpty()) return false;
-    String trimmed = text.trim();
-    // Проверяем, что строка НАЧИНАЕТСЯ с File= или Srvr=
-    return trimmed.startsWith("File=") || trimmed.startsWith("Srvr=");
-}
-
-private static void autoPasteFromClipboard() {
-    try {
-        java.awt.datatransfer.Clipboard clipboard = java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
-        java.awt.datatransfer.Transferable contents = clipboard.getContents(null);
-        
-        if (contents != null && contents.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.stringFlavor)) {
-            String text = (String) contents.getTransferData(java.awt.datatransfer.DataFlavor.stringFlavor);
-            if (isDatabaseAddress(text)) {
-                addressComboBox.setSelectedItem(text);
-                JOptionPane.showMessageDialog(null,
-                        "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + text,
-                        "Автовставка из буфера", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-        }
-        // Если адреса нет в буфере — оставляем поле пустым
-        addressComboBox.setSelectedItem(null);
-        addressComboBox.getEditor().setItem("");
-        
-    } catch (Exception e) {
-        // При ошибке тоже очищаем поле
-        addressComboBox.setSelectedItem(null);
-        addressComboBox.getEditor().setItem("");
+        if (text == null || text.isEmpty()) return false;
+        String trimmed = text.trim();
+        return trimmed.startsWith("File=") || trimmed.startsWith("Srvr=");
     }
-}
+
+    private static void autoPasteFromClipboard() {
+        try {
+            java.awt.datatransfer.Clipboard clipboard = java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
+            java.awt.datatransfer.Transferable contents = clipboard.getContents(null);
+
+            if (contents != null && contents.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.stringFlavor)) {
+                String text = (String) contents.getTransferData(java.awt.datatransfer.DataFlavor.stringFlavor);
+                if (isDatabaseAddress(text)) {
+                    addressComboBox.setSelectedItem(text);
+                    JOptionPane.showMessageDialog(null,
+                            "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + text,
+                            "Автовставка из буфера", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+            }
+            addressComboBox.setSelectedItem(null);
+            addressComboBox.getEditor().setItem("");
+        } catch (Exception e) {
+            addressComboBox.setSelectedItem(null);
+            addressComboBox.getEditor().setItem("");
+        }
+    }
+
     private static String getCurrentAddress() {
         Object sel = addressComboBox.getSelectedItem();
         return sel == null ? "" : sel.toString().trim();
@@ -420,7 +485,7 @@ private static void autoPasteFromClipboard() {
             return;
         }
 
-        addToHistory(text); // сохраняем в историю
+        addToHistory(text);
 
         String commandPart = getCommandPart();
         outputArea86.setText("");
@@ -463,13 +528,13 @@ private static void autoPasteFromClipboard() {
                 int code = process.exitValue();
                 if (code == 0) {
                     if (SHOW_RUN_MESSAGE)
-                        JOptionPane.showMessageDialog(null, "? " + mode + " успешно запущен!\nБаза: " + getCurrentAddress() + "\nПлатформа: " + platform, "Запуск 1С", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(null, mode + " успешно запущен!\nБаза: " + getCurrentAddress() + "\nПлатформа: " + platform, "Запуск 1С", JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    JOptionPane.showMessageDialog(null, "? Ошибка запуска " + mode + "!\nКод: " + code, "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Ошибка запуска " + mode + "!\nКод: " + code, "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 if (SHOW_RUN_MESSAGE)
-                    JOptionPane.showMessageDialog(null, "? " + mode + " запущен (фоновый процесс).\nБаза: " + getCurrentAddress(), "Запуск 1С", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(null, mode + " запущен (фоновый процесс).\nБаза: " + getCurrentAddress(), "Запуск 1С", JOptionPane.INFORMATION_MESSAGE);
             }
             if (SHOW_DEBUG_PANEL && debugArea != null) debugArea.append("=== Конец запуска ===\n\n");
         } catch (Exception e) {
