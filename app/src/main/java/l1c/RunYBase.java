@@ -57,15 +57,15 @@ import org.xml.sax.SAXException;
 
 public class RunYBase {
 
-    // ========== НАСТРОЙКИ ==========
+    //#region ========== НАСТРОЙКИ ==========
     private static final boolean SHOW_DEBUG_PANEL = false;
     private static final boolean SHOW_RUN_MESSAGE = true;
     private static final int MAX_HISTORY_SIZE = 20;
     private static final String HISTORY_DIR = ".1c_launcher";
     private static final String HISTORY_FILE = "history.xml";
-    // =================================
+    //#endregion =================================
 
-    // ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
+    //#region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
     private static final Color COLOR_BG = new Color(255, 255, 255);       // Белый фон
     private static final Color COLOR_BUTTON_BG = new Color(230, 200, 120); // Приглушённый жёлто-песочный
     private static final Color COLOR_BUTTON_FG = Color.BLACK;              // Чёрный текст на кнопках
@@ -74,7 +74,7 @@ public class RunYBase {
     private static final Color COLOR_INPUT_BG = new Color(255, 255, 255);  // Белый фон полей ввода
     private static final Color COLOR_OUTPUT_BG = new Color(250, 250, 250); // Светло-серый фон для вывода
     private static final Color COLOR_PANEL_BG = new Color(255, 255, 255);  // Белый фон панелей
-    // =================================
+    //#endregion =================================
 
     private static JComboBox<String> addressComboBox;
     private static JTextArea outputArea86;
@@ -145,11 +145,12 @@ public class RunYBase {
         for (String addr : getHistoryList()) {
             historyModel.addElement(addr);
         }
-        addressComboBox = new JComboBox<>(historyModel);
-        addressComboBox.setEditable(true);
-        addressComboBox.setPreferredSize(new Dimension(400, 28));
+        addressComboBox = new HintComboBox(historyModel, 
+            "для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
+        addressComboBox.setPreferredSize(new Dimension(550, 28));
         addressComboBox.setBackground(COLOR_INPUT_BG);
         addressComboBox.setToolTipText("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\"");
+
         inputPanel.add(addressComboBox);
 
         JButton button = createButton("Сформировать");
@@ -242,10 +243,10 @@ panel.add(header86Panel);
         JLabel label64 = new JLabel("Команда для 64-битной платформы (x64):");
         //label64.setForeground(COLOR_TEXT_FG);
         //label64.setFont(new Font("Segoe UI", Font.BOLD, 11));
-JPanel header64Panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-header64Panel.setBackground(COLOR_BG);
-header64Panel.add(label64);
-panel.add(header64Panel);
+        JPanel header64Panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        header64Panel.setBackground(COLOR_BG);
+        header64Panel.add(label64);
+        panel.add(header64Panel);
 
 //panel.add(label64);
 
@@ -465,7 +466,7 @@ panel.add(header64Panel);
             if (contents != null && contents.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.stringFlavor)) {
                 String text = (String) contents.getTransferData(java.awt.datatransfer.DataFlavor.stringFlavor);
                 if (isDatabaseAddress(text)) {
-                    addressComboBox.setSelectedItem(text);
+                    ((HintComboBox) addressComboBox).setRealText(text);
                     JOptionPane.showMessageDialog(null,
                             "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + text,
                             "Автовставка из буфера", JOptionPane.INFORMATION_MESSAGE);
@@ -496,7 +497,7 @@ panel.add(header64Panel);
         String text = getCurrentAddress();
         if (text.isEmpty()) {
             JOptionPane.showMessageDialog(null,
-                    "Пожалуйста, введите адрес базы данных!\n\nФайловая БД: File=\"C:\\1C\\Base\"\nКлиент-сервер: Srvr=\"127.0.0.1\";Ref=\"Base\";",
+                    "Введите адрес базы данных! Например:\n\nФайловая БД: File=\"C:\\1C\\Base\"\nКлиент-сервер: Srvr=\"127.0.0.1\";Ref=\"Base\";",
                     "Предупреждение", JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -611,4 +612,43 @@ panel.add(header64Panel);
         java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sel, null);
         JOptionPane.showMessageDialog(null, "Команда скопирована в буфер обмена!", "Успешно", JOptionPane.INFORMATION_MESSAGE);
     }
+}
+
+// Замени класс HintComboBox на этот
+class HintComboBox extends JComboBox<String> {
+    private String hint;
+
+    public HintComboBox(DefaultComboBoxModel<String> history, String hint) {
+        super(history);
+        this.hint = hint;
+        setEditable(true);
+        
+        // Настраиваем редактор для отображения подсказки
+        JTextComponent editor = (JTextComponent) getEditor().getEditorComponent();
+        editor.setForeground(Color.GRAY);
+        editor.setText(hint);
+        
+        // При фокусе — очищаем подсказку
+        editor.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (editor.getText().equals(hint)) {
+                    editor.setText("");
+                    editor.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (editor.getText().isEmpty()) {
+                    editor.setForeground(Color.GRAY);
+                    editor.setText(hint);
+                }
+            }
+        });
+    }
+
+    public void setRealText(String text) {
+        JTextComponent editor = (JTextComponent) getEditor().getEditorComponent();
+        editor.setForeground(Color.BLACK);
+        editor.setText(text);
+        setSelectedItem(text);
+}    
 }
