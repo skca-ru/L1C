@@ -622,61 +622,62 @@ public class RunYBase {
         java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sel, null);
         JOptionPane.showMessageDialog(null, "Команда скопирована в буфер обмена!", "Успешно", JOptionPane.INFORMATION_MESSAGE);
     }
-private static void selectDatabaseFromList() {
-    try {
-        String userHome = System.getProperty("user.home");
-        Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
-        
-        if (!Files.exists(ibasesPath)) {
+
+    private static void selectDatabaseFromList() {
+        try {
+            String userHome = System.getProperty("user.home");
+            Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
+            
+            if (!Files.exists(ibasesPath)) {
+                JOptionPane.showMessageDialog(null, 
+                    "Файл списка баз не найден:\n" + ibasesPath.toString(),
+                    "Ошибка", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Автоопределение формата и парсинг
+            List<String> dbNames = new ArrayList<>();
+            List<String> dbConnections = new ArrayList<>();
+            
+            String content = new String(Files.readAllBytes(ibasesPath), StandardCharsets.UTF_8);
+            
+            // Пробуем парсить как XML
+            if (content.trim().startsWith("<?xml") || content.contains("<infobase>")) {
+                parseXmlFormat(ibasesPath, dbNames, dbConnections);
+            } 
+            // Иначе парсим как INI
+            else {
+                parseIniFormat(ibasesPath, dbNames, dbConnections);
+            }
+            
+            if (dbNames.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Нет зарегистрированных баз 1С", 
+                    "Список баз", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            
+            // Показываем диалог выбора
+            String selected = (String) JOptionPane.showInputDialog(null,
+                "Выберите базу 1С:",
+                "Список баз (" + (dbNames.size() + " баз)"),
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                dbNames.toArray(),
+                dbNames.get(0));
+            
+            if (selected != null) {
+                int index = dbNames.indexOf(selected);
+                String address = dbConnections.get(index);
+                ((HintComboBox) addressComboBox).setRealText(address);
+            }
+            
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(null, 
-                "Файл списка баз не найден:\n" + ibasesPath.toString(),
+                "Ошибка при чтении списка баз:\n" + e.getMessage(),
                 "Ошибка", JOptionPane.ERROR_MESSAGE);
-            return;
+            e.printStackTrace();
         }
-        
-        // Автоопределение формата и парсинг
-        List<String> dbNames = new ArrayList<>();
-        List<String> dbConnections = new ArrayList<>();
-        
-        String content = new String(Files.readAllBytes(ibasesPath), StandardCharsets.UTF_8);
-        
-        // Пробуем парсить как XML
-        if (content.trim().startsWith("<?xml") || content.contains("<infobase>")) {
-            parseXmlFormat(ibasesPath, dbNames, dbConnections);
-        } 
-        // Иначе парсим как INI
-        else {
-            parseIniFormat(ibasesPath, dbNames, dbConnections);
-        }
-        
-        if (dbNames.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Нет зарегистрированных баз 1С", 
-                "Список баз", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        
-        // Показываем диалог выбора
-        String selected = (String) JOptionPane.showInputDialog(null,
-            "Выберите базу 1С:",
-            "Список баз (" + (dbNames.size() + " баз)"),
-            JOptionPane.PLAIN_MESSAGE,
-            null,
-            dbNames.toArray(),
-            dbNames.get(0));
-        
-        if (selected != null) {
-            int index = dbNames.indexOf(selected);
-            String address = dbConnections.get(index);
-            ((HintComboBox) addressComboBox).setRealText(address);
-        }
-        
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, 
-            "Ошибка при чтении списка баз:\n" + e.getMessage(),
-            "Ошибка", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
     }
-}
 
 // Парсинг XML формата
 private static void parseXmlFormat(Path path, List<String> names, List<String> connections) throws Exception {
