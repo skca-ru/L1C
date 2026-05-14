@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Timer;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -30,6 +31,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -554,14 +556,26 @@ public class RunYBase {
             if (finished) {
                 int code = process.exitValue();
                 if (code == 0) {
-                    if (SHOW_RUN_MESSAGE)
-                        JOptionPane.showMessageDialog(null, mode + " успешно запущен!\nБаза: " + getCurrentAddress() + "\nПлатформа: " + platform, "Запуск 1С", JOptionPane.INFORMATION_MESSAGE);
+                    if (SHOW_RUN_MESSAGE) {
+                        showAutoClosingDialog(
+                            mode + " успешно запущен!\nБаза: " + getCurrentAddress() + "\nПлатформа: " + platform,
+                            "Запуск 1С",
+                            JOptionPane.INFORMATION_MESSAGE,
+                            5
+                        );
+                    }
                 } else {
                     JOptionPane.showMessageDialog(null, "Ошибка запуска " + mode + "!\nКод: " + code, "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                if (SHOW_RUN_MESSAGE)
-                    JOptionPane.showMessageDialog(null, mode + " запущен (фоновый процесс).\nБаза: " + getCurrentAddress(), "Запуск 1С", JOptionPane.INFORMATION_MESSAGE);
+                if (SHOW_RUN_MESSAGE) {
+                    showAutoClosingDialog(
+                        mode + " запущен (фоновый процесс).\nБаза: " + getCurrentAddress(),
+                        "Запуск 1С",
+                        JOptionPane.INFORMATION_MESSAGE,
+                        5
+                    );
+                }
             }
             if (SHOW_DEBUG_PANEL && debugArea != null) debugArea.append("=== Конец запуска ===\n\n");
         } catch (Exception e) {
@@ -570,6 +584,25 @@ public class RunYBase {
         }
     }
 
+    // Вспомогательный метод для автоматического закрытия диалога
+    private static void showAutoClosingDialog(String message, String title, int messageType, int delaySeconds) {
+        // Создаём диалог вручную
+        final JDialog dialog = new JDialog();
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setModal(false); // Неблокирующий, чтобы таймер работал
+        
+        JOptionPane optionPane = new JOptionPane(message, messageType);
+        dialog.setContentPane(optionPane);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        
+        // Таймер для закрытия
+        Timer timer = new Timer(delaySeconds * 1000, e -> dialog.dispose());
+        timer.setRepeats(false);
+        timer.start();
+        
+        dialog.setVisible(true);
+    }    
     private static List<String> parseCommand(String command) {
         List<String> args = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
