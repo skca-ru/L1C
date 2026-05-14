@@ -14,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -133,13 +134,17 @@ public class RunYBase {
         panel.setBackground(COLOR_BG);
 
         //#region ОбластьАдресаБД
-        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
         inputPanel.setBackground(COLOR_BG);
 
         JLabel addressLabel = new JLabel("Адрес БД:");
         addressLabel.setForeground(COLOR_TEXT_FG);
         addressLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        inputPanel.add(addressLabel);
+        
+        JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        labelPanel.setBackground(COLOR_BG);
+        labelPanel.add(addressLabel);
+        inputPanel.add(labelPanel, BorderLayout.WEST);
 
         historyModel = new DefaultComboBoxModel<>();
         for (String addr : getHistoryList()) {
@@ -147,15 +152,22 @@ public class RunYBase {
         }
         addressComboBox = new HintComboBox(historyModel, 
             "для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
-        addressComboBox.setPreferredSize(new Dimension(550, 28));
         addressComboBox.setBackground(COLOR_INPUT_BG);
         addressComboBox.setToolTipText("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\"");
+        inputPanel.add(addressComboBox, BorderLayout.CENTER);
 
-        inputPanel.add(addressComboBox);
-
+        JPanel rightPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        rightPanel.setBackground(COLOR_BG);
+        
         JButton button = createButton("Сформировать");
         button.addActionListener(e -> handleButtonClick());
-        inputPanel.add(button);
+        
+        JButton selectButton = createButton("Выбрать");
+        selectButton.addActionListener(e -> selectDatabaseFromList());
+        
+        rightPanel.add(selectButton);
+        rightPanel.add(button);
+        inputPanel.add(rightPanel, BorderLayout.EAST);
 
         panel.add(inputPanel);
         //#endregion
@@ -200,16 +212,16 @@ public class RunYBase {
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
         //#endregion
 
-// Заголовки для вывода
-JLabel label86 = new JLabel("Команда для 32-битной платформы (x86):");
-// label86.setAlignmentX(Component.LEFT_ALIGNMENT);
-// label86.setForeground(COLOR_TEXT_FG);
-// label86.setFont(new Font("Segoe UI", Font.BOLD, 11));
-//panel.add(label86);
-JPanel header86Panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-header86Panel.setBackground(COLOR_BG);
-header86Panel.add(label86);
-panel.add(header86Panel);
+        // Заголовки для вывода
+        JLabel label86 = new JLabel("Команда для 32-битной платформы (x86):");
+        // label86.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // label86.setForeground(COLOR_TEXT_FG);
+        // label86.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        //panel.add(label86);
+        JPanel header86Panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        header86Panel.setBackground(COLOR_BG);
+        header86Panel.add(label86);
+        panel.add(header86Panel);
 
         // Блок для x86
         JPanel p86 = new JPanel(new BorderLayout(5, 0));
@@ -247,8 +259,6 @@ panel.add(header86Panel);
         header64Panel.setBackground(COLOR_BG);
         header64Panel.add(label64);
         panel.add(header64Panel);
-
-//panel.add(label64);
 
         // Блок для x64
         JPanel p64 = new JPanel(new BorderLayout(5, 0));
@@ -612,9 +622,120 @@ panel.add(header86Panel);
         java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sel, null);
         JOptionPane.showMessageDialog(null, "Команда скопирована в буфер обмена!", "Успешно", JOptionPane.INFORMATION_MESSAGE);
     }
+private static void selectDatabaseFromList() {
+    try {
+        String userHome = System.getProperty("user.home");
+        Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
+        
+        if (!Files.exists(ibasesPath)) {
+            JOptionPane.showMessageDialog(null, 
+                "Файл списка баз не найден:\n" + ibasesPath.toString(),
+                "Ошибка", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Автоопределение формата и парсинг
+        List<String> dbNames = new ArrayList<>();
+        List<String> dbConnections = new ArrayList<>();
+        
+        String content = new String(Files.readAllBytes(ibasesPath), StandardCharsets.UTF_8);
+        
+        // Пробуем парсить как XML
+        if (content.trim().startsWith("<?xml") || content.contains("<infobase>")) {
+            parseXmlFormat(ibasesPath, dbNames, dbConnections);
+        } 
+        // Иначе парсим как INI
+        else {
+            parseIniFormat(ibasesPath, dbNames, dbConnections);
+        }
+        
+        if (dbNames.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Нет зарегистрированных баз 1С", 
+                "Список баз", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        // Показываем диалог выбора
+        String selected = (String) JOptionPane.showInputDialog(null,
+            "Выберите базу 1С:",
+            "Список баз (" + (dbNames.size() + " баз)"),
+            JOptionPane.PLAIN_MESSAGE,
+            null,
+            dbNames.toArray(),
+            dbNames.get(0));
+        
+        if (selected != null) {
+            int index = dbNames.indexOf(selected);
+            String address = dbConnections.get(index);
+            ((HintComboBox) addressComboBox).setRealText(address);
+        }
+        
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, 
+            "Ошибка при чтении списка баз:\n" + e.getMessage(),
+            "Ошибка", JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
+    }
 }
 
-// Замени класс HintComboBox на этот
+// Парсинг XML формата
+private static void parseXmlFormat(Path path, List<String> names, List<String> connections) throws Exception {
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    Document doc = builder.parse(path.toFile());
+    
+    NodeList infos = doc.getElementsByTagName("infobase");
+    for (int i = 0; i < infos.getLength(); i++) {
+        Element info = (Element) infos.item(i);
+        String name = getTagValue("name", info);
+        String connect = getTagValue("connect", info);
+        if (name != null && !name.isEmpty() && connect != null && !connect.isEmpty()) {
+            names.add(name);
+            connections.add(connect);
+        }
+    }
+}
+
+// Парсинг INI формата
+private static void parseIniFormat(Path path, List<String> names, List<String> connections) throws IOException {
+    List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+    String currentName = null;
+    String currentConnect = null;
+    
+    for (String line : lines) {
+        line = line.trim();
+        if (line.isEmpty()) continue;
+        
+        if (line.startsWith("[") && line.endsWith("]")) {
+            // Сохраняем предыдущую базу
+            if (currentName != null && currentConnect != null) {
+                names.add(currentName);
+                connections.add(currentConnect);
+            }
+            currentName = line.substring(1, line.length() - 1);
+            currentConnect = null;
+        }
+        else if (line.startsWith("Connect=") && currentName != null) {
+            currentConnect = line.substring(8);
+        }
+    }
+    
+    // Сохраняем последнюю базу
+    if (currentName != null && currentConnect != null) {
+        names.add(currentName);
+        connections.add(currentConnect);
+    }
+}
+
+// Вспомогательный метод для XML
+private static String getTagValue(String tag, Element element) {
+    NodeList list = element.getElementsByTagName(tag);
+    if (list.getLength() == 0) return null;
+    return list.item(0).getTextContent();
+}
+
+}
+
 class HintComboBox extends JComboBox<String> {
     private String hint;
 
@@ -650,5 +771,5 @@ class HintComboBox extends JComboBox<String> {
         editor.setForeground(Color.BLACK);
         editor.setText(text);
         setSelectedItem(text);
-}    
+    }    
 }
