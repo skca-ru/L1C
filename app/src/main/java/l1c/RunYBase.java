@@ -35,6 +35,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -521,7 +522,7 @@ public class RunYBase {
         String escaped = text.replace("\"", "\"\"");
         String cmd86 = "\"C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe\" " + commandPart
                 + " /IBConnectionString \"" + escaped + "\"";
-        String cmd64 = "\"C:\\Program Files\\1cv8\\common\\1cestart.exe\" " + commandPart + " /IBConnectionString \""
+        String cmd64 = "\"C:\\Program Files\\1cv8\\common\\1cestart.exe\" " + commandPart + " /IBConnectionString \"" 
                 + escaped + "\"";
         outputArea86.append(cmd86);
         outputArea.append(cmd64);
@@ -693,7 +694,7 @@ public class RunYBase {
 
         return baseEntries;
     }
-    
+
     // Показ окна выбора базы из списка баз
     private static void selectDatabaseFromList() {
         try {
@@ -705,42 +706,29 @@ public class RunYBase {
                 return;
             }
 
-            List<String> dbNames = new ArrayList<>();
-            List<String> dbConnections = new ArrayList<>();
-            for (BaseEntry entry : baseEntries) {
-                dbNames.add(entry.name);
-                dbConnections.add(entry.connect);
-            }
-
-            // Создаём панель с отступами для списка
-            JPanel listPanel = new JPanel(new BorderLayout());
-            listPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
-
-            // Создаём список
-            JList<String> list = new JList<>(dbNames.toArray(new String[0]));
+            // Создаём список с кастомным рендерером
+            JList<BaseEntry> list = new JList<>(baseEntries.toArray(new BaseEntry[0]));
             list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            list.setCellRenderer(new BaseEntryListRenderer());
+
             JScrollPane scrollPane = new JScrollPane(list);
-            scrollPane.setPreferredSize(new Dimension(400, 300));
-            listPanel.add(scrollPane, BorderLayout.CENTER);
+            scrollPane.setPreferredSize(new Dimension(600, 400));
+            scrollPane.setBorder(BorderFactory.createTitledBorder("Зарегистрированные базы 1С"));
 
             JPanel panel = new JPanel(new BorderLayout(10, 10));
-            JLabel label = new JLabel("Выберите базу 1С:");
-            label.setHorizontalAlignment(SwingConstants.CENTER);
-            panel.add(label, BorderLayout.NORTH);
-            panel.add(listPanel, BorderLayout.CENTER);
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
             JDialog dialog = new JDialog();
-            dialog.setTitle("Список баз (" + dbNames.size() + " баз)");
+            dialog.setTitle("Выбор базы 1С");
             dialog.setModal(true);
             dialog.setResizable(true);
             dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
             JButton okButton = new JButton("OK");
             okButton.addActionListener(e -> {
-                int index = list.getSelectedIndex();
-                if (index >= 0) {
-                    String address = dbConnections.get(index);
-                    ((HintComboBox) addressComboBox).setRealText(address);
+                BaseEntry selected = list.getSelectedValue();
+                if (selected != null) {
+                    ((HintComboBox) addressComboBox).setRealText(selected.connect);
                 }
                 dialog.dispose();
             });
@@ -752,10 +740,9 @@ public class RunYBase {
             list.addMouseListener(new java.awt.event.MouseAdapter() {
                 public void mouseClicked(java.awt.event.MouseEvent evt) {
                     if (evt.getClickCount() == 2) {
-                        int index = list.getSelectedIndex();
-                        if (index >= 0) {
-                            String address = dbConnections.get(index);
-                            ((HintComboBox) addressComboBox).setRealText(address);
+                        BaseEntry selected = list.getSelectedValue();
+                        if (selected != null) {
+                            ((HintComboBox) addressComboBox).setRealText(selected.connect);
                             dialog.dispose();
                         }
                     }
@@ -765,11 +752,13 @@ public class RunYBase {
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
             buttonPanel.add(okButton);
             buttonPanel.add(cancelButton);
+
+            panel.add(scrollPane, BorderLayout.CENTER);
             panel.add(buttonPanel, BorderLayout.SOUTH);
 
             dialog.add(panel);
             dialog.pack();
-            dialog.setMinimumSize(new Dimension(450, 350));
+            dialog.setMinimumSize(new Dimension(650, 450));
             dialog.setLocationRelativeTo(null);
             dialog.setVisible(true);
 
@@ -906,5 +895,52 @@ class BaseEntry {
         this.name = name;
         this.connect = connect;
         this.order = order;
+    }
+}
+
+// Рендерер для отображения базы в две строки
+class BaseEntryListRenderer extends JPanel implements ListCellRenderer<BaseEntry> {
+    private JLabel nameLabel;
+    private JLabel connectLabel;
+
+    public BaseEntryListRenderer() {
+        setLayout(new BorderLayout(5, 2));
+        setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        nameLabel = new JLabel();
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+
+        connectLabel = new JLabel();
+        connectLabel.setFont(new Font("Segoe UI", Font.ITALIC, 10));
+        connectLabel.setForeground(Color.GRAY);
+
+        add(nameLabel, BorderLayout.NORTH);
+        add(connectLabel, BorderLayout.CENTER);
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<? extends BaseEntry> list,
+            BaseEntry value, int index, boolean isSelected, boolean cellHasFocus) {
+
+        nameLabel.setText(value.name);
+        connectLabel.setText(value.connect);
+
+        // Добавляем отступ слева для адреса
+        connectLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+
+        if (isSelected) {
+            setBackground(list.getSelectionBackground());
+            setForeground(list.getSelectionForeground());
+            nameLabel.setForeground(list.getSelectionForeground());
+            connectLabel.setForeground(list.getSelectionForeground());
+        } else {
+            setBackground(list.getBackground());
+            setForeground(list.getForeground());
+            nameLabel.setForeground(Color.BLACK);
+            connectLabel.setForeground(Color.GRAY);
+        }
+        setOpaque(true);
+
+        return this;
     }
 }
