@@ -34,6 +34,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -42,6 +43,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 import javax.swing.text.JTextComponent;
 import javax.xml.parsers.DocumentBuilder;
@@ -68,8 +71,9 @@ public class RunYBase {
     private static final String HISTORY_FILE = "history.xml";
     // #endregion =================================
 
+    // @formatter:off
    // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
-    private static final Color COLOR_BG = new Color(255, 255, 255);       // Белый фон
+    private static final Color COLOR_BG = new Color(255, 255, 255);        // Белый фон
     private static final Color COLOR_BUTTON_BG = new Color(230, 200, 120); // Приглушённый жёлто-песочный
     private static final Color COLOR_BUTTON_FG = Color.BLACK;              // Чёрный текст на кнопках
     private static final Color COLOR_ACCENT = new Color(200, 160, 70);     // Приглушённый для рамок
@@ -78,6 +82,7 @@ public class RunYBase {
     private static final Color COLOR_OUTPUT_BG = new Color(250, 250, 250); // Светло-серый фон для вывода
     private static final Color COLOR_PANEL_BG = new Color(255, 255, 255);  // Белый фон панелей
     // #endregion =================================
+    // @formatter:on
 
     private static JComboBox<String> addressComboBox;
     private static JTextArea outputArea86;
@@ -672,17 +677,13 @@ public class RunYBase {
                 return;
             }
 
-            // Список для хранения баз с порядком сортировки
             List<BaseEntry> baseEntries = new ArrayList<>();
 
             String content = new String(Files.readAllBytes(ibasesPath), StandardCharsets.UTF_8);
 
-            // Пробуем парсить как XML
             if (content.trim().startsWith("<?xml") || content.contains("<infobase>")) {
                 parseXmlFormatWithOrder(ibasesPath, baseEntries);
-            }
-            // Иначе парсим как INI
-            else {
+            } else {
                 parseIniFormatWithOrder(ibasesPath, baseEntries);
             }
 
@@ -692,32 +693,73 @@ public class RunYBase {
                 return;
             }
 
-            // Сортируем по имени (по возрастанию)
+            // Сортируем по имени
             baseEntries.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
 
-            // Собираем отсортированные имена и адреса
             List<String> dbNames = new ArrayList<>();
             List<String> dbConnections = new ArrayList<>();
             for (BaseEntry entry : baseEntries) {
                 dbNames.add(entry.name);
                 dbConnections.add(entry.connect);
             }
+            // Создаём панель с отступами для списка
+            JPanel listPanel = new JPanel(new BorderLayout());
+            listPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15)); // отступы: верх, лево, низ, право
+            // Создаём список
+            JList<String> list = new JList<>(dbNames.toArray(new String[0]));
+            list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            JScrollPane scrollPane = new JScrollPane(list);
+            scrollPane.setPreferredSize(new Dimension(400, 300));
+            listPanel.add(scrollPane, BorderLayout.CENTER);
+            JPanel panel = new JPanel(new BorderLayout(10, 10));
+            JLabel label = new JLabel("Выберите базу 1С:");
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+            panel.add(label, BorderLayout.NORTH);
+            panel.add(listPanel, BorderLayout.CENTER);
 
-            // Показываем диалог выбора
-            String selected = (String) JOptionPane.showInputDialog(null,
-                    "Выберите базу 1С:",
-                    "Список баз (" + dbNames.size() + " баз)",
-                    JOptionPane.PLAIN_MESSAGE,
-                    null,
-                    dbNames.toArray(),
-                    dbNames.get(0));
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Список баз (" + dbNames.size() + " баз)");
+            dialog.setModal(true);
+            dialog.setResizable(true);
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
-            if (selected != null) {
-                int index = dbNames.indexOf(selected);
-                String address = dbConnections.get(index);
-                ((HintComboBox) addressComboBox).setRealText(address);
-            }
+            JButton okButton = new JButton("OK");
+            okButton.addActionListener(e -> {
+                int index = list.getSelectedIndex();
+                if (index >= 0) {
+                    String address = dbConnections.get(index);
+                    ((HintComboBox) addressComboBox).setRealText(address);
+                }
+                dialog.dispose();
+            });
 
+            JButton cancelButton = new JButton("Отмена");
+            cancelButton.addActionListener(e -> dialog.dispose());
+
+            // Двойной клик для выбора
+            list.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    if (evt.getClickCount() == 2) {
+                        int index = list.getSelectedIndex();
+                        if (index >= 0) {
+                            String address = dbConnections.get(index);
+                            ((HintComboBox) addressComboBox).setRealText(address);
+                            dialog.dispose();
+                        }
+                    }
+                }
+            });
+
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            buttonPanel.add(okButton);
+            buttonPanel.add(cancelButton);
+            panel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.add(panel);
+            dialog.pack();
+            dialog.setMinimumSize(new Dimension(450, 350));
+            dialog.setLocationRelativeTo(null);
+            dialog.setVisible(true);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null,
                     "Ошибка при чтении списка баз:\n" + e.getMessage(),

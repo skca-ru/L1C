@@ -1,10 +1,10 @@
 {
   "models": [
     {
-      "title": "Claude",
-      "provider": "anthropic",
-      "model": "claude-3-5-sonnet-20241022",
-      "apiKey": "YOUR_ANTHROPIC_API_KEY"
+      "title": "qwen 7b",
+      "provider": "ollama",
+      "model": "qwen2.5-coder:7b",
+      "timeout": 180
     }
   ]
 }
