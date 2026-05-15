@@ -665,27 +665,39 @@ public class RunYBase {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
+    // Получение отсортированного списка баз из файла
+    private static List<BaseEntry> loadAndSortDatabases()
+            throws IOException, ParserConfigurationException, SAXException, Exception {
+        String userHome = System.getProperty("user.home");
+        Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
+
+        if (!Files.exists(ibasesPath)) {
+            JOptionPane.showMessageDialog(null,
+                    "Файл списка баз не найден:\n" + ibasesPath.toString(),
+                    "Ошибка", JOptionPane.ERROR_MESSAGE);
+            return new ArrayList<>();
+        }
+
+        List<BaseEntry> baseEntries = new ArrayList<>();
+
+        String content = new String(Files.readAllBytes(ibasesPath), StandardCharsets.UTF_8);
+
+        if (content.trim().startsWith("<?xml") || content.contains("<infobase>")) {
+            parseXmlFormatWithOrder(ibasesPath, baseEntries);
+        } else {
+            parseIniFormatWithOrder(ibasesPath, baseEntries);
+        }
+
+        // Сортируем по имени (без учёта регистра)
+        baseEntries.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
+
+        return baseEntries;
+    }
+    
+    // Показ окна выбора базы из списка баз
     private static void selectDatabaseFromList() {
         try {
-            String userHome = System.getProperty("user.home");
-            Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
-
-            if (!Files.exists(ibasesPath)) {
-                JOptionPane.showMessageDialog(null,
-                        "Файл списка баз не найден:\n" + ibasesPath.toString(),
-                        "Ошибка", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            List<BaseEntry> baseEntries = new ArrayList<>();
-
-            String content = new String(Files.readAllBytes(ibasesPath), StandardCharsets.UTF_8);
-
-            if (content.trim().startsWith("<?xml") || content.contains("<infobase>")) {
-                parseXmlFormatWithOrder(ibasesPath, baseEntries);
-            } else {
-                parseIniFormatWithOrder(ibasesPath, baseEntries);
-            }
+            List<BaseEntry> baseEntries = loadAndSortDatabases();
 
             if (baseEntries.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Нет зарегистрированных баз 1С",
@@ -693,24 +705,24 @@ public class RunYBase {
                 return;
             }
 
-            // Сортируем по имени
-            baseEntries.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
-
             List<String> dbNames = new ArrayList<>();
             List<String> dbConnections = new ArrayList<>();
             for (BaseEntry entry : baseEntries) {
                 dbNames.add(entry.name);
                 dbConnections.add(entry.connect);
             }
+
             // Создаём панель с отступами для списка
             JPanel listPanel = new JPanel(new BorderLayout());
-            listPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15)); // отступы: верх, лево, низ, право
+            listPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+
             // Создаём список
             JList<String> list = new JList<>(dbNames.toArray(new String[0]));
             list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             JScrollPane scrollPane = new JScrollPane(list);
             scrollPane.setPreferredSize(new Dimension(400, 300));
             listPanel.add(scrollPane, BorderLayout.CENTER);
+
             JPanel panel = new JPanel(new BorderLayout(10, 10));
             JLabel label = new JLabel("Выберите базу 1С:");
             label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -760,6 +772,7 @@ public class RunYBase {
             dialog.setMinimumSize(new Dimension(450, 350));
             dialog.setLocationRelativeTo(null);
             dialog.setVisible(true);
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null,
                     "Ошибка при чтении списка баз:\n" + e.getMessage(),
