@@ -10,19 +10,7 @@
             "request": "launch",
             "mainClass": "l1c.RunYBase",
             "projectName": "app"
-        },
-        {
-            "type": "java",
-            "name": "Current File",
-            "request": "launch",
-            "mainClass": "${file}"
-        },
-        {
-            "type": "java",
-            "name": "Run1CBase",
-            "request": "launch",
-            "mainClass": "l1c.Run1CBase",
-            "projectName": "app"
         }
+        
     ]
 }
