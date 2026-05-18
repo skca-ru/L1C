@@ -723,6 +723,10 @@ public class RunYBase {
             dialog.setModal(true);
             dialog.setResizable(true);
             dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            // Закрытие по ESC (как отмена)
+            dialog.getRootPane().registerKeyboardAction(e -> dialog.dispose(),
+                KeyStroke.getKeyStroke("ESCAPE"),
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
 
             JButton okButton = new JButton("OK");
             okButton.addActionListener(e -> {
@@ -911,8 +915,8 @@ class BaseEntryListRenderer extends JPanel implements ListCellRenderer<BaseEntry
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
 
         connectLabel = new JLabel();
-        connectLabel.setFont(new Font("Segoe UI", Font.ITALIC, 10));
-        connectLabel.setForeground(Color.GRAY);
+        connectLabel.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        connectLabel.setForeground(Color.BLACK);
 
         add(nameLabel, BorderLayout.NORTH);
         add(connectLabel, BorderLayout.CENTER);
@@ -937,7 +941,7 @@ class BaseEntryListRenderer extends JPanel implements ListCellRenderer<BaseEntry
             setBackground(list.getBackground());
             setForeground(list.getForeground());
             nameLabel.setForeground(Color.BLACK);
-            connectLabel.setForeground(Color.GRAY);
+            connectLabel.setForeground(Color.BLACK);
         }
         setOpaque(true);
 
