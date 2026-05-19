@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import javax.swing.Timer;
@@ -29,21 +30,24 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.ListCellRenderer;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
@@ -85,7 +89,7 @@ public class RunYBase {
     // #endregion =================================
     // @formatter:on
 
-    private static JComboBox<String> addressComboBox;
+    private static HintComboBox addressComboBox;
     private static JTextArea outputArea86;
     private static JTextArea outputArea;
     private static JRadioButton designerRadio;
@@ -95,6 +99,9 @@ public class RunYBase {
     private static ButtonGroup modeGroup;
     private static JTextArea debugArea;
     private static DefaultComboBoxModel<String> historyModel;
+    
+    // Хранилище для учётных данных (адрес -> credentials)
+    private static java.util.Map<String, UserCredentials> credentialsMap = new java.util.HashMap<>();
 
     // Вспомогательный метод для создания объёмной кнопки
     private static JButton createButton(String text) {
@@ -103,12 +110,10 @@ public class RunYBase {
         button.setForeground(COLOR_BUTTON_FG);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createRaisedBevelBorder(), // Объёмный эффект
-                BorderFactory.createEmptyBorder(2, 10, 2, 10) // Внутренние отступы
-        ));
+                BorderFactory.createRaisedBevelBorder(),
+                BorderFactory.createEmptyBorder(2, 10, 2, 10)));
         button.setFont(new Font("Segoe UI", Font.BOLD, 11));
 
-        // Эффект нажатия
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 button.setBorder(BorderFactory.createCompoundBorder(
@@ -126,13 +131,13 @@ public class RunYBase {
     }
 
     public static void main(String[] args) {
-        // Загружаем историю из XML-файла в домашней папке
+        loadCredentials(); // Загружаем сохранённые учётные данные
         loadHistoryFromXml();
 
         JFrame frame = new JFrame(
                 "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(950, SHOW_DEBUG_PANEL ? 700 : 500);
+        frame.setSize(1050, SHOW_DEBUG_PANEL ? 700 : 500);
         frame.getContentPane().setBackground(COLOR_BG);
         frame.setLayout(new FlowLayout());
 
@@ -164,8 +169,11 @@ public class RunYBase {
         addressComboBox.setToolTipText("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\"");
         inputPanel.add(addressComboBox, BorderLayout.CENTER);
 
-        JPanel rightPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        JPanel rightPanel = new JPanel(new GridLayout(3, 1, 5, 5));
         rightPanel.setBackground(COLOR_BG);
+
+        JButton userButton = createButton("Пользователь");
+        userButton.addActionListener(e -> showUserCredentialsDialog());
 
         JButton button = createButton("Сформировать");
         button.addActionListener(e -> handleButtonClick());
@@ -173,6 +181,7 @@ public class RunYBase {
         JButton selectButton = createButton("Выбрать");
         selectButton.addActionListener(e -> selectDatabaseFromList());
 
+        rightPanel.add(userButton);
         rightPanel.add(selectButton);
         rightPanel.add(button);
         inputPanel.add(rightPanel, BorderLayout.EAST);
@@ -194,7 +203,6 @@ public class RunYBase {
         thickOrdinaryRadio = new JRadioButton("Толстый клиент (Обычное приложение)");
         thickManagedRadio = new JRadioButton("Толстый клиент (Управляемое приложение)");
 
-        // Настройка цвета радиокнопок
         JRadioButton[] radios = { designerRadio, thinRadio, thickOrdinaryRadio, thickManagedRadio };
         for (JRadioButton rb : radios) {
             rb.setBackground(COLOR_PANEL_BG);
@@ -307,6 +315,7 @@ public class RunYBase {
         frame.getRootPane().getActionMap().put("closeWindow", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                saveCredentials();
                 saveHistoryToXml();
                 System.exit(0);
             }
@@ -314,7 +323,6 @@ public class RunYBase {
 
         frame.setVisible(true);
 
-        // Контекстное меню для редактируемой части комбобокса
         Component editorComp = addressComboBox.getEditor().getEditorComponent();
         if (editorComp instanceof JTextComponent) {
             addContextMenu((JTextComponent) editorComp);
@@ -327,6 +335,180 @@ public class RunYBase {
         autoPasteFromClipboard();
 
         addressComboBox.requestFocus();
+    }
+
+    // -----------------------------------------------------------------
+    // Учётные данные пользователей
+    // -----------------------------------------------------------------
+    
+    private static Path getCredentialsPath() {
+        String userHome = System.getProperty("user.home");
+        Path dir = Paths.get(userHome, HISTORY_DIR);
+        try {
+            Files.createDirectories(dir);
+        } catch (IOException e) {
+            System.err.println("Не удалось создать директорию для истории: " + dir);
+        }
+        return dir.resolve("credentials.xml");
+    }
+    
+    private static void loadCredentials() {
+        Path path = getCredentialsPath();
+        if (!Files.exists(path)) {
+            return;
+        }
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(path.toFile());
+            
+            NodeList credNodes = doc.getElementsByTagName("credential");
+            for (int i = 0; i < credNodes.getLength(); i++) {
+                Element elem = (Element) credNodes.item(i);
+                String address = getTagValue("address", elem);
+                String username = getTagValue("username", elem);
+                String encryptedPassword = getTagValue("password", elem);
+                
+                if (address != null && username != null && !address.isEmpty()) {
+                    String password = encryptedPassword != null ? decrypt(encryptedPassword) : "";
+                    credentialsMap.put(address, new UserCredentials(username, password));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Ошибка загрузки учётных данных: " + e.getMessage());
+        }
+    }
+    
+    private static void saveCredentials() {
+        Path path = getCredentialsPath();
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.newDocument();
+            
+            Element root = doc.createElement("credentials");
+            doc.appendChild(root);
+            
+            for (java.util.Map.Entry<String, UserCredentials> entry : credentialsMap.entrySet()) {
+                Element credElem = doc.createElement("credential");
+                
+                Element addrElem = doc.createElement("address");
+                addrElem.setTextContent(entry.getKey());
+                credElem.appendChild(addrElem);
+                
+                Element userElem = doc.createElement("username");
+                userElem.setTextContent(entry.getValue().getUsername());
+                credElem.appendChild(userElem);
+                
+                Element passElem = doc.createElement("password");
+                passElem.setTextContent(encrypt(entry.getValue().getPassword()));
+                credElem.appendChild(passElem);
+                
+                root.appendChild(credElem);
+            }
+            
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(path.toFile());
+            transformer.transform(source, result);
+        } catch (Exception e) {
+            System.err.println("Ошибка сохранения учётных данных: " + e.getMessage());
+        }
+    }
+    
+    // Простое XOR-шифрование (для демонстрации, в реальном проекте используйте более стойкое)
+    private static final String KEY = "1C_Launcher_2026_Secret_Key";
+    
+    private static String encrypt(String input) {
+        if (input == null || input.isEmpty()) return "";
+        byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes = KEY.getBytes(StandardCharsets.UTF_8);
+        byte[] result = new byte[inputBytes.length];
+        for (int i = 0; i < inputBytes.length; i++) {
+            result[i] = (byte) (inputBytes[i] ^ keyBytes[i % keyBytes.length]);
+        }
+        return Base64.getEncoder().encodeToString(result);
+    }
+    
+    private static String decrypt(String input) {
+        if (input == null || input.isEmpty()) return "";
+        byte[] inputBytes = Base64.getDecoder().decode(input);
+        byte[] keyBytes = KEY.getBytes(StandardCharsets.UTF_8);
+        byte[] result = new byte[inputBytes.length];
+        for (int i = 0; i < inputBytes.length; i++) {
+            result[i] = (byte) (inputBytes[i] ^ keyBytes[i % keyBytes.length]);
+        }
+        return new String(result, StandardCharsets.UTF_8);
+    }
+    
+    private static void showUserCredentialsDialog() {
+        String address = getCurrentAddress();
+        if (address.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Сначала введите адрес базы данных!", 
+                    "Предупреждение", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        UserCredentials existing = credentialsMap.get(address);
+        String currentUsername = existing != null ? existing.getUsername() : "";
+        String currentPassword = existing != null ? existing.getPassword() : "";
+        
+        JTextField usernameField = new JTextField(currentUsername, 20);
+        JPasswordField passwordField = new JPasswordField(currentPassword, 20);
+        
+        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+        panel.add(new JLabel("Имя пользователя:"));
+        panel.add(usernameField);
+        panel.add(new JLabel("Пароль:"));
+        panel.add(passwordField);
+        
+        int result = JOptionPane.showConfirmDialog(null, panel, 
+                "Учётные данные для базы\n" + address, 
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        
+        if (result == JOptionPane.OK_OPTION) {
+            String username = usernameField.getText().trim();
+            String password = new String(passwordField.getPassword());
+            
+            if (!username.isEmpty()) {
+                credentialsMap.put(address, new UserCredentials(username, password));
+                saveCredentials();
+                JOptionPane.showMessageDialog(null, "Учётные данные сохранены для адреса:\n" + address);
+            } else if (existing != null) {
+                // Если поле имени пустое — удаляем запись
+                credentialsMap.remove(address);
+                saveCredentials();
+                JOptionPane.showMessageDialog(null, "Учётные данные удалены для адреса:\n" + address);
+            }
+        }
+    }
+    
+    private static void askAndRunWithCredentials(String address, String baseCommand) {
+        UserCredentials cred = credentialsMap.get(address);
+        if (cred != null && !cred.getUsername().isEmpty()) {
+            int answer = JOptionPane.showConfirmDialog(null,
+                    "Запустить от имени пользователя:\n" + cred.getUsername() + 
+                    (cred.getPassword().isEmpty() ? "\n(без пароля)" : ""),
+                    "Запуск с учётными данными",
+                    JOptionPane.YES_NO_OPTION);
+            
+            if (answer == JOptionPane.YES_OPTION) {
+                String cmd = baseCommand;
+                cmd += " /UserName \"" + cred.getUsername() + "\"";
+                if (!cred.getPassword().isEmpty()) {
+                    cmd += " /Password \"" + cred.getPassword() + "\"";
+                }
+                runCommand(cmd, "с учётными данными");
+            } else {
+                runCommand(baseCommand, "без учётных данных");
+            }
+        } else {
+            runCommand(baseCommand, "");
+        }
     }
 
     // -----------------------------------------------------------------
@@ -522,8 +704,19 @@ public class RunYBase {
         String escaped = text.replace("\"", "\"\"");
         String cmd86 = "\"C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe\" " + commandPart
                 + " /IBConnectionString \"" + escaped + "\"";
-        String cmd64 = "\"C:\\Program Files\\1cv8\\common\\1cestart.exe\" " + commandPart + " /IBConnectionString \"" 
-                + escaped + "\"";
+        String cmd64 = "\"C:\\Program Files\\1cv8\\common\\1cestart.exe\" " + commandPart + " /IBConnectionString \"" + escaped + "\"";
+        
+        // Проверяем, есть ли учётные данные для этого адреса
+        UserCredentials cred = credentialsMap.get(text);
+        if (cred != null && !cred.getUsername().isEmpty()) {
+            cmd86 += " /UserName \"" + cred.getUsername() + "\"";
+            cmd64 += " /UserName \"" + cred.getUsername() + "\"";
+            if (!cred.getPassword().isEmpty()) {
+                cmd86 += " /Password \"" + cred.getPassword() + "\"";
+                cmd64 += " /Password \"" + cred.getPassword() + "\"";
+            }
+        }
+        
         outputArea86.append(cmd86);
         outputArea.append(cmd64);
 
@@ -592,17 +785,15 @@ public class RunYBase {
 
     // Вспомогательный метод для автоматического закрытия диалога
     private static void showAutoClosingDialog(String message, String title, int messageType, int delaySeconds) {
-        // Создаём диалог вручную
         final JDialog dialog = new JDialog();
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dialog.setModal(false); // Неблокирующий, чтобы таймер работал
+        dialog.setModal(false);
 
         JOptionPane optionPane = new JOptionPane(message, messageType);
         dialog.setContentPane(optionPane);
         dialog.pack();
         dialog.setLocationRelativeTo(null);
 
-        // Таймер для закрытия
         Timer timer = new Timer(delaySeconds * 1000, e -> dialog.dispose());
         timer.setRepeats(false);
         timer.start();
@@ -689,7 +880,6 @@ public class RunYBase {
             parseIniFormatWithOrder(ibasesPath, baseEntries);
         }
 
-        // Сортируем по имени (без учёта регистра)
         baseEntries.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
 
         return baseEntries;
@@ -706,7 +896,6 @@ public class RunYBase {
                 return;
             }
 
-            // Создаём список с кастомным рендерером
             JList<BaseEntry> list = new JList<>(baseEntries.toArray(new BaseEntry[0]));
             list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             list.setCellRenderer(new BaseEntryListRenderer());
@@ -723,10 +912,10 @@ public class RunYBase {
             dialog.setModal(true);
             dialog.setResizable(true);
             dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-            // Закрытие по ESC (как отмена)
+
             dialog.getRootPane().registerKeyboardAction(e -> dialog.dispose(),
-                KeyStroke.getKeyStroke("ESCAPE"),
-                JComponent.WHEN_IN_FOCUSED_WINDOW);
+                    KeyStroke.getKeyStroke("ESCAPE"),
+                    JComponent.WHEN_IN_FOCUSED_WINDOW);
 
             JButton okButton = new JButton("OK");
             okButton.addActionListener(e -> {
@@ -740,7 +929,6 @@ public class RunYBase {
             JButton cancelButton = new JButton("Отмена");
             cancelButton.addActionListener(e -> dialog.dispose());
 
-            // Двойной клик для выбора
             list.addMouseListener(new java.awt.event.MouseAdapter() {
                 public void mouseClicked(java.awt.event.MouseEvent evt) {
                     if (evt.getClickCount() == 2) {
@@ -774,12 +962,11 @@ public class RunYBase {
         }
     }
 
-    // Парсинг INI формата с OrderInList
     private static void parseIniFormatWithOrder(Path path, List<BaseEntry> entries) throws IOException {
         List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
         String currentName = null;
         String currentConnect = null;
-        double currentOrder = Double.MAX_VALUE; // По умолчанию в конец списка
+        double currentOrder = Double.MAX_VALUE;
 
         for (String line : lines) {
             line = line.trim();
@@ -787,7 +974,6 @@ public class RunYBase {
                 continue;
 
             if (line.startsWith("[") && line.endsWith("]")) {
-                // Сохраняем предыдущую базу
                 if (currentName != null && currentConnect != null) {
                     entries.add(new BaseEntry(currentName, currentConnect, currentOrder));
                 }
@@ -805,13 +991,11 @@ public class RunYBase {
             }
         }
 
-        // Сохраняем последнюю базу
         if (currentName != null && currentConnect != null) {
             entries.add(new BaseEntry(currentName, currentConnect, currentOrder));
         }
     }
 
-    // Парсинг XML формата с OrderInList
     private static void parseXmlFormatWithOrder(Path path, List<BaseEntry> entries) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
@@ -824,7 +1008,6 @@ public class RunYBase {
             String connect = getTagValue("connect", info);
             double order = Double.MAX_VALUE;
 
-            // Читаем OrderInList из XML (если есть)
             NodeList orderNodes = info.getElementsByTagName("orderInList");
             if (orderNodes.getLength() > 0) {
                 try {
@@ -840,7 +1023,6 @@ public class RunYBase {
         }
     }
 
-    // Вспомогательный метод для XML
     private static String getTagValue(String tag, Element element) {
         NodeList list = element.getElementsByTagName(tag);
         if (list.getLength() == 0)
@@ -850,6 +1032,8 @@ public class RunYBase {
 
 }
 
+// ========== ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ ==========
+
 class HintComboBox extends JComboBox<String> {
     private String hint;
 
@@ -858,12 +1042,10 @@ class HintComboBox extends JComboBox<String> {
         this.hint = hint;
         setEditable(true);
 
-        // Настраиваем редактор для отображения подсказки
         JTextComponent editor = (JTextComponent) getEditor().getEditorComponent();
         editor.setForeground(Color.GRAY);
         editor.setText(hint);
 
-        // При фокусе — очищаем подсказку
         editor.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent e) {
                 if (editor.getText().equals(hint)) {
@@ -889,7 +1071,6 @@ class HintComboBox extends JComboBox<String> {
     }
 }
 
-// Вспомогательный класс для хранения базы с порядком сортировки
 class BaseEntry {
     String name;
     String connect;
@@ -902,7 +1083,6 @@ class BaseEntry {
     }
 }
 
-// Рендерер для отображения базы в две строки
 class BaseEntryListRenderer extends JPanel implements ListCellRenderer<BaseEntry> {
     private JLabel nameLabel;
     private JLabel connectLabel;
@@ -915,7 +1095,7 @@ class BaseEntryListRenderer extends JPanel implements ListCellRenderer<BaseEntry
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
 
         connectLabel = new JLabel();
-        connectLabel.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        connectLabel.setFont(new Font("Segoe UI", Font.ITALIC, 10));
         connectLabel.setForeground(Color.BLACK);
 
         add(nameLabel, BorderLayout.NORTH);
@@ -929,7 +1109,6 @@ class BaseEntryListRenderer extends JPanel implements ListCellRenderer<BaseEntry
         nameLabel.setText(value.name);
         connectLabel.setText(value.connect);
 
-        // Добавляем отступ слева для адреса
         connectLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
 
         if (isSelected) {
@@ -947,4 +1126,17 @@ class BaseEntryListRenderer extends JPanel implements ListCellRenderer<BaseEntry
 
         return this;
     }
+}
+
+class UserCredentials {
+    private String username;
+    private String password;
+    
+    public UserCredentials(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+    
+    public String getUsername() { return username; }
+    public String getPassword() { return password; }
 }
