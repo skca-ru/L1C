@@ -103,7 +103,7 @@ public class RunYBase {
     // Хранилище для учётных данных (адрес -> credentials)
     private static java.util.Map<String, UserCredentials> credentialsMap = new java.util.HashMap<>();
 
-    // Вспомогательный метод для создания объёмной кнопки
+        // Вспомогательный метод для создания объёмной кнопки
     private static JButton createButton(String text) {
         JButton button = new JButton(text);
         button.setBackground(COLOR_BUTTON_BG);
@@ -127,6 +127,19 @@ public class RunYBase {
                         BorderFactory.createEmptyBorder(2, 10, 2, 10)));
             }
         });
+        return button;
+    }
+
+    // Вспомогательный метод для создания плоской кнопки
+    private static JButton createFlatButton(String text) {
+        JButton button = new JButton(text);
+        button.setBackground(COLOR_INPUT_BG);
+        button.setForeground(COLOR_TEXT_FG);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        button.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        button.setContentAreaFilled(true);
+        button.setOpaque(false);
         return button;
     }
 
@@ -167,22 +180,37 @@ public class RunYBase {
                 "для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
         addressComboBox.setBackground(COLOR_INPUT_BG);
         addressComboBox.setToolTipText("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\"");
-        inputPanel.add(addressComboBox, BorderLayout.CENTER);
 
-        JPanel rightPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+        // Обёртка для ComboBox с кнопкой
+        JPanel comboBoxPanel = new JPanel(new BorderLayout(0, 0));
+        comboBoxPanel.setBackground(COLOR_INPUT_BG);
+        comboBoxPanel.add(addressComboBox, BorderLayout.CENTER);
+
+        JButton selectButton = createFlatButton("…");
+        selectButton.setToolTipText("Выбрать из списка зарегистрированных баз");
+        selectButton.addActionListener(e -> selectDatabaseFromList());
+        selectButton.setPreferredSize(new Dimension(25, 30));
+        selectButton.setMaximumSize(new Dimension(25, 30));
+        selectButton.setMinimumSize(new Dimension(25, 30));
+        comboBoxPanel.add(selectButton, BorderLayout.EAST);
+
+        inputPanel.add(comboBoxPanel, BorderLayout.CENTER);
+
+        JPanel rightPanel = new JPanel(new GridLayout(2, 1, 5, 5));
         rightPanel.setBackground(COLOR_BG);
+
+        JPanel topButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        topButtonPanel.setBackground(COLOR_BG);
 
         JButton userButton = createButton("Пользователь");
         userButton.addActionListener(e -> showUserCredentialsDialog());
 
+        topButtonPanel.add(userButton);
+
         JButton button = createButton("Сформировать");
         button.addActionListener(e -> handleButtonClick());
 
-        JButton selectButton = createButton("Выбрать");
-        selectButton.addActionListener(e -> selectDatabaseFromList());
-
-        rightPanel.add(userButton);
-        rightPanel.add(selectButton);
+        rightPanel.add(topButtonPanel);
         rightPanel.add(button);
         inputPanel.add(rightPanel, BorderLayout.EAST);
 
@@ -239,7 +267,6 @@ public class RunYBase {
         JPanel p86 = new JPanel(new BorderLayout(5, 0));
         p86.setBackground(COLOR_BG);
         outputArea86 = new JTextArea(4, 85);
-        outputArea86.setEditable(false);
         outputArea86.setFont(new Font("Consolas", Font.PLAIN, 11));
         p86.add(new JScrollPane(outputArea86), BorderLayout.CENTER);
 
@@ -270,7 +297,6 @@ public class RunYBase {
         JPanel p64 = new JPanel(new BorderLayout(5, 0));
         p64.setBackground(COLOR_BG);
         outputArea = new JTextArea(4, 85);
-        outputArea.setEditable(false);
         outputArea.setFont(new Font("Consolas", Font.PLAIN, 11));
         p64.add(new JScrollPane(outputArea), BorderLayout.CENTER);
 
@@ -296,7 +322,6 @@ public class RunYBase {
             panel.add(debugLabel);
 
             debugArea = new JTextArea(8, 85);
-            debugArea.setEditable(false);
             debugArea.setFont(new Font("Consolas", Font.PLAIN, 11));
             debugArea.setBackground(COLOR_OUTPUT_BG);
             debugArea.setForeground(COLOR_TEXT_FG);
@@ -709,11 +734,11 @@ public class RunYBase {
         // Проверяем, есть ли учётные данные для этого адреса
         UserCredentials cred = credentialsMap.get(text);
         if (cred != null && !cred.getUsername().isEmpty()) {
-            cmd86 += " /UserName \"" + cred.getUsername() + "\"";
-            cmd64 += " /UserName \"" + cred.getUsername() + "\"";
+            cmd86 += " /N \"" + cred.getUsername() + "\"";
+            cmd64 += " /N \"" + cred.getUsername() + "\"";
             if (!cred.getPassword().isEmpty()) {
-                cmd86 += " /Password \"" + cred.getPassword() + "\"";
-                cmd64 += " /Password \"" + cred.getPassword() + "\"";
+                cmd86 += " /P \"" + cred.getPassword() + "\"";
+                cmd64 += " /P \"" + cred.getPassword() + "\"";
             }
         }
         
