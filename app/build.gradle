@@ -34,10 +34,4 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'l1c.App'
-}
-
-tasks.named('test') {
-    // Use JUnit Platform for unit tests.
-    useJUnitPlatform()
-}
+    mainClass = 'l1c.RunYBase'}
