@@ -279,7 +279,6 @@ public class RunYBase {
         modePanel.add(thickManagedRadio);
 
         panel.add(modePanel);
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // Чекбокс "Приоритет платформы"
         JPanel priorityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -317,7 +316,9 @@ public class RunYBase {
         
         panel.add(priorityPanel);
         
-        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+        // Вертикальный отступ       
+        panel.add(Box.createRigidArea(new Dimension(0, 25)));
+         // Конец области "Режим запуска"
         // #endregion
 
         // Заголовки для вывода
