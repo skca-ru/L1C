@@ -282,7 +282,7 @@ public class RunYBase {
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // Чекбокс "Приоритет платформы"
-        JPanel priorityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel priorityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         priorityPanel.setBackground(COLOR_PANEL_BG);
         priorityPlatformCheckbox = new JCheckBox("Приоритет платформы");
         priorityPlatformCheckbox.setBackground(COLOR_PANEL_BG);
@@ -290,6 +290,31 @@ public class RunYBase {
         priorityPlatformCheckbox.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         priorityPlatformCheckbox.setToolTipText("Добавить параметры /AppArch для разрядности платформы");
         priorityPanel.add(priorityPlatformCheckbox);
+        
+        JButton helpButton = createFlatButton("?");
+        helpButton.setPreferredSize(new Dimension(25, 25));
+        helpButton.setMaximumSize(new Dimension(25, 25));
+        helpButton.setMinimumSize(new Dimension(25, 25));
+        helpButton.setBorderPainted(false);
+        helpButton.setContentAreaFilled(false);
+        helpButton.setOpaque(true);
+        helpButton.setToolTipText("Параметр /AppArch указывает разрядность клиентского приложения:\n" +
+                "x86 — использовать только 32-разрядные версии\n" +
+                "x86_64 — использовать только 64-разрядные версии\n" +
+                "x86_prt — выбрать 32-разрядную при наличии обеих\n" +
+                "x86_64_prt — выбрать 64-разрядную при наличии обеих");
+        helpButton.addActionListener(e -> JOptionPane.showMessageDialog(
+                null,
+                "Параметр /AppArch указывает разрядность используемого клиентского приложения на 64-разрядных ОС Windows.\n\n" +
+                        "Доступные значения:\n" +
+                        "• x86 — использовать только 32-разрядные версии\n" +
+                        "• x86_64 — использовать только 64-разрядные версии\n" +
+                        "• x86_prt — поиск актуальной версии, при наличии обеих выбрать 32-разрядную\n" +
+                        "• x86_64_prt — поиск актуальной версии, при наличии обеих выбрать 64-разрядную",
+                "Справка: параметр /AppArch",
+                JOptionPane.INFORMATION_MESSAGE));
+        priorityPanel.add(helpButton);
+        
         panel.add(priorityPanel);
         
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
