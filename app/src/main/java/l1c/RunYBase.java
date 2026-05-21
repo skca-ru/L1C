@@ -51,6 +51,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -143,6 +144,29 @@ public class RunYBase {
         return button;
     }
 
+    // Цвет для кнопки "Пользователь" когда есть сохранённые учётные данные
+    private static final Color COLOR_USER_HAS_CRED = new Color(100, 180, 100); // Зелёный
+    private static final Color COLOR_USER_NO_CRED = new Color(230, 200, 120);  // Жёлтый (как обычные кнопки)
+    
+    private static JButton userCredentialsButton;
+    
+    private static void updateUserButtonState() {
+        if (userCredentialsButton == null) return;
+        
+        String address = getCurrentAddress();
+        UserCredentials cred = credentialsMap.get(address);
+        
+        if (cred != null && !cred.getUsername().isEmpty()) {
+            // Есть учётные данные - зелёный фон
+            userCredentialsButton.setBackground(COLOR_USER_HAS_CRED);
+            userCredentialsButton.setToolTipText("Учётные данные сохранены: " + cred.getUsername());
+        } else {
+            // Нет учётных данных - жёлтый фон
+            userCredentialsButton.setBackground(COLOR_USER_NO_CRED);
+            userCredentialsButton.setToolTipText("Нажмите чтобы задать учётные данные");
+        }
+    }
+
     public static void main(String[] args) {
         loadCredentials(); // Загружаем сохранённые учётные данные
         loadHistoryFromXml();
@@ -202,10 +226,10 @@ public class RunYBase {
         JPanel topButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         topButtonPanel.setBackground(COLOR_BG);
 
-        JButton userButton = createButton("Пользователь");
-        userButton.addActionListener(e -> showUserCredentialsDialog());
+        userCredentialsButton = createButton("Пользователь");
+        userCredentialsButton.addActionListener(e -> showUserCredentialsDialog());
 
-        topButtonPanel.add(userButton);
+        topButtonPanel.add(userCredentialsButton);
 
         JButton button = createButton("Сформировать");
         button.addActionListener(e -> handleButtonClick());
@@ -360,6 +384,21 @@ public class RunYBase {
         autoPasteFromClipboard();
 
         addressComboBox.requestFocus();
+        
+        // Добавляем слушатель для обновления состояния кнопки при изменении адреса
+        Component editorComp2 = addressComboBox.getEditor().getEditorComponent();
+        if (editorComp2 instanceof JTextField) {
+            JTextField editorField = (JTextField) editorComp2;
+            // Слушаем изменения текста в поле ввода
+            editorField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                public void changedUpdate(javax.swing.event.DocumentEvent e) { updateUserButtonState(); }
+                public void removeUpdate(javax.swing.event.DocumentEvent e) { updateUserButtonState(); }
+                public void insertUpdate(javax.swing.event.DocumentEvent e) { updateUserButtonState(); }
+            });
+        }
+        
+        // Инициализируем состояние кнопки при старте
+        updateUserButtonState();
     }
 
     // -----------------------------------------------------------------
@@ -403,7 +442,7 @@ public class RunYBase {
             System.err.println("Ошибка загрузки учётных данных: " + e.getMessage());
         }
     }
-    
+
     private static void saveCredentials() {
         Path path = getCredentialsPath();
         try {
@@ -509,6 +548,9 @@ public class RunYBase {
                 saveCredentials();
                 JOptionPane.showMessageDialog(null, "Учётные данные удалены для адреса:\n" + address);
             }
+            
+            // Обновляем состояние кнопки
+            updateUserButtonState();
         }
     }
     
