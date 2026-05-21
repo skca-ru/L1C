@@ -81,6 +81,7 @@ public class RunYBase {
    // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
     private static final Color COLOR_BG = new Color(255, 255, 255);        // Белый фон
     private static final Color COLOR_BUTTON_BG = new Color(230, 200, 120); // Приглушённый жёлто-песочный
+    private static final Color COLOR_BUTTON_COPY_BG = new Color(243, 228, 188); // На 50% светлее для кнопок Copy/Run
     private static final Color COLOR_BUTTON_FG = Color.BLACK;              // Чёрный текст на кнопках
     private static final Color COLOR_ACCENT = new Color(200, 160, 70);     // Приглушённый для рамок
     private static final Color COLOR_TEXT_FG = new Color(0, 0, 0);         // Чёрный текст
@@ -145,8 +146,8 @@ public class RunYBase {
     }
 
     // Цвет для кнопки "Пользователь" когда есть сохранённые учётные данные
-    private static final Color COLOR_USER_HAS_CRED = new Color(100, 180, 100); // Зелёный
-    private static final Color COLOR_USER_NO_CRED = new Color(230, 200, 120);  // Жёлтый (как обычные кнопки)
+    private static final Color COLOR_USER_HAS_CRED = new Color(178, 218, 178); // Зелёный на 50% светлее
+    private static final Color COLOR_USER_NO_CRED = new Color(243, 228, 188);  // Как у кнопок Copy/Run
     
     private static JButton userCredentialsButton;
     
@@ -298,9 +299,11 @@ public class RunYBase {
         buttonPanel86.setBackground(COLOR_BG);
 
         JButton copy86 = createButton("Copy");
+        copy86.setBackground(COLOR_BUTTON_COPY_BG);
         copy86.addActionListener(e -> copyToClipboard(outputArea86.getText()));
 
         JButton run86 = createButton("Run");
+        run86.setBackground(COLOR_BUTTON_COPY_BG);
         run86.addActionListener(e -> runCommand(outputArea86.getText(), "x86"));
 
         buttonPanel86.add(copy86);
@@ -328,9 +331,11 @@ public class RunYBase {
         buttonPanel64.setBackground(COLOR_BG);
 
         JButton copy64 = createButton("Copy");
+        copy64.setBackground(COLOR_BUTTON_COPY_BG);
         copy64.addActionListener(e -> copyToClipboard(outputArea.getText()));
 
         JButton run64 = createButton("Run");
+        run64.setBackground(COLOR_BUTTON_COPY_BG);
         run64.addActionListener(e -> runCommand(outputArea.getText(), "x64"));
 
         buttonPanel64.add(copy64);
