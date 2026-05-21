@@ -99,6 +99,7 @@ public class RunYBase {
     private static JRadioButton thickOrdinaryRadio;
     private static JRadioButton thickManagedRadio;
     private static ButtonGroup modeGroup;
+    private static JCheckBox priorityPlatformCheckbox;
     private static JTextArea debugArea;
     private static DefaultComboBoxModel<String> historyModel;
     
@@ -278,6 +279,19 @@ public class RunYBase {
         modePanel.add(thickManagedRadio);
 
         panel.add(modePanel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Чекбокс "Приоритет платформы"
+        JPanel priorityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        priorityPanel.setBackground(COLOR_PANEL_BG);
+        priorityPlatformCheckbox = new JCheckBox("Приоритет платформы");
+        priorityPlatformCheckbox.setBackground(COLOR_PANEL_BG);
+        priorityPlatformCheckbox.setForeground(COLOR_TEXT_FG);
+        priorityPlatformCheckbox.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        priorityPlatformCheckbox.setToolTipText("Добавить параметры /AppArch для разрядности платформы");
+        priorityPanel.add(priorityPlatformCheckbox);
+        panel.add(priorityPanel);
+        
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
         // #endregion
 
@@ -787,6 +801,12 @@ public class RunYBase {
                 cmd86 += " /P \"" + cred.getPassword() + "\"";
                 cmd64 += " /P \"" + cred.getPassword() + "\"";
             }
+        }
+        
+        // Добавляем параметры приоритета платформы если чекбокс включен
+        if (priorityPlatformCheckbox.isSelected()) {
+            cmd86 += " /AppArch x86";
+            cmd64 += " /AppArch x86_64";
         }
         
         outputArea86.append(cmd86);
