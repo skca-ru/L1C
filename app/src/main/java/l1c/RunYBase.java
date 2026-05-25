@@ -1040,6 +1040,7 @@ public class RunYBase {
                 BaseEntry selected = list.getSelectedValue();
                 if (selected != null) {
                     ((HintComboBox) addressComboBox).setRealText(selected.connect);
+                    updateUserButtonState();
                 }
                 dialog.dispose();
             });
@@ -1053,6 +1054,7 @@ public class RunYBase {
                         BaseEntry selected = list.getSelectedValue();
                         if (selected != null) {
                             ((HintComboBox) addressComboBox).setRealText(selected.connect);
+                            updateUserButtonState();
                             dialog.dispose();
                         }
                     }
@@ -1184,8 +1186,8 @@ class HintComboBox extends JComboBox<String> {
     public void setRealText(String text) {
         JTextComponent editor = (JTextComponent) getEditor().getEditorComponent();
         editor.setForeground(Color.BLACK);
-        editor.setText(text);
         setSelectedItem(text);
+        editor.setText(text);
     }
 }
 
