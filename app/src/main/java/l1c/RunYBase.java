@@ -1,4 +1,4 @@
-// Версия KodaPro
+// Версия kПро
 package l1c;
 
 import java.io.BufferedReader;
@@ -60,6 +60,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -81,6 +84,7 @@ public class RunYBase extends Application {
     private static final String COLOR_BUTTON_BG = "#E6C878";
     private static final String COLOR_BUTTON_COPY_BG = "#F3E4BC";
     private static final String COLOR_BUTTON_FG = "#000000";
+    private static final String COLOR_BUTTON_BORDER = "#C0A050";
     private static final String COLOR_ACCENT = "#C8A046";
     private static final String COLOR_TEXT_FG = "#000000";
     private static final String COLOR_INPUT_BG = "#FFFFFF";
@@ -295,16 +299,16 @@ public class RunYBase extends Application {
 
     private Button createButton(String text) {
         Button button = new Button(text);
-        button.setStyle(
-                "-fx-background-color: " + COLOR_BUTTON_BG + ";" +
-                        "-fx-text-fill: " + COLOR_BUTTON_FG + ";" +
-                        "-fx-font-weight: bold;" +
-                        "-fx-font-size: 11px;" +
-                        "-fx-padding: 4 10 4 10;" +
-                        "-fx-border-radius: 4px;" +
-                        "-fx-background-radius: 4px;" +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 2, 0, 0, 1);"
-        );
+        button.setStyle(String.format("""
+                -fx-background-color: %s; 
+                -fx-text-fill: %s; 
+                -fx-font-weight: bold; 
+                -fx-font-size: 11px; 
+                -fx-border-color: %s; 
+                -fx-border-width: 1px;
+                -fx-border-radius: 3px;
+                -fx-background-radius: 3px""",
+                COLOR_BUTTON_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
         button.setOnMousePressed(e -> button.setStyle(button.getStyle().replace("dropshadow(gaussian, rgba(0,0,0,0.2), 2, 0, 0, 1)", "inset dropshadow(gaussian, rgba(0,0,0,0.2), 2, 0, 0, 1)")));
         button.setOnMouseReleased(e -> button.setStyle(button.getStyle().replace("inset dropshadow", "dropshadow")));
         return button;
@@ -312,6 +316,7 @@ public class RunYBase extends Application {
 
     private Button createFlatButton(String text) {
         Button button = new Button(text);
+            
         button.setStyle(
                 "-fx-background-color: " + COLOR_INPUT_BG + ";" +
                         "-fx-text-fill: " + COLOR_TEXT_FG + ";" +
