@@ -1,3 +1,4 @@
+// Версия KodaPro
 package l1c;
 
 import java.io.BufferedReader;
