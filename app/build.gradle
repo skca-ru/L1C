@@ -24,6 +24,29 @@ java {
     }
 }
 
+// Компилировать для совместимости с Java 17 (bytecode 61)
+tasks.withType(JavaCompile) {
+    options.release = 17
+}
+
 application {
     mainClass = 'l1c.RunYBase'
+}
+
+jar {
+    archiveBaseName.set('launcher1c')
+    archiveVersion.set('1.0.0')
+    
+    manifest {
+        attributes 'Main-Class': 'l1c.RunYBase'
+    }
+    
+    from {
+        configurations.runtimeClasspath.collect { 
+            it.isDirectory() ? it : zipTree(it) 
+        }
+    }
+    
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }

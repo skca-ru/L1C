@@ -54,6 +54,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -148,7 +149,7 @@ public class RunYBase extends Application {
         userCredentialsButton = createButton("Пользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
 
-        Button generateButton = createButton("Сформировать");
+        Button generateButton = createButton("С_формировать");
         generateButton.setOnAction(e -> handleButtonClick());
 
         inputPanel.getChildren().addAll(addressLabel, addressComboBox, selectButton, userCredentialsButton, generateButton);
@@ -298,7 +299,11 @@ public class RunYBase extends Application {
     }
 
     private Button createButton(String text) {
+        
         Button button = new Button(text);
+        // Что бы ускорители на кнопке работали
+        button.setMnemonicParsing(true);
+        
         button.setStyle(String.format("""
                 -fx-background-color: %s; 
                 -fx-text-fill: %s; 

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Main-Class: l1c.RunYBase
+Class-Path: guava-33.4.6-jre.jar javafx-controls-21.0.2-win.jar failurea
+ ccess-1.0.3.jar listenablefuture-9999.0-empty-to-avoid-conflict-with-gu
+ ava.jar jspecify-1.0.0.jar error_prone_annotations-2.36.0.jar j2objc-an
+ notations-3.0.0.jar javafx-graphics-21.0.2-win.jar javafx-base-21.0.2-w
+ in.jar
+
