@@ -71,28 +71,36 @@ import javafx.animation.PauseTransition;
 
 public class RunYBase extends Application {
 
+    // @formatter:off
     // #region ========== НАСТРОЙКИ ==========
-    private static final boolean SHOW_DEBUG_PANEL = false;
-    private static final boolean SHOW_RUN_MESSAGE = true;
-    private static final int MAX_HISTORY_SIZE = 20;
-    private static final String HISTORY_DIR = ".1c_launcher";
-    private static final String HISTORY_FILE = "history.xml";
+    private static final boolean SHOW_DEBUG_PANEL    = false;
+    private static final boolean SHOW_RUN_MESSAGE    = true;
+    private static final int MAX_HISTORY_SIZE        = 20;
+    private static final String HISTORY_DIR          = ".1c_launcher";
+    private static final String HISTORY_FILE         = "history.xml";
+    private static final String APP_ARCH_INFO        = """
+            Параметр /AppArch указывает разрядность используемого клиентского приложения на 64-разрядных ОС Windows.
+
+            Доступные значения:
+            • x86 — использовать только 32-разрядные версии
+            • x86_64 — использовать только 64-разрядные версии
+            • x86_prt — поиск актуальной версии, при наличии обеих выбрать 32-разрядную
+            • x86_64_prt — поиск актуальной версии, при наличии обеих выбрать 64-разрядную""";
     // #endregion =================================
 
-    // @formatter:off
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
-    private static final String COLOR_BG = "#FFFFFF";
-    private static final String COLOR_BUTTON_BG = "#E6C878";
+    private static final String COLOR_BG             = "#FFFFFF";
+    private static final String COLOR_BUTTON_BG      = "#E6C878";
     private static final String COLOR_BUTTON_COPY_BG = "#F3E4BC";
-    private static final String COLOR_BUTTON_FG = "#000000";
-    private static final String COLOR_BUTTON_BORDER = "#C0A050";
-    private static final String COLOR_ACCENT = "#C8A046";
-    private static final String COLOR_TEXT_FG = "#000000";
-    private static final String COLOR_INPUT_BG = "#FFFFFF";
-    private static final String COLOR_OUTPUT_BG = "#FAFAFA";
-    private static final String COLOR_PANEL_BG = "#FFFFFF";
-    private static final String COLOR_USER_HAS_CRED = "#B2DAB2";
-    private static final String COLOR_USER_NO_CRED = "#F3E4BC";
+    private static final String COLOR_BUTTON_FG      = "#000000";
+    private static final String COLOR_BUTTON_BORDER  = "#C0A050";
+    private static final String COLOR_ACCENT         = "#C8A046";
+    private static final String COLOR_TEXT_FG        = "#000000";
+    private static final String COLOR_INPUT_BG       = "#FFFFFF";
+    private static final String COLOR_OUTPUT_BG      = "#FAFAFA";
+    private static final String COLOR_PANEL_BG       = "#FFFFFF";
+    private static final String COLOR_USER_HAS_CRED  = "#B2DAB2";
+    private static final String COLOR_USER_NO_CRED   = "#F3E4BC";
     // #endregion =================================
     // @formatter:on
 
@@ -186,20 +194,9 @@ public class RunYBase extends Application {
         priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
         priorityPlatformCheckbox.setTooltip(new Tooltip("Добавить параметры /AppArch для разрядности платформы"));
 
-        Button helpButton = createFlatButton("?");
-        helpButton.setTooltip(new Tooltip(
-                "Параметр /AppArch указывает разрядность клиентского приложения:\n" +
-                        "x86 — использовать только 32-разрядные версии\n" +
-                        "x86_64 — использовать только 64-разрядные версии\n" +
-                        "x86_prt — выбрать 32-разрядную при наличии обеих\n" +
-                        "x86_64_prt — выбрать 64-разрядную при наличии обеих"));
-        helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch",
-                "Параметр /AppArch указывает разрядность используемого клиентского приложения на 64-разрядных ОС Windows.\n\n" +
-                        "Доступные значения:\n" +
-                        "• x86 — использовать только 32-разрядные версии\n" +
-                        "• x86_64 — использовать только 64-разрядные версии\n" +
-                        "• x86_prt — поиск актуальной версии, при наличии обеих выбрать 32-разрядную\n" +
-                        "• x86_64_prt — поиск актуальной версии, при наличии обеих выбрать 64-разрядную"));
+        Button helpButton = createHelpButton("?");
+        helpButton.setTooltip(new Tooltip(APP_ARCH_INFO));
+        helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch", APP_ARCH_INFO));
         helpButton.setMinSize(25, 25);
         helpButton.setMaxSize(25, 25);
 
@@ -337,14 +334,41 @@ public class RunYBase extends Application {
     private Button createFlatButton(String text) {
         Button button = new Button(text);
             
-        button.setStyle(
-                "-fx-background-color: " + COLOR_INPUT_BG + ";" +
-                        "-fx-text-fill: " + COLOR_TEXT_FG + ";" +
-                        "-fx-font-size: 12px;" +
-                        "-fx-border-color: gray;" +
-                        "-fx-border-radius: 3px;" +
-                        "-fx-background-radius: 3px;"
-        );
+        button.setStyle(String.format("""
+                -fx-background-color: %s; 
+                -fx-text-fill: %s; 
+                -fx-font-size: 12px;
+                -fx-border-color: gray;
+                -fx-border-radius: 3px;
+                -fx-background-radius: 3px""",
+                COLOR_INPUT_BG, COLOR_TEXT_FG));
+        return button;
+    }
+
+    private Button createHelpButton(String text) {
+        Button button = new Button(text);
+            
+        button.setStyle(String.format("""
+                -fx-background-color: %s; 
+                -fx-text-fill: %s; 
+                -fx-font-size: 12px;
+                -fx-background-radius: 3px""",
+                COLOR_INPUT_BG, COLOR_TEXT_FG));
+        
+        button.setOnMouseEntered(e -> button.setStyle(String.format("""
+                -fx-background-color: %s; 
+                -fx-text-fill: %s; 
+                -fx-font-size: 12px;
+                -fx-background-radius: 3px""",
+                COLOR_ACCENT, COLOR_TEXT_FG)));
+        
+        button.setOnMouseExited(e -> button.setStyle(String.format("""
+                -fx-background-color: %s; 
+                -fx-text-fill: %s; 
+                -fx-font-size: 12px;
+                -fx-background-radius: 3px""",
+                COLOR_INPUT_BG, COLOR_TEXT_FG)));
+        
         return button;
     }
 
