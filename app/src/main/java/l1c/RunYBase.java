@@ -309,8 +309,23 @@ public class RunYBase extends Application {
                 -fx-border-radius: 3px;
                 -fx-background-radius: 3px""",
                 COLOR_BUTTON_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
-        button.setOnMousePressed(e -> button.setStyle(button.getStyle().replace("dropshadow(gaussian, rgba(0,0,0,0.2), 2, 0, 0, 1)", "inset dropshadow(gaussian, rgba(0,0,0,0.2), 2, 0, 0, 1)")));
-        button.setOnMouseReleased(e -> button.setStyle(button.getStyle().replace("inset dropshadow", "dropshadow")));
+        
+        // Эффект нажатия - сдвигаем кнопку на 1px вниз-вправо
+        button.setOnMousePressed(e -> {
+            button.setTranslateY(1);
+            button.setTranslateX(1);
+        });
+        
+        button.setOnMouseReleased(e -> {
+            button.setTranslateY(0);
+            button.setTranslateX(0);
+        });
+        
+        button.setOnMouseExited(e -> {
+            button.setTranslateY(0);
+            button.setTranslateX(0);
+        });
+        
         return button;
     }
 
