@@ -200,22 +200,20 @@ public class RunYBase extends Application {
         debugModeCheckbox.setSelected(true); // по умолчанию включено
         debugModeCheckbox.setTooltip(new Tooltip("Добавить параметр /Debug для запуска в режиме отладки"));
 
-        Button debugHelpButton = createHelpButton("?");
+        Button debugHelpButton = createHelpButton();
         debugHelpButton.setTooltip(new Tooltip(DEBUG_INFO));
         debugHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", DEBUG_INFO));
-        debugHelpButton.setMinSize(25, 25);
-        debugHelpButton.setMaxSize(25, 25);
 
         priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
         priorityPlatformCheckbox.setTooltip(new Tooltip("Добавить параметры /AppArch для разрядности платформы"));
 
-        Button helpButton = createHelpButton("?");
+        Button helpButton = createHelpButton();
         helpButton.setTooltip(new Tooltip(APP_ARCH_INFO));
         helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch", APP_ARCH_INFO));
-        helpButton.setMinSize(25, 25);
-        helpButton.setMaxSize(25, 25);
 
-        HBox optionsPanel = new HBox(15, debugModeCheckbox, debugHelpButton, priorityPlatformCheckbox, helpButton);
+        HBox debugOption = createHelpOption(debugModeCheckbox, debugHelpButton);
+        HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
+        HBox optionsPanel = new HBox(15, debugOption, platformOption);
         optionsPanel.setAlignment(Pos.CENTER_LEFT);
         optionsPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
         root.getChildren().add(optionsPanel);
@@ -367,15 +365,32 @@ public class RunYBase extends Application {
         return button;
     }
 
-    private Button createHelpButton(String text) {
-        Button button = new Button(text);
+    private HBox createHelpOption(CheckBox option, Button helpButton) {
+        HBox box = new HBox(3, option, helpButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
+    private Button createHelpButton() {
+        Button button = new Button("?");
+        String linkColor = "#0563C1";
 
         button.setStyle(String.format("""
-                -fx-background-color: %s;
+                -fx-background-color: transparent;
                 -fx-text-fill: %s;
-                -fx-font-size: 12px;
-                -fx-background-radius: 3px""",
-                COLOR_INPUT_BG, COLOR_TEXT_FG));
+                -fx-font-size: 10px;
+                -fx-font-weight: bold;
+                -fx-border-color: %s;
+                -fx-border-width: 1px;
+                -fx-border-radius: 50%%;
+                -fx-background-radius: 50%%;
+                -fx-padding: 0""",
+                linkColor, linkColor));
+
+        button.setMinSize(16, 16);
+        button.setPrefSize(16, 16);
+        button.setMaxSize(16, 16);
+        button.setFocusTraversable(false);
 
         button.setCursor(javafx.scene.Cursor.HAND);
         
