@@ -206,14 +206,6 @@ public class RunYBase extends Application {
         debugHelpButton.setMinSize(25, 25);
         debugHelpButton.setMaxSize(25, 25);
 
-        HBox debugPanel = new HBox(5, debugModeCheckbox, debugHelpButton);
-        debugPanel.setAlignment(Pos.CENTER_LEFT);
-        root.getChildren().add(debugPanel);
-
-        HBox priorityPanel = new HBox(5);
-        priorityPanel.setAlignment(Pos.CENTER_LEFT);
-        priorityPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
-
         priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
         priorityPlatformCheckbox.setTooltip(new Tooltip("Добавить параметры /AppArch для разрядности платформы"));
 
@@ -223,8 +215,10 @@ public class RunYBase extends Application {
         helpButton.setMinSize(25, 25);
         helpButton.setMaxSize(25, 25);
 
-        priorityPanel.getChildren().addAll(priorityPlatformCheckbox, helpButton);
-        root.getChildren().add(priorityPanel);
+        HBox optionsPanel = new HBox(15, debugModeCheckbox, debugHelpButton, priorityPlatformCheckbox, helpButton);
+        optionsPanel.setAlignment(Pos.CENTER_LEFT);
+        optionsPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
+        root.getChildren().add(optionsPanel);
         // #endregion
 
         root.getChildren().add(new Label());
