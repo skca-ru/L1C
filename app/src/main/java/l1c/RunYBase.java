@@ -86,6 +86,13 @@ public class RunYBase extends Application {
             • x86_64 — использовать только 64-разрядные версии
             • x86_prt — поиск актуальной версии, при наличии обеих выбрать 32-разрядную
             • x86_64_prt — поиск актуальной версии, при наличии обеих выбрать 64-разрядную""";
+    private static final String DEBUG_INFO           = """
+            /Debug [<режим>] [-attach]
+            — указывает, что данное клиентское приложение будет запущено в режиме отладки.
+            Протокол, используемый для работы отладчика, определяется параметром <режим>:
+            -tcp – для отладки используется протокол TCP/IP;
+            -http – для отладки используется протокол HTTP.
+            Если в командной строке указан параметр -attach, то это означает, что отладчик будет автоматически подключать предметы отладки (клиентский и серверный) запускаемого приложения, которые будут зарегистрированы на сервере отладки. Параметр используется только для отладки по протоколу HTTP.""";
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
@@ -113,6 +120,7 @@ public class RunYBase extends Application {
     private RadioButton thickManagedRadio;
     private ToggleGroup modeGroup;
     private CheckBox priorityPlatformCheckbox;
+    private CheckBox debugModeCheckbox;
     private TextArea debugArea;
     private ObservableList<String> historyList;
 
@@ -154,13 +162,14 @@ public class RunYBase extends Application {
         selectButton.setMinSize(30, 30);
         selectButton.setMaxSize(30, 30);
 
-        userCredentialsButton = createButton("Пользователь");
+        userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
 
         Button generateButton = createButton("С_формировать");
         generateButton.setOnAction(e -> handleButtonClick());
 
-        inputPanel.getChildren().addAll(addressLabel, addressComboBox, selectButton, userCredentialsButton, generateButton);
+        inputPanel.getChildren().addAll(
+            addressLabel, addressComboBox, selectButton, userCredentialsButton, generateButton);
         root.getChildren().add(inputPanel);
         // #endregion
 
@@ -187,6 +196,20 @@ public class RunYBase extends Application {
         modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickOrdinaryRadio, thickManagedRadio);
         root.getChildren().add(modePanel);
 
+        debugModeCheckbox = new CheckBox("Режим отладки");
+        debugModeCheckbox.setSelected(true); // по умолчанию включено
+        debugModeCheckbox.setTooltip(new Tooltip("Добавить параметр /Debug для запуска в режиме отладки"));
+
+        Button debugHelpButton = createHelpButton("?");
+        debugHelpButton.setTooltip(new Tooltip(DEBUG_INFO));
+        debugHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", DEBUG_INFO));
+        debugHelpButton.setMinSize(25, 25);
+        debugHelpButton.setMaxSize(25, 25);
+
+        HBox debugPanel = new HBox(5, debugModeCheckbox, debugHelpButton);
+        debugPanel.setAlignment(Pos.CENTER_LEFT);
+        root.getChildren().add(debugPanel);
+
         HBox priorityPanel = new HBox(5);
         priorityPanel.setAlignment(Pos.CENTER_LEFT);
         priorityPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
@@ -208,6 +231,7 @@ public class RunYBase extends Application {
 
         // x86
         Label label86 = new Label("Команда для 32-битной платформы (x86):");
+        label86.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
         root.getChildren().add(label86);
 
         HBox p86 = new HBox(5);
@@ -232,6 +256,7 @@ public class RunYBase extends Application {
 
         // x64
         Label label64 = new Label("Команда для 64-битной платформы (x64):");
+        label64.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
         root.getChildren().add(label64);
 
         HBox p64 = new HBox(5);
@@ -258,7 +283,8 @@ public class RunYBase extends Application {
             root.getChildren().add(new Label("Отладка (вывод команды и ошибок):"));
             debugArea = new TextArea();
             debugArea.setPrefRowCount(8);
-            debugArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_OUTPUT_BG + ";");
+            debugArea.setStyle(
+                    "-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_OUTPUT_BG + ";");
             debugArea.setStyle(debugArea.getStyle() + "-fx-border-color: " + COLOR_ACCENT + ";");
             root.getChildren().add(debugArea);
         } else {
@@ -274,7 +300,8 @@ public class RunYBase extends Application {
             }
         });
 
-        primaryStage.setTitle("Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
+        primaryStage.setTitle(
+                "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(e -> {
             saveCredentials();
@@ -285,7 +312,8 @@ public class RunYBase extends Application {
         addContextMenu(addressComboBox.getEditor());
         addContextMenu(outputArea);
         addContextMenu(outputArea86);
-        if (debugArea != null) addContextMenu(debugArea);
+        if (debugArea != null)
+            addContextMenu(debugArea);
 
         autoPasteFromClipboard();
 
@@ -296,47 +324,47 @@ public class RunYBase extends Application {
     }
 
     private Button createButton(String text) {
-        
+
         Button button = new Button(text);
         // Что бы ускорители на кнопке работали
         button.setMnemonicParsing(true);
-        
+
         button.setStyle(String.format("""
-                -fx-background-color: %s; 
-                -fx-text-fill: %s; 
-                -fx-font-weight: bold; 
-                -fx-font-size: 11px; 
-                -fx-border-color: %s; 
+                -fx-background-color: %s;
+                -fx-text-fill: %s;
+                -fx-font-weight: bold;
+                -fx-font-size: 11px;
+                -fx-border-color: %s;
                 -fx-border-width: 1px;
                 -fx-border-radius: 3px;
                 -fx-background-radius: 3px""",
                 COLOR_BUTTON_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
-        
+
         // Эффект нажатия - сдвигаем кнопку на 1px вниз-вправо
         button.setOnMousePressed(e -> {
             button.setTranslateY(1);
             button.setTranslateX(1);
         });
-        
+
         button.setOnMouseReleased(e -> {
             button.setTranslateY(0);
             button.setTranslateX(0);
         });
-        
+
         button.setOnMouseExited(e -> {
             button.setTranslateY(0);
             button.setTranslateX(0);
         });
-        
+
         return button;
     }
 
     private Button createFlatButton(String text) {
         Button button = new Button(text);
-            
+
         button.setStyle(String.format("""
-                -fx-background-color: %s; 
-                -fx-text-fill: %s; 
+                -fx-background-color: %s;
+                -fx-text-fill: %s;
                 -fx-font-size: 12px;
                 -fx-border-color: gray;
                 -fx-border-radius: 3px;
@@ -347,40 +375,31 @@ public class RunYBase extends Application {
 
     private Button createHelpButton(String text) {
         Button button = new Button(text);
-            
+
         button.setStyle(String.format("""
-                -fx-background-color: %s; 
-                -fx-text-fill: %s; 
+                -fx-background-color: %s;
+                -fx-text-fill: %s;
                 -fx-font-size: 12px;
                 -fx-background-radius: 3px""",
                 COLOR_INPUT_BG, COLOR_TEXT_FG));
-        
-        button.setOnMouseEntered(e -> button.setStyle(String.format("""
-                -fx-background-color: %s; 
-                -fx-text-fill: %s; 
-                -fx-font-size: 12px;
-                -fx-background-radius: 3px""",
-                COLOR_ACCENT, COLOR_TEXT_FG)));
-        
-        button.setOnMouseExited(e -> button.setStyle(String.format("""
-                -fx-background-color: %s; 
-                -fx-text-fill: %s; 
-                -fx-font-size: 12px;
-                -fx-background-radius: 3px""",
-                COLOR_INPUT_BG, COLOR_TEXT_FG)));
+
+        button.setCursor(javafx.scene.Cursor.HAND);
         
         return button;
     }
 
     private void updateUserButtonState() {
-        if (userCredentialsButton == null) return;
+        if (userCredentialsButton == null)
+            return;
         String address = getCurrentAddress();
         UserCredentials cred = credentialsMap.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
-            userCredentialsButton.setStyle(userCredentialsButton.getStyle().replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_HAS_CRED));
+            userCredentialsButton.setStyle(userCredentialsButton.getStyle()
+                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_HAS_CRED));
             userCredentialsButton.setTooltip(new Tooltip("Учётные данные сохранены: " + cred.getUsername()));
         } else {
-            userCredentialsButton.setStyle(userCredentialsButton.getStyle().replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_NO_CRED));
+            userCredentialsButton.setStyle(userCredentialsButton.getStyle()
+                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_NO_CRED));
             userCredentialsButton.setTooltip(new Tooltip("Нажмите чтобы задать учётные данные"));
         }
     }
@@ -471,7 +490,8 @@ public class RunYBase extends Application {
     private static final String KEY = "1C_Launcher_2026_Secret_Key";
 
     private static String encrypt(String input) {
-        if (input == null || input.isEmpty()) return "";
+        if (input == null || input.isEmpty())
+            return "";
         byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
         byte[] keyBytes = KEY.getBytes(StandardCharsets.UTF_8);
         byte[] result = new byte[inputBytes.length];
@@ -482,7 +502,8 @@ public class RunYBase extends Application {
     }
 
     private static String decrypt(String input) {
-        if (input == null || input.isEmpty()) return "";
+        if (input == null || input.isEmpty())
+            return "";
         byte[] inputBytes = Base64.getDecoder().decode(input);
         byte[] keyBytes = KEY.getBytes(StandardCharsets.UTF_8);
         byte[] result = new byte[inputBytes.length];
@@ -538,7 +559,8 @@ public class RunYBase extends Application {
                 if (!username.isEmpty()) {
                     credentialsMap.put(address, new UserCredentials(username, password));
                     saveCredentials();
-                    showAlert(Alert.AlertType.INFORMATION, "Успешно", "Учётные данные сохранены для адреса:\n" + address);
+                    showAlert(Alert.AlertType.INFORMATION, "Успешно",
+                            "Учётные данные сохранены для адреса:\n" + address);
                 } else if (existing != null) {
                     credentialsMap.remove(address);
                     saveCredentials();
@@ -631,7 +653,8 @@ public class RunYBase extends Application {
             root.appendChild(doc.createComment(
                     " Файл истории адресов баз 1С.\n" +
                             " Содержит последние использованные адреса для быстрого выбора.\n" +
-                            " Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).\n" +
+                            " Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).\n"
+                            +
                             " Рекомендуется не редактировать файл вручную. Если всё же редактируете, сделайте резервную копию.\n"));
 
             Element addresses = doc.createElement("addresses");
@@ -652,7 +675,8 @@ public class RunYBase extends Application {
     }
 
     private void addToHistory(String address) {
-        if (address == null || address.isEmpty()) return;
+        if (address == null || address.isEmpty())
+            return;
         historyList.remove(address);
         historyList.add(0, address);
         while (historyList.size() > MAX_HISTORY_SIZE) {
@@ -675,7 +699,8 @@ public class RunYBase extends Application {
             root.appendChild(doc.createComment(
                     " Файл истории адресов баз 1С.\n" +
                             " Содержит последние использованные адреса для быстрого выбора.\n" +
-                            " Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).\n" +
+                            " Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).\n"
+                            +
                             " Рекомендуется не редактировать файл вручную. Если всё же редактируете, сделайте резервную копию.\n"));
 
             Element addresses = doc.createElement("addresses");
@@ -702,7 +727,8 @@ public class RunYBase extends Application {
     }
 
     private static boolean isDatabaseAddress(String text) {
-        if (text == null || text.isEmpty()) return false;
+        if (text == null || text.isEmpty())
+            return false;
         String trimmed = text.trim();
         return trimmed.startsWith("File=") || trimmed.startsWith("Srvr=");
     }
@@ -733,9 +759,12 @@ public class RunYBase extends Application {
     }
 
     private String getCommandPart() {
-        if (designerRadio.isSelected()) return "DESIGNER";
-        if (thinRadio.isSelected()) return "ENTERPRISE /ThinClient";
-        if (thickOrdinaryRadio.isSelected()) return "ENTERPRISE /RunModeOrdinaryApplication";
+        if (designerRadio.isSelected())
+            return "DESIGNER";
+        if (thinRadio.isSelected())
+            return "ENTERPRISE /ThinClient";
+        if (thickOrdinaryRadio.isSelected())
+            return "ENTERPRISE /RunModeOrdinaryApplication";
         return "ENTERPRISE /RunModeManagedApplication";
     }
 
@@ -756,7 +785,8 @@ public class RunYBase extends Application {
         String escaped = text.replace("\"", "\"\"");
         String cmd86 = "\"C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe\" " + commandPart
                 + " /IBConnectionString \"" + escaped + "\"";
-        String cmd64 = "\"C:\\Program Files\\1cv8\\common\\1cestart.exe\" " + commandPart + " /IBConnectionString \"" + escaped + "\"";
+        String cmd64 = "\"C:\\Program Files\\1cv8\\common\\1cestart.exe\" " + commandPart + " /IBConnectionString \""
+                + escaped + "\"";
 
         UserCredentials cred = credentialsMap.get(text);
         if (cred != null && !cred.getUsername().isEmpty()) {
@@ -771,6 +801,12 @@ public class RunYBase extends Application {
         if (priorityPlatformCheckbox.isSelected()) {
             cmd86 += " /AppArch x86";
             cmd64 += " /AppArch x86_64";
+        }
+
+        // Добавляем режим отладки
+        if (debugModeCheckbox.isSelected()) {
+            cmd86 += " /Debug";
+            cmd64 += " /Debug";
         }
 
         outputArea86.setText(cmd86);
@@ -803,14 +839,15 @@ public class RunYBase extends Application {
             boolean finished = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
             String mode = designerRadio.isSelected() ? "Конфигуратор"
                     : thinRadio.isSelected() ? "Тонкий клиент"
-                    : thickOrdinaryRadio.isSelected() ? "Толстый клиент (Обычное)"
-                    : "Толстый клиент (Управляемое)";
+                            : thickOrdinaryRadio.isSelected() ? "Толстый клиент (Обычное)"
+                                    : "Толстый клиент (Управляемое)";
 
             if (finished) {
                 int code = process.exitValue();
                 if (code == 0) {
                     if (SHOW_RUN_MESSAGE) {
-                        showAutoClosingAlert(mode + " успешно запущен!\nБаза: " + getCurrentAddress() + "\nПлатформа: " + platform,
+                        showAutoClosingAlert(
+                                mode + " успешно запущен!\nБаза: " + getCurrentAddress() + "\nПлатформа: " + platform,
                                 "Запуск 1С", 5);
                     }
                 } else {
@@ -888,7 +925,8 @@ public class RunYBase extends Application {
     }
 
     private void copyToClipboard(String text) {
-        if (text == null || text.isEmpty()) return;
+        if (text == null || text.isEmpty())
+            return;
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
@@ -972,7 +1010,8 @@ public class RunYBase extends Application {
 
             Scene scene = new Scene(pane, 650, 450);
             scene.setOnKeyPressed(e -> {
-                if (e.getCode() == KeyCode.ESCAPE) dialog.close();
+                if (e.getCode() == KeyCode.ESCAPE)
+                    dialog.close();
             });
 
             dialog.setScene(scene);
@@ -992,7 +1031,8 @@ public class RunYBase extends Application {
 
         for (String line : lines) {
             line = line.trim();
-            if (line.isEmpty()) continue;
+            if (line.isEmpty())
+                continue;
 
             if (line.startsWith("[") && line.endsWith("]")) {
                 if (currentName != null && currentConnect != null) {
@@ -1046,7 +1086,8 @@ public class RunYBase extends Application {
 
     private static String getTagValue(String tag, Element element) {
         NodeList list = element.getElementsByTagName(tag);
-        if (list.getLength() == 0) return null;
+        if (list.getLength() == 0)
+            return null;
         return list.item(0).getTextContent();
     }
 
@@ -1126,6 +1167,11 @@ class UserCredentials {
         this.password = password;
     }
 
-    public String getUsername() { return username; }
-    public String getPassword() { return password; }
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
 }
