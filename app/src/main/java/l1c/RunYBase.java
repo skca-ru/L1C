@@ -830,7 +830,7 @@ public class RunYBase extends Application {
 
         // Добавляем режим отладки
         if (debugModeCheckbox.isSelected()) {
-            String debugParam = " /Debug";
+            String debugParam = " /Debug -attach";
             String protocol = debugProtocolCombo.getValue();
             if (protocol != null && !"по умолчанию".equals(protocol)) {
                 debugParam += " " + protocol;
