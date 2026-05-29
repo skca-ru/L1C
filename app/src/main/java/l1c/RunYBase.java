@@ -93,6 +93,11 @@ public class RunYBase extends Application {
             -tcp – для отладки используется протокол TCP/IP;
             -http – для отладки используется протокол HTTP.
             Если в командной строке указан параметр -attach, то это означает, что отладчик будет автоматически подключать предметы отладки (клиентский и серверный) запускаемого приложения, которые будут зарегистрированы на сервере отладки. Параметр используется только для отладки по протоколу HTTP.""";
+    private static final String DEBUG_PROTOCOL_INFO  = """
+            Режим отладки:
+            • по умолчанию — /Debug (протокол выбирается платформой);
+            • -tcp — /Debug -tcp (протокол TCP/IP);
+            • -http — /Debug -http (протокол HTTP).""";
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
@@ -121,6 +126,7 @@ public class RunYBase extends Application {
     private ToggleGroup modeGroup;
     private CheckBox priorityPlatformCheckbox;
     private CheckBox debugModeCheckbox;
+    private ComboBox<String> debugProtocolCombo;
     private TextArea debugArea;
     private ObservableList<String> historyList;
 
@@ -200,6 +206,10 @@ public class RunYBase extends Application {
         debugModeCheckbox.setSelected(true); // по умолчанию включено
         debugModeCheckbox.setTooltip(new Tooltip("Добавить параметр /Debug для запуска в режиме отладки"));
 
+        debugProtocolCombo = new ComboBox<>(FXCollections.observableArrayList("по умолчанию", "-tcp", "-http"));
+        debugProtocolCombo.setValue("по умолчанию");
+        debugProtocolCombo.setTooltip(new Tooltip(DEBUG_PROTOCOL_INFO));
+
         Button debugHelpButton = createHelpButton();
         debugHelpButton.setTooltip(new Tooltip(DEBUG_INFO));
         debugHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", DEBUG_INFO));
@@ -211,7 +221,7 @@ public class RunYBase extends Application {
         helpButton.setTooltip(new Tooltip(APP_ARCH_INFO));
         helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch", APP_ARCH_INFO));
 
-        HBox debugOption = createHelpOption(debugModeCheckbox, debugHelpButton);
+        HBox debugOption = createHelpOption(debugModeCheckbox, debugProtocolCombo, debugHelpButton);
         HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
         HBox optionsPanel = new HBox(15, debugOption, platformOption);
         optionsPanel.setAlignment(Pos.CENTER_LEFT);
@@ -367,6 +377,12 @@ public class RunYBase extends Application {
 
     private HBox createHelpOption(CheckBox option, Button helpButton) {
         HBox box = new HBox(3, option, helpButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
+    private HBox createHelpOption(CheckBox option, ComboBox<String> combo, Button helpButton) {
+        HBox box = new HBox(5, option, combo, helpButton);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -814,8 +830,13 @@ public class RunYBase extends Application {
 
         // Добавляем режим отладки
         if (debugModeCheckbox.isSelected()) {
-            cmd86 += " /Debug";
-            cmd64 += " /Debug";
+            String debugParam = " /Debug";
+            String protocol = debugProtocolCombo.getValue();
+            if (protocol != null && !"по умолчанию".equals(protocol)) {
+                debugParam += " " + protocol;
+            }
+            cmd86 += debugParam;
+            cmd64 += debugParam;
         }
 
         outputArea86.setText(cmd86);
