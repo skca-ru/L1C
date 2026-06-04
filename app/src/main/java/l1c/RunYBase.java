@@ -149,10 +149,15 @@ public class RunYBase extends Application {
         // Создаём меню
         MenuBar menuBar = createMenuBar();
 
-        VBox root = new VBox(8);
-        root.setPadding(new Insets(10));
-        root.setStyle("-fx-background-color: " + COLOR_BG + ";");
-        root.getChildren().add(menuBar);
+        // Корневой BorderPane без отступов
+        BorderPane borderRoot = new BorderPane();
+        borderRoot.setStyle("-fx-background-color: " + COLOR_BG + ";");
+        borderRoot.setTop(menuBar);
+
+        // Все остальные элементы помещаем в VBox с отступами
+        VBox contentBox = new VBox(8);
+        contentBox.setPadding(new Insets(10));
+        contentBox.setStyle("-fx-background-color: " + COLOR_BG + ";");
 
         // #region ОбластьАдресаБД
         HBox inputPanel = new HBox(5);
@@ -183,7 +188,7 @@ public class RunYBase extends Application {
 
         inputPanel.getChildren().addAll(
             addressLabel, addressComboBox, selectButton, userCredentialsButton, generateButton);
-        root.getChildren().add(inputPanel);
+        contentBox.getChildren().add(inputPanel);
         // #endregion
 
         // #region Режим запуска
@@ -207,7 +212,7 @@ public class RunYBase extends Application {
         thickManagedRadio.setToggleGroup(modeGroup);
 
         modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickOrdinaryRadio, thickManagedRadio);
-        root.getChildren().add(modePanel);
+        contentBox.getChildren().add(modePanel);
 
         debugModeCheckbox = new CheckBox("Режим отладки");
         debugModeCheckbox.setSelected(true); // по умолчанию включено
@@ -233,15 +238,15 @@ public class RunYBase extends Application {
         HBox optionsPanel = new HBox(15, debugOption, platformOption);
         optionsPanel.setAlignment(Pos.CENTER_LEFT);
         optionsPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
-        root.getChildren().add(optionsPanel);
+        contentBox.getChildren().add(optionsPanel);
         // #endregion
 
-        root.getChildren().add(new Label());
+        contentBox.getChildren().add(new Label());
 
         // x86
         Label label86 = new Label("Команда для 32-битной платформы (x86):");
         label86.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-        root.getChildren().add(label86);
+        contentBox.getChildren().add(label86);
 
         HBox p86 = new HBox(5);
         p86.setAlignment(Pos.CENTER_LEFT);
@@ -261,12 +266,12 @@ public class RunYBase extends Application {
         buttonPanel86.getChildren().addAll(copy86, run86);
 
         p86.getChildren().addAll(outputArea86, buttonPanel86);
-        root.getChildren().add(p86);
+        contentBox.getChildren().add(p86);
 
         // x64
         Label label64 = new Label("Команда для 64-битной платформы (x64):");
         label64.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-        root.getChildren().add(label64);
+        contentBox.getChildren().add(label64);
 
         HBox p64 = new HBox(5);
         p64.setAlignment(Pos.CENTER_LEFT);
@@ -286,21 +291,23 @@ public class RunYBase extends Application {
         buttonPanel64.getChildren().addAll(copy64, run64);
 
         p64.getChildren().addAll(outputArea, buttonPanel64);
-        root.getChildren().add(p64);
+        contentBox.getChildren().add(p64);
 
         if (SHOW_DEBUG_PANEL) {
-            root.getChildren().add(new Label("Отладка (вывод команды и ошибок):"));
+            contentBox.getChildren().add(new Label("Отладка (вывод команды и ошибок):"));
             debugArea = new TextArea();
             debugArea.setPrefRowCount(8);
             debugArea.setStyle(
                     "-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_OUTPUT_BG + ";");
             debugArea.setStyle(debugArea.getStyle() + "-fx-border-color: " + COLOR_ACCENT + ";");
-            root.getChildren().add(debugArea);
+            contentBox.getChildren().add(debugArea);
         } else {
             debugArea = new TextArea();
         }
 
-        Scene scene = new Scene(root, 1050, SHOW_DEBUG_PANEL ? 700 : 500);
+        borderRoot.setCenter(contentBox);
+
+        Scene scene = new Scene(borderRoot, 1050, SHOW_DEBUG_PANEL ? 700 : 500);
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
                 saveCredentials();
@@ -400,7 +407,7 @@ public class RunYBase extends Application {
 
         // Меню Файл
         Menu fileMenu = new Menu("_Файл");
-        fileMenu.setStyle("-fx-padding: 5 10 5 10;");
+        fileMenu.setStyle("-fx-padding: 5 10 5 10;"); 
         
         MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
