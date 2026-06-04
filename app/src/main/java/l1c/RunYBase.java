@@ -98,6 +98,13 @@ public class RunYBase extends Application {
             • по умолчанию — /Debug (протокол выбирается платформой);
             • -tcp — /Debug -tcp (протокол TCP/IP);
             • -http — /Debug -http (протокол HTTP).""";
+    private static final String HISTORY_COMMENT ="""
+        Файл истории адресов баз 1С.
+        Содержит последние использованные адреса для быстрого выбора.
+        Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).
+        
+        Рекомендуется не редактировать файл вручную. Если всё же редактируете, сделайте резервную копию.""";
+
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
@@ -675,12 +682,7 @@ public class RunYBase extends Application {
             Element root = doc.createElement("history");
             doc.appendChild(root);
 
-            root.appendChild(doc.createComment(
-                    " Файл истории адресов баз 1С.\n" +
-                            " Содержит последние использованные адреса для быстрого выбора.\n" +
-                            " Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).\n"
-                            +
-                            " Рекомендуется не редактировать файл вручную. Если всё же редактируете, сделайте резервную копию.\n"));
+            root.appendChild(doc.createComment( HISTORY_COMMENT));
 
             Element addresses = doc.createElement("addresses");
             root.appendChild(addresses);
@@ -721,14 +723,7 @@ public class RunYBase extends Application {
             Element root = doc.createElement("history");
             doc.appendChild(root);
 
-            root.appendChild(doc.createComment("""
-                    Файл истории адресов баз 1С.
-                        Содержит последние использованные адреса для быстрого выбора.
-                        Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).
-                            
-                        Рекомендуется не редактировать файл вручную. Если всё же редактируете, сделайте резервную копию.
-                                    
-                    """));
+            root.appendChild(doc.createComment(HISTORY_COMMENT));
 
             Element addresses = doc.createElement("addresses");
             root.appendChild(addresses);
