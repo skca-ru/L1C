@@ -43,6 +43,8 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.RadioButton;
@@ -73,6 +75,7 @@ public class RunYBase extends Application {
 
     // @formatter:off
     // #region ========== НАСТРОЙКИ ==========
+    private static final String VERSION              = "2026.06.04.001";
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
     private static final int MAX_HISTORY_SIZE        = 20;
@@ -143,9 +146,13 @@ public class RunYBase extends Application {
         loadCredentials();
         loadHistoryFromXml();
 
+        // Создаём меню
+        MenuBar menuBar = createMenuBar();
+
         VBox root = new VBox(8);
         root.setPadding(new Insets(10));
         root.setStyle("-fx-background-color: " + COLOR_BG + ";");
+        root.getChildren().add(menuBar);
 
         // #region ОбластьАдресаБД
         HBox inputPanel = new HBox(5);
@@ -385,6 +392,57 @@ public class RunYBase extends Application {
         HBox box = new HBox(5, option, combo, helpButton);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
+    }
+
+    private MenuBar createMenuBar() {
+        MenuBar menuBar = new MenuBar();
+        menuBar.setStyle("-fx-padding: 0; -fx-background-insets: 0; -fx-background-radius: 0;");
+
+        // Меню Файл
+        Menu fileMenu = new Menu("_Файл");
+        fileMenu.setStyle("-fx-padding: 5 10 5 10;");
+        
+        MenuItem exitItem = new MenuItem("Вы_ход");
+        exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
+        exitItem.setOnAction(e -> {
+            saveCredentials();
+            saveHistoryToXml();
+            Platform.exit();
+        });
+        
+        fileMenu.getItems().addAll(exitItem);
+        menuBar.getMenus().add(fileMenu);
+
+        // Меню Помощь
+        Menu helpMenu = new Menu("_Помощь");
+        helpMenu.setStyle("-fx-padding: 5 10 5 10;");
+        
+        MenuItem aboutItem = new MenuItem("О _программе");
+        aboutItem.setOnAction(e -> showAboutDialog());
+        
+        helpMenu.getItems().add(aboutItem);
+        menuBar.getMenus().add(helpMenu);
+
+        return menuBar;
+    }
+
+    private void showAboutDialog() {
+        String message = String.format(
+            "Построитель команды запуска 1С\n\n" +
+            "Версия: %s\n\n" +
+            "Программа для удобного формирования\n" +
+            "команд запуска 1С: Предприятие и Конфигуратор.\n\n" +
+            "Разработано с использованием:\n" +
+            "• Koda-pro\n" +
+            "• Koda-base",
+            VERSION
+        );
+        
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("О программе");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private Button createHelpButton() {
