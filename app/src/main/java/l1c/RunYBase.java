@@ -260,7 +260,7 @@ public class RunYBase extends Application {
         outputArea86 = new TextArea();
         outputArea86.setWrapText(true);
         outputArea86.setPrefRowCount(4);
-        outputArea86.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_OUTPUT_BG + ";");
+        outputArea86.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
         HBox.setHgrow(outputArea86, Priority.ALWAYS);
 
         VBox buttonPanel86 = new VBox(5);
@@ -285,7 +285,7 @@ public class RunYBase extends Application {
         outputArea = new TextArea();
         outputArea.setWrapText(true);
         outputArea.setPrefRowCount(4);
-        outputArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_OUTPUT_BG + ";");
+        outputArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
         HBox.setHgrow(outputArea, Priority.ALWAYS);
 
         VBox buttonPanel64 = new VBox(5);
