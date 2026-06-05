@@ -380,8 +380,7 @@ public class RunYBase extends Application {
                     -fx-border-color: %s;
                     -fx-border-width: 1px;
                     -fx-border-radius: 3px;
-                    -fx-background-radius: 3px;
-                    -fx-cursor: hand""",
+                    -fx-background-radius: 3px""",
                     adjustColorBrightness(baseColor, 1.1), COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
         });
 
