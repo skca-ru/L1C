@@ -347,10 +347,16 @@ public class RunYBase extends Application {
     }
 
     private Button createButton(String text) {
+        return createButton(text, COLOR_BUTTON_BG);
+    }
+
+    private Button createButton(String text, String bgColor) {
 
         Button button = new Button(text);
         // Что бы ускорители на кнопке работали
         button.setMnemonicParsing(true);
+
+        button.setUserData(bgColor); // Сохраняем базовый цвет
 
         button.setStyle(String.format("""
                 -fx-background-color: %s;
@@ -361,7 +367,39 @@ public class RunYBase extends Application {
                 -fx-border-width: 1px;
                 -fx-border-radius: 3px;
                 -fx-background-radius: 3px""",
-                COLOR_BUTTON_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                bgColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+
+        // Эффект наведения курсора
+        button.setOnMouseEntered(e -> {
+            String baseColor = (String) button.getUserData();
+            button.setStyle(String.format("""
+                    -fx-background-color: %s;
+                    -fx-text-fill: %s;
+                    -fx-font-weight: bold;
+                    -fx-font-size: 11px;
+                    -fx-border-color: %s;
+                    -fx-border-width: 1px;
+                    -fx-border-radius: 3px;
+                    -fx-background-radius: 3px;
+                    -fx-cursor: hand""",
+                    adjustColorBrightness(baseColor, 1.1), COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+        });
+
+        button.setOnMouseExited(e -> {
+            String baseColor = (String) button.getUserData();
+            button.setStyle(String.format("""
+                    -fx-background-color: %s;
+                    -fx-text-fill: %s;
+                    -fx-font-weight: bold;
+                    -fx-font-size: 11px;
+                    -fx-border-color: %s;
+                    -fx-border-width: 1px;
+                    -fx-border-radius: 3px;
+                    -fx-background-radius: 3px""",
+                    baseColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+            button.setTranslateY(0);
+            button.setTranslateX(0);
+        });
 
         // Эффект нажатия - сдвигаем кнопку на 1px вниз-вправо
         button.setOnMousePressed(e -> {
@@ -370,11 +408,6 @@ public class RunYBase extends Application {
         });
 
         button.setOnMouseReleased(e -> {
-            button.setTranslateY(0);
-            button.setTranslateX(0);
-        });
-
-        button.setOnMouseExited(e -> {
             button.setTranslateY(0);
             button.setTranslateX(0);
         });
@@ -491,10 +524,12 @@ public class RunYBase extends Application {
         String address = getCurrentAddress();
         UserCredentials cred = credentialsMap.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
+            userCredentialsButton.setUserData(COLOR_USER_HAS_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
                     .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_HAS_CRED));
             userCredentialsButton.setTooltip(new Tooltip("Учётные данные сохранены: " + cred.getUsername()));
         } else {
+            userCredentialsButton.setUserData(COLOR_USER_NO_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
                     .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_NO_CRED));
             userCredentialsButton.setTooltip(new Tooltip("Нажмите чтобы задать учётные данные"));
@@ -585,6 +620,29 @@ public class RunYBase extends Application {
     }
 
     private static final String KEY = "1C_Launcher_2026_Secret_Key";
+
+    /**
+     * Увеличивает яркость цвета на заданный коэффициент
+     * @param hexColor HEX цвет (например "#E6C878")
+     * @param factor коэффициент яркости (1.0 - без изменения, >1.0 - светлее, <1.0 - темнее)
+     * @return новый HEX цвет
+     */
+    private String adjustColorBrightness(String hexColor, double factor) {
+        try {
+            String hex = hexColor.replace("#", "");
+            int r = Integer.parseInt(hex.substring(0, 2), 16);
+            int g = Integer.parseInt(hex.substring(2, 4), 16);
+            int b = Integer.parseInt(hex.substring(4, 6), 16);
+
+            r = Math.min(255, (int)(r * factor));
+            g = Math.min(255, (int)(g * factor));
+            b = Math.min(255, (int)(b * factor));
+
+            return String.format("#%02X%02X%02X", r, g, b);
+        } catch (Exception e) {
+            return hexColor;
+        }
+    }
 
     private static String encrypt(String input) {
         if (input == null || input.isEmpty())
