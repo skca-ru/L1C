@@ -1,5 +1,4 @@
-﻿// Р’РµСЂСЃРёСЏ kРџСЂРѕ
-package l1c;
+﻿package l1c;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -74,43 +73,43 @@ import javafx.animation.PauseTransition;
 public class RunYBase extends Application {
 
     // @formatter:off
-    // #region ========== РќРђРЎРўР РћР™РљР ==========
-    private static final String VERSION = "2026.06.04.002";
+    // #region ========== НАСТРОЙКИ ==========
+    private static final String VERSION              = "2026.06.05.002";
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
     private static final int MAX_HISTORY_SIZE        = 20;
     private static final String HISTORY_DIR          = ".1c_launcher";
     private static final String HISTORY_FILE         = "history.xml";
     private static final String APP_ARCH_INFO        = """
-            РџР°СЂР°РјРµС‚СЂ /AppArch СѓРєР°Р·С‹РІР°РµС‚ СЂР°Р·СЂСЏРґРЅРѕСЃС‚СЊ РёСЃРїРѕР»СЊР·СѓРµРјРѕРіРѕ РєР»РёРµРЅС‚СЃРєРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ РЅР° 64-СЂР°Р·СЂСЏРґРЅС‹С… РћРЎ Windows.
+            Параметр /AppArch указывает разрядность используемого клиентского приложения на 64-разрядных ОС Windows.
 
-            Р”РѕСЃС‚СѓРїРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ:
-            вЂў x86 вЂ” РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ 32-СЂР°Р·СЂСЏРґРЅС‹Рµ РІРµСЂСЃРёРё
-            вЂў x86_64 вЂ” РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С‚РѕР»СЊРєРѕ 64-СЂР°Р·СЂСЏРґРЅС‹Рµ РІРµСЂСЃРёРё
-            вЂў x86_prt вЂ” РїРѕРёСЃРє Р°РєС‚СѓР°Р»СЊРЅРѕР№ РІРµСЂСЃРёРё, РїСЂРё РЅР°Р»РёС‡РёРё РѕР±РµРёС… РІС‹Р±СЂР°С‚СЊ 32-СЂР°Р·СЂСЏРґРЅСѓСЋ
-            вЂў x86_64_prt вЂ” РїРѕРёСЃРє Р°РєС‚СѓР°Р»СЊРЅРѕР№ РІРµСЂСЃРёРё, РїСЂРё РЅР°Р»РёС‡РёРё РѕР±РµРёС… РІС‹Р±СЂР°С‚СЊ 64-СЂР°Р·СЂСЏРґРЅСѓСЋ""";
+            Доступные значения:
+            • x86 — использовать только 32-разрядные версии
+            • x86_64 — использовать только 64-разрядные версии
+            • x86_prt — поиск актуальной версии, при наличии обеих выбрать 32-разрядную
+            • x86_64_prt — поиск актуальной версии, при наличии обеих выбрать 64-разрядную""";
     private static final String DEBUG_INFO           = """
-            /Debug [<СЂРµР¶РёРј>] [-attach]
-            вЂ” СѓРєР°Р·С‹РІР°РµС‚, С‡С‚Рѕ РґР°РЅРЅРѕРµ РєР»РёРµРЅС‚СЃРєРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ Р±СѓРґРµС‚ Р·Р°РїСѓС‰РµРЅРѕ РІ СЂРµР¶РёРјРµ РѕС‚Р»Р°РґРєРё.
-            РџСЂРѕС‚РѕРєРѕР», РёСЃРїРѕР»СЊР·СѓРµРјС‹Р№ РґР»СЏ СЂР°Р±РѕС‚С‹ РѕС‚Р»Р°РґС‡РёРєР°, РѕРїСЂРµРґРµР»СЏРµС‚СЃСЏ РїР°СЂР°РјРµС‚СЂРѕРј <СЂРµР¶РёРј>:
-            -tcp вЂ“ РґР»СЏ РѕС‚Р»Р°РґРєРё РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РїСЂРѕС‚РѕРєРѕР» TCP/IP;
-            -http вЂ“ РґР»СЏ РѕС‚Р»Р°РґРєРё РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РїСЂРѕС‚РѕРєРѕР» HTTP.
-            Р•СЃР»Рё РІ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРµ СѓРєР°Р·Р°РЅ РїР°СЂР°РјРµС‚СЂ -attach, С‚Рѕ СЌС‚Рѕ РѕР·РЅР°С‡Р°РµС‚, С‡С‚Рѕ РѕС‚Р»Р°РґС‡РёРє Р±СѓРґРµС‚ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РїРѕРґРєР»СЋС‡Р°С‚СЊ РїСЂРµРґРјРµС‚С‹ РѕС‚Р»Р°РґРєРё (РєР»РёРµРЅС‚СЃРєРёР№ Рё СЃРµСЂРІРµСЂРЅС‹Р№) Р·Р°РїСѓСЃРєР°РµРјРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ, РєРѕС‚РѕСЂС‹Рµ Р±СѓРґСѓС‚ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅС‹ РЅР° СЃРµСЂРІРµСЂРµ РѕС‚Р»Р°РґРєРё. РџР°СЂР°РјРµС‚СЂ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РґР»СЏ РѕС‚Р»Р°РґРєРё РїРѕ РїСЂРѕС‚РѕРєРѕР»Сѓ HTTP.""";
+            /Debug [<режим>] [-attach]
+            — указывает, что данное клиентское приложение будет запущено в режиме отладки.
+            Протокол, используемый для работы отладчика, определяется параметром <режим>:
+            -tcp – для отладки используется протокол TCP/IP;
+            -http – для отладки используется протокол HTTP.
+            Если в командной строке указан параметр -attach, то это означает, что отладчик будет автоматически подключать предметы отладки (клиентский и серверный) запускаемого приложения, которые будут зарегистрированы на сервере отладки. Параметр используется только для отладки по протоколу HTTP.""";
     private static final String DEBUG_PROTOCOL_INFO  = """
-            Р РµР¶РёРј РѕС‚Р»Р°РґРєРё:
-            вЂў РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ вЂ” /Debug (РїСЂРѕС‚РѕРєРѕР» РІС‹Р±РёСЂР°РµС‚СЃСЏ РїР»Р°С‚С„РѕСЂРјРѕР№);
-            вЂў -tcp вЂ” /Debug -tcp (РїСЂРѕС‚РѕРєРѕР» TCP/IP);
-            вЂў -http вЂ” /Debug -http (РїСЂРѕС‚РѕРєРѕР» HTTP).""";
+            Режим отладки:
+            • по умолчанию — /Debug (протокол выбирается платформой);
+            • -tcp — /Debug -tcp (протокол TCP/IP);
+            • -http — /Debug -http (протокол HTTP).""";
     private static final String HISTORY_COMMENT ="""
-        Р¤Р°Р№Р» РёСЃС‚РѕСЂРёРё Р°РґСЂРµСЃРѕРІ Р±Р°Р· 1РЎ.
-        РЎРѕРґРµСЂР¶РёС‚ РїРѕСЃР»РµРґРЅРёРµ РёСЃРїРѕР»СЊР·РѕРІР°РЅРЅС‹Рµ Р°РґСЂРµСЃР° РґР»СЏ Р±С‹СЃС‚СЂРѕРіРѕ РІС‹Р±РѕСЂР°.
-        Р•СЃР»Рё СѓРґР°Р»РёС‚СЊ РёР»Рё РѕС‡РёСЃС‚РёС‚СЊ СЌС‚РѕС‚ С„Р°Р№Р», РёСЃС‚РѕСЂРёСЏ Р±СѓРґРµС‚ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅР° РїСЂРё СЃР»РµРґСѓСЋС‰РµРј Р·Р°РїСѓСЃРєРµ РїСЂРѕРіСЂР°РјРјС‹ (РїСѓСЃС‚Р°СЏ).
+        Файл истории адресов баз 1С.
+        Содержит последние использованные адреса для быстрого выбора.
+        Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).
         
-        Р РµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РЅРµ СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ С„Р°Р№Р» РІСЂСѓС‡РЅСѓСЋ. Р•СЃР»Рё РІСЃС‘ Р¶Рµ СЂРµРґР°РєС‚РёСЂСѓРµС‚Рµ, СЃРґРµР»Р°Р№С‚Рµ СЂРµР·РµСЂРІРЅСѓСЋ РєРѕРїРёСЋ.""";
+        Рекомендуется не редактировать файл вручную. Если всё же редактируете, сделайте резервную копию.""";
 
     // #endregion =================================
 
-    // #region ========== Р¦Р’Р•РўРђ 1РЎ (Р±РµР»С‹Р№ С„РѕРЅ + РїСЂРёРіР»СѓС€С‘РЅРЅС‹Рµ Р¶С‘Р»С‚С‹Рµ Р°РєС†РµРЅС‚С‹) ==========
+    // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
     private static final String COLOR_BG             = "#FFFFFF";
     private static final String COLOR_BUTTON_BG      = "#E6C878";
     private static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
@@ -153,44 +152,44 @@ public class RunYBase extends Application {
         loadCredentials();
         loadHistoryFromXml();
 
-        // РЎРѕР·РґР°С‘Рј РјРµРЅСЋ
+        // Создаём меню
         MenuBar menuBar = createMenuBar();
 
-        // РљРѕСЂРЅРµРІРѕР№ BorderPane Р±РµР· РѕС‚СЃС‚СѓРїРѕРІ
+        // Корневой BorderPane без отступов
         BorderPane borderRoot = new BorderPane();
         borderRoot.setStyle("-fx-background-color: " + COLOR_BG + ";");
         borderRoot.setTop(menuBar);
 
-        // Р’СЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ РїРѕРјРµС‰Р°РµРј РІ VBox СЃ РѕС‚СЃС‚СѓРїР°РјРё
+        // Все остальные элементы помещаем в VBox с отступами
         VBox contentBox = new VBox(8);
         contentBox.setPadding(new Insets(10));
         contentBox.setStyle("-fx-background-color: " + COLOR_BG + ";");
 
-        // #region РћР±Р»Р°СЃС‚СЊРђРґСЂРµСЃР°Р‘Р”
+        // #region ОбластьАдресаБД
         HBox inputPanel = new HBox(5);
         inputPanel.setAlignment(Pos.CENTER_LEFT);
 
-        Label addressLabel = new Label("РђРґСЂРµСЃ Р‘Р”:");
+        Label addressLabel = new Label("Адрес БД:");
         addressLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
         historyList = FXCollections.observableArrayList(getHistoryList());
         addressComboBox = new ComboBox<>(historyList);
         addressComboBox.setEditable(true);
-        addressComboBox.setPromptText("РґР»СЏ С„Р°Р№Р»РѕРІРѕР№ 'File=\"C:\\1C\\Base\";' РґР»СЏ СЃРµСЂРІРµСЂРЅРѕР№ 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
-        addressComboBox.setTooltip(new Tooltip("РќР°РїСЂРёРјРµСЂ File=\"C:\\1C\\Base\"  РёР»Рё  Srvr=\"127.0.0.1\";Ref=\"Base\""));
+        addressComboBox.setPromptText("для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
+        addressComboBox.setTooltip(new Tooltip("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\""));
         addressComboBox.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(addressComboBox, Priority.ALWAYS);
 
-        Button selectButton = createFlatButton("вЂ¦");
-        selectButton.setTooltip(new Tooltip("Р’С‹Р±СЂР°С‚СЊ РёР· СЃРїРёСЃРєР° Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅС‹С… Р±Р°Р·"));
+        Button selectButton = createFlatButton("…");
+        selectButton.setTooltip(new Tooltip("Выбрать из списка зарегистрированных баз"));
         selectButton.setOnAction(e -> selectDatabaseFromList());
         selectButton.setMinSize(30, 30);
         selectButton.setMaxSize(30, 30);
 
-        userCredentialsButton = createButton("Рџ_РѕР»СЊР·РѕРІР°С‚РµР»СЊ");
+        userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
 
-        Button generateButton = createButton("РЎ_С„РѕСЂРјРёСЂРѕРІР°С‚СЊ");
+        Button generateButton = createButton("С_формировать");
         generateButton.setOnAction(e -> handleButtonClick());
 
         inputPanel.getChildren().addAll(
@@ -198,47 +197,47 @@ public class RunYBase extends Application {
         contentBox.getChildren().add(inputPanel);
         // #endregion
 
-        // #region Р РµР¶РёРј Р·Р°РїСѓСЃРєР°
+        // #region Режим запуска
         HBox modePanel = new HBox(15);
         modePanel.setAlignment(Pos.CENTER_LEFT);
         modePanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
         modePanel.setPadding(new Insets(5, 0, 5, 0));
 
-        Label modeLabel = new Label("Р РµР¶РёРј Р·Р°РїСѓСЃРєР°:");
+        Label modeLabel = new Label("Режим запуска:");
         modeLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
         modeGroup = new ToggleGroup();
-        designerRadio = new RadioButton("РљРѕРЅС„РёРіСѓСЂР°С‚РѕСЂ");
+        designerRadio = new RadioButton("Конфигуратор");
         designerRadio.setToggleGroup(modeGroup);
         designerRadio.setSelected(true);
-        thinRadio = new RadioButton("РўРѕРЅРєРёР№ РєР»РёРµРЅС‚");
+        thinRadio = new RadioButton("Тонкий клиент");
         thinRadio.setToggleGroup(modeGroup);
-        thickManagedRadio = new RadioButton("РўРѕР»СЃС‚С‹Р№ РєР»РёРµРЅС‚ (РЈРїСЂР°РІР»СЏРµРјРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ)");
+        thickManagedRadio = new RadioButton("Толстый клиент (Управляемое приложение)");
         thickManagedRadio.setToggleGroup(modeGroup);
-        thickOrdinaryRadio = new RadioButton("РўРѕР»СЃС‚С‹Р№ РєР»РёРµРЅС‚ (РћР±С‹С‡РЅРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ)");
+        thickOrdinaryRadio = new RadioButton("Толстый клиент (Обычное приложение)");
         thickOrdinaryRadio.setToggleGroup(modeGroup);
 
         modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio);
         contentBox.getChildren().add(modePanel);
 
-        debugModeCheckbox = new CheckBox("Р РµР¶РёРј РѕС‚Р»Р°РґРєРё");
-        debugModeCheckbox.setSelected(true); // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РІРєР»СЋС‡РµРЅРѕ
-        debugModeCheckbox.setTooltip(new Tooltip("Р”РѕР±Р°РІРёС‚СЊ РїР°СЂР°РјРµС‚СЂ /Debug РґР»СЏ Р·Р°РїСѓСЃРєР° РІ СЂРµР¶РёРјРµ РѕС‚Р»Р°РґРєРё"));
+        debugModeCheckbox = new CheckBox("Режим отладки");
+        debugModeCheckbox.setSelected(true); // по умолчанию включено
+        debugModeCheckbox.setTooltip(new Tooltip("Добавить параметр /Debug для запуска в режиме отладки"));
 
-        debugProtocolCombo = new ComboBox<>(FXCollections.observableArrayList("РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ", "-tcp", "-http"));
-        debugProtocolCombo.setValue("РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ");
+        debugProtocolCombo = new ComboBox<>(FXCollections.observableArrayList("по умолчанию", "-tcp", "-http"));
+        debugProtocolCombo.setValue("по умолчанию");
         debugProtocolCombo.setTooltip(new Tooltip(DEBUG_PROTOCOL_INFO));
 
         Button debugHelpButton = createHelpButton();
         debugHelpButton.setTooltip(new Tooltip(DEBUG_INFO));
-        debugHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "РЎРїСЂР°РІРєР°: РїР°СЂР°РјРµС‚СЂ /Debug", DEBUG_INFO));
+        debugHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", DEBUG_INFO));
 
-        priorityPlatformCheckbox = new CheckBox("РџСЂРёРѕСЂРёС‚РµС‚ РїР»Р°С‚С„РѕСЂРјС‹");
-        priorityPlatformCheckbox.setTooltip(new Tooltip("Р”РѕР±Р°РІРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ /AppArch РґР»СЏ СЂР°Р·СЂСЏРґРЅРѕСЃС‚Рё РїР»Р°С‚С„РѕСЂРјС‹"));
+        priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
+        priorityPlatformCheckbox.setTooltip(new Tooltip("Добавить параметры /AppArch для разрядности платформы"));
 
         Button helpButton = createHelpButton();
         helpButton.setTooltip(new Tooltip(APP_ARCH_INFO));
-        helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "РЎРїСЂР°РІРєР°: РїР°СЂР°РјРµС‚СЂ /AppArch", APP_ARCH_INFO));
+        helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch", APP_ARCH_INFO));
 
         HBox debugOption = createHelpOption(debugModeCheckbox, debugProtocolCombo, debugHelpButton);
         HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
@@ -251,7 +250,7 @@ public class RunYBase extends Application {
         contentBox.getChildren().add(new Label());
 
         // x86
-        Label label86 = new Label("РљРѕРјР°РЅРґР° РґР»СЏ 32-Р±РёС‚РЅРѕР№ РїР»Р°С‚С„РѕСЂРјС‹ (x86):");
+        Label label86 = new Label("Команда для 32-битной платформы (x86):");
         label86.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
         contentBox.getChildren().add(label86);
 
@@ -276,7 +275,7 @@ public class RunYBase extends Application {
         contentBox.getChildren().add(p86);
 
         // x64
-        Label label64 = new Label("РљРѕРјР°РЅРґР° РґР»СЏ 64-Р±РёС‚РЅРѕР№ РїР»Р°С‚С„РѕСЂРјС‹ (x64):");
+        Label label64 = new Label("Команда для 64-битной платформы (x64):");
         label64.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
         contentBox.getChildren().add(label64);
 
@@ -301,7 +300,7 @@ public class RunYBase extends Application {
         contentBox.getChildren().add(p64);
 
         if (SHOW_DEBUG_PANEL) {
-            contentBox.getChildren().add(new Label("РћС‚Р»Р°РґРєР° (РІС‹РІРѕРґ РєРѕРјР°РЅРґС‹ Рё РѕС€РёР±РѕРє):"));
+            contentBox.getChildren().add(new Label("Отладка (вывод команды и ошибок):"));
             debugArea = new TextArea();
             debugArea.setPrefRowCount(8);
             debugArea.setStyle(
@@ -324,7 +323,7 @@ public class RunYBase extends Application {
         });
 
         primaryStage.setTitle(
-                "РџРѕСЃС‚СЂРѕРёС‚РµР»СЊ РєРѕРјР°РЅРґС‹ Р·Р°РїСѓСЃРєР° 1РЎ - РџСЂРёРјРµСЂС‹: File=\"C:\\1C\\Base\";  РёР»Рё  Srvr=\"127.0.0.1\";Ref=\"Base\";");
+                "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(e -> {
             saveCredentials();
@@ -353,10 +352,10 @@ public class RunYBase extends Application {
     private Button createButton(String text, String bgColor) {
 
         Button button = new Button(text);
-        // Р§С‚Рѕ Р±С‹ СѓСЃРєРѕСЂРёС‚РµР»Рё РЅР° РєРЅРѕРїРєРµ СЂР°Р±РѕС‚Р°Р»Рё
+        // Что бы ускорители на кнопке работали
         button.setMnemonicParsing(true);
 
-        button.setUserData(bgColor); // РЎРѕС…СЂР°РЅСЏРµРј Р±Р°Р·РѕРІС‹Р№ С†РІРµС‚
+        button.setUserData(bgColor); // Сохраняем базовый цвет
 
         button.setStyle(String.format("""
                 -fx-background-color: %s;
@@ -369,7 +368,7 @@ public class RunYBase extends Application {
                 -fx-background-radius: 3px""",
                 bgColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
 
-        // Р­С„С„РµРєС‚ РЅР°РІРµРґРµРЅРёСЏ РєСѓСЂСЃРѕСЂР°
+        // Эффект наведения курсора
         button.setOnMouseEntered(e -> {
             String baseColor = (String) button.getUserData();
             button.setStyle(String.format("""
@@ -400,7 +399,7 @@ public class RunYBase extends Application {
             button.setTranslateX(0);
         });
 
-        // Р­С„С„РµРєС‚ РЅР°Р¶Р°С‚РёСЏ - СЃРґРІРёРіР°РµРј РєРЅРѕРїРєСѓ РЅР° 1px РІРЅРёР·-РІРїСЂР°РІРѕ
+        // Эффект нажатия - сдвигаем кнопку на 1px вниз-вправо
         button.setOnMousePressed(e -> {
             button.setTranslateY(1);
             button.setTranslateX(1);
@@ -444,11 +443,11 @@ public class RunYBase extends Application {
         MenuBar menuBar = new MenuBar();
         menuBar.setStyle("-fx-padding: 0; -fx-background-insets: 0; -fx-background-radius: 0;");
 
-        // РњРµРЅСЋ Р¤Р°Р№Р»
-        Menu fileMenu = new Menu("_Р¤Р°Р№Р»");
+        // Меню Файл
+        Menu fileMenu = new Menu("_Файл");
         fileMenu.setStyle("-fx-padding: 5 10 5 10;"); 
         
-        MenuItem exitItem = new MenuItem("Р’С‹_С…РѕРґ");
+        MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
         exitItem.setOnAction(e -> {
             saveCredentials();
@@ -459,11 +458,11 @@ public class RunYBase extends Application {
         fileMenu.getItems().addAll(exitItem);
         menuBar.getMenus().add(fileMenu);
 
-        // РњРµРЅСЋ РџРѕРјРѕС‰СЊ
-        Menu helpMenu = new Menu("_РџРѕРјРѕС‰СЊ");
+        // Меню Помощь
+        Menu helpMenu = new Menu("_Помощь");
         helpMenu.setStyle("-fx-padding: 5 10 5 10;");
         
-        MenuItem aboutItem = new MenuItem("Рћ _РїСЂРѕРіСЂР°РјРјРµ");
+        MenuItem aboutItem = new MenuItem("О _программе");
         aboutItem.setOnAction(e -> showAboutDialog());
         
         helpMenu.getItems().add(aboutItem);
@@ -474,18 +473,18 @@ public class RunYBase extends Application {
 
     private void showAboutDialog() {
         String message = String.format(
-            "РџРѕСЃС‚СЂРѕРёС‚РµР»СЊ РєРѕРјР°РЅРґС‹ Р·Р°РїСѓСЃРєР° 1РЎ\n\n" +
-            "Р’РµСЂСЃРёСЏ: %s\n\n" +
-            "РџСЂРѕРіСЂР°РјРјР° РґР»СЏ СѓРґРѕР±РЅРѕРіРѕ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ\n" +
-            "РєРѕРјР°РЅРґ Р·Р°РїСѓСЃРєР° 1РЎ: РџСЂРµРґРїСЂРёСЏС‚РёРµ Рё РљРѕРЅС„РёРіСѓСЂР°С‚РѕСЂ.\n\n" +
-            "Р Р°Р·СЂР°Р±РѕС‚Р°РЅРѕ СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј:\n" +
-            "вЂў Koda-pro\n" +
-            "вЂў Koda-base",
+            "Построитель команды запуска 1С\n\n" +
+            "Версия: %s\n\n" +
+            "Программа для удобного формирования\n" +
+            "команд запуска 1С: Предприятие и Конфигуратор.\n\n" +
+            "Разработано с использованием:\n" +
+            "• Koda-pro\n" +
+            "• Koda-base",
             VERSION
         );
         
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Рћ РїСЂРѕРіСЂР°РјРјРµ");
+        alert.setTitle("О программе");
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
@@ -526,17 +525,17 @@ public class RunYBase extends Application {
             userCredentialsButton.setUserData(COLOR_USER_HAS_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
                     .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_HAS_CRED));
-            userCredentialsButton.setTooltip(new Tooltip("РЈС‡С‘С‚РЅС‹Рµ РґР°РЅРЅС‹Рµ СЃРѕС…СЂР°РЅРµРЅС‹: " + cred.getUsername()));
+            userCredentialsButton.setTooltip(new Tooltip("Учётные данные сохранены: " + cred.getUsername()));
         } else {
             userCredentialsButton.setUserData(COLOR_USER_NO_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
                     .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_NO_CRED));
-            userCredentialsButton.setTooltip(new Tooltip("РќР°Р¶РјРёС‚Рµ С‡С‚РѕР±С‹ Р·Р°РґР°С‚СЊ СѓС‡С‘С‚РЅС‹Рµ РґР°РЅРЅС‹Рµ"));
+            userCredentialsButton.setTooltip(new Tooltip("Нажмите чтобы задать учётные данные"));
         }
     }
 
     // -----------------------------------------------------------------
-    // РЈС‡С‘С‚РЅС‹Рµ РґР°РЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+    // Учётные данные пользователей
     // -----------------------------------------------------------------
 
     private static Path getCredentialsPath() {
@@ -545,7 +544,7 @@ public class RunYBase extends Application {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
-            System.err.println("РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ РґРёСЂРµРєС‚РѕСЂРёСЋ РґР»СЏ РёСЃС‚РѕСЂРёРё: " + dir);
+            System.err.println("Не удалось создать директорию для истории: " + dir);
         }
         return dir.resolve("credentials.xml");
     }
@@ -573,7 +572,7 @@ public class RunYBase extends Application {
                 }
             }
         } catch (Exception e) {
-            System.err.println("РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё СѓС‡С‘С‚РЅС‹С… РґР°РЅРЅС‹С…: " + e.getMessage());
+            System.err.println("Ошибка загрузки учётных данных: " + e.getMessage());
         }
     }
 
@@ -614,17 +613,17 @@ public class RunYBase extends Application {
             StreamResult result = new StreamResult(path.toFile());
             transformer.transform(source, result);
         } catch (Exception e) {
-            System.err.println("РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ СѓС‡С‘С‚РЅС‹С… РґР°РЅРЅС‹С…: " + e.getMessage());
+            System.err.println("Ошибка сохранения учётных данных: " + e.getMessage());
         }
     }
 
     private static final String KEY = "1C_Launcher_2026_Secret_Key";
 
     /**
-     * РЈРІРµР»РёС‡РёРІР°РµС‚ СЏСЂРєРѕСЃС‚СЊ С†РІРµС‚Р° РЅР° Р·Р°РґР°РЅРЅС‹Р№ РєРѕСЌС„С„РёС†РёРµРЅС‚
-     * @param hexColor HEX С†РІРµС‚ (РЅР°РїСЂРёРјРµСЂ "#E6C878")
-     * @param factor РєРѕСЌС„С„РёС†РёРµРЅС‚ СЏСЂРєРѕСЃС‚Рё (1.0 - Р±РµР· РёР·РјРµРЅРµРЅРёСЏ, >1.0 - СЃРІРµС‚Р»РµРµ, <1.0 - С‚РµРјРЅРµРµ)
-     * @return РЅРѕРІС‹Р№ HEX С†РІРµС‚
+     * Увеличивает яркость цвета на заданный коэффициент
+     * @param hexColor HEX цвет (например "#E6C878")
+     * @param factor коэффициент яркости (1.0 - без изменения, >1.0 - светлее, <1.0 - темнее)
+     * @return новый HEX цвет
      */
     private String adjustColorBrightness(String hexColor, double factor) {
         try {
@@ -670,7 +669,7 @@ public class RunYBase extends Application {
     private void showUserCredentialsDialog() {
         String address = getCurrentAddress();
         if (address.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ", "РЎРЅР°С‡Р°Р»Р° РІРІРµРґРёС‚Рµ Р°РґСЂРµСЃ Р±Р°Р·С‹ РґР°РЅРЅС‹С…!");
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Сначала введите адрес базы данных!");
             return;
         }
 
@@ -679,11 +678,11 @@ public class RunYBase extends Application {
         String currentPassword = existing != null ? existing.getPassword() : "";
 
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("РЈС‡С‘С‚РЅС‹Рµ РґР°РЅРЅС‹Рµ РґР»СЏ Р±Р°Р·С‹");
+        dialog.setTitle("Учётные данные для базы");
         dialog.setHeaderText(address);
 
         ButtonType okButtonType = new ButtonType("OK", javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelButtonType = new ButtonType("РћС‚РјРµРЅР°", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType cancelButtonType = new ButtonType("Отмена", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(okButtonType, cancelButtonType);
 
         GridPane grid = new GridPane();
@@ -692,14 +691,14 @@ public class RunYBase extends Application {
         grid.setPadding(new Insets(10));
 
         TextField usernameField = new TextField(currentUsername);
-        usernameField.setPromptText("РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ");
+        usernameField.setPromptText("Имя пользователя");
         PasswordField passwordField = new PasswordField();
         passwordField.setText(currentPassword);
-        passwordField.setPromptText("РџР°СЂРѕР»СЊ");
+        passwordField.setPromptText("Пароль");
 
-        grid.add(new Label("РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ:"), 0, 0);
+        grid.add(new Label("Имя пользователя:"), 0, 0);
         grid.add(usernameField, 1, 0);
-        grid.add(new Label("РџР°СЂРѕР»СЊ:"), 0, 1);
+        grid.add(new Label("Пароль:"), 0, 1);
         grid.add(passwordField, 1, 1);
 
         dialog.getDialogPane().setContent(grid);
@@ -713,12 +712,12 @@ public class RunYBase extends Application {
                 if (!username.isEmpty()) {
                     credentialsMap.put(address, new UserCredentials(username, password));
                     saveCredentials();
-                    showAlert(Alert.AlertType.INFORMATION, "РЈСЃРїРµС€РЅРѕ",
-                            "РЈС‡С‘С‚РЅС‹Рµ РґР°РЅРЅС‹Рµ СЃРѕС…СЂР°РЅРµРЅС‹ РґР»СЏ Р°РґСЂРµСЃР°:\n" + address);
+                    showAlert(Alert.AlertType.INFORMATION, "Успешно",
+                            "Учётные данные сохранены для адреса:\n" + address);
                 } else if (existing != null) {
                     credentialsMap.remove(address);
                     saveCredentials();
-                    showAlert(Alert.AlertType.INFORMATION, "РЈРґР°Р»РµРЅРѕ", "РЈС‡С‘С‚РЅС‹Рµ РґР°РЅРЅС‹Рµ СѓРґР°Р»РµРЅС‹ РґР»СЏ Р°РґСЂРµСЃР°:\n" + address);
+                    showAlert(Alert.AlertType.INFORMATION, "Удалено", "Учётные данные удалены для адреса:\n" + address);
                 }
                 updateUserButtonState();
             }
@@ -729,10 +728,10 @@ public class RunYBase extends Application {
         UserCredentials cred = credentialsMap.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Р—Р°РїСѓСЃРє СЃ СѓС‡С‘С‚РЅС‹РјРё РґР°РЅРЅС‹РјРё");
+            alert.setTitle("Запуск с учётными данными");
             alert.setHeaderText(null);
-            alert.setContentText("Р—Р°РїСѓСЃС‚РёС‚СЊ РѕС‚ РёРјРµРЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ:\n" + cred.getUsername() +
-                    (cred.getPassword().isEmpty() ? "\n(Р±РµР· РїР°СЂРѕР»СЏ)" : ""));
+            alert.setContentText("Запустить от имени пользователя:\n" + cred.getUsername() +
+                    (cred.getPassword().isEmpty() ? "\n(без пароля)" : ""));
 
             alert.showAndWait().ifPresent(result -> {
                 if (result == ButtonType.OK) {
@@ -741,9 +740,9 @@ public class RunYBase extends Application {
                     if (!cred.getPassword().isEmpty()) {
                         cmd += " /Password \"" + cred.getPassword() + "\"";
                     }
-                    runCommand(cmd, "СЃ СѓС‡С‘С‚РЅС‹РјРё РґР°РЅРЅС‹РјРё");
+                    runCommand(cmd, "с учётными данными");
                 } else {
-                    runCommand(baseCommand, "Р±РµР· СѓС‡С‘С‚РЅС‹С… РґР°РЅРЅС‹С…");
+                    runCommand(baseCommand, "без учётных данных");
                 }
             });
         } else {
@@ -752,7 +751,7 @@ public class RunYBase extends Application {
     }
 
     // -----------------------------------------------------------------
-    // Р Р°Р±РѕС‚Р° СЃ РёСЃС‚РѕСЂРёРµР№ РІ XML (РґРѕРјР°С€РЅСЏСЏ РїР°РїРєР°)
+    // Работа с историей в XML (домашняя папка)
     // -----------------------------------------------------------------
     private static Path getHistoryPath() {
         String userHome = System.getProperty("user.home");
@@ -760,7 +759,7 @@ public class RunYBase extends Application {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
-            System.err.println("РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ РґРёСЂРµРєС‚РѕСЂРёСЋ РґР»СЏ РёСЃС‚РѕСЂРёРё: " + dir);
+            System.err.println("Не удалось создать директорию для истории: " + dir);
         }
         return dir.resolve(HISTORY_FILE);
     }
@@ -784,7 +783,7 @@ public class RunYBase extends Application {
                 }
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {
-            System.err.println("РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РёСЃС‚РѕСЂРёРё РёР· XML. Р‘СѓРґРµС‚ СЃРѕР·РґР°РЅ РЅРѕРІС‹Р№ С„Р°Р№Р».");
+            System.err.println("Ошибка загрузки истории из XML. Будет создан новый файл.");
             e.printStackTrace();
             createDefaultHistoryFile(path);
         }
@@ -792,7 +791,7 @@ public class RunYBase extends Application {
     }
 
     private static void loadHistoryFromXml() {
-        // РґР°РЅРЅС‹Рµ СѓР¶Рµ Р·Р°РіСЂСѓР¶РµРЅС‹ С‡РµСЂРµР· getHistoryList()
+        // данные уже загружены через getHistoryList()
     }
 
     private static void createDefaultHistoryFile(Path path) {
@@ -818,7 +817,7 @@ public class RunYBase extends Application {
             StreamResult result = new StreamResult(path.toFile());
             transformer.transform(source, result);
         } catch (Exception e) {
-            System.err.println("РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ С„Р°Р№Р» РёСЃС‚РѕСЂРёРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ: " + path);
+            System.err.println("Не удалось создать файл истории по умолчанию: " + path);
             e.printStackTrace();
         }
     }
@@ -865,7 +864,7 @@ public class RunYBase extends Application {
             StreamResult result = new StreamResult(path.toFile());
             transformer.transform(source, result);
         } catch (Exception e) {
-            System.err.println("РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ РёСЃС‚РѕСЂРёРё РІ XML: " + e.getMessage());
+            System.err.println("Ошибка сохранения истории в XML: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -884,8 +883,8 @@ public class RunYBase extends Application {
                 String text = clipboard.getString();
                 if (isDatabaseAddress(text)) {
                     addressComboBox.setValue(text);
-                    showAlert(Alert.AlertType.INFORMATION, "РђРІС‚РѕРІСЃС‚Р°РІРєР° РёР· Р±СѓС„РµСЂР°",
-                            "РћР±РЅР°СЂСѓР¶РµРЅ Р°РґСЂРµСЃ Р±Р°Р·С‹ 1РЎ РІ Р±СѓС„РµСЂРµ РѕР±РјРµРЅР°!\n\nРђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІСЃС‚Р°РІР»РµРЅРѕ:\n" + text);
+                    showAlert(Alert.AlertType.INFORMATION, "Автовставка из буфера",
+                            "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + text);
                     return;
                 }
             }
@@ -915,8 +914,8 @@ public class RunYBase extends Application {
     private void handleButtonClick() {
         String text = getCurrentAddress();
         if (text.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ",
-                    "Р’РІРµРґРёС‚Рµ Р°РґСЂРµСЃ Р±Р°Р·С‹ РґР°РЅРЅС‹С…! РќР°РїСЂРёРјРµСЂ:\n\nР¤Р°Р№Р»РѕРІР°СЏ Р‘Р”: File=\"C:\\1C\\Base\"\nРљР»РёРµРЅС‚-СЃРµСЂРІРµСЂ: Srvr=\"127.0.0.1\";Ref=\"Base\";");
+            showAlert(Alert.AlertType.WARNING, "Предупреждение",
+                    "Введите адрес базы данных! Например:\n\nФайловая БД: File=\"C:\\1C\\Base\"\nКлиент-сервер: Srvr=\"127.0.0.1\";Ref=\"Base\";");
             return;
         }
 
@@ -947,11 +946,11 @@ public class RunYBase extends Application {
             cmd64 += " /AppArch x86_64";
         }
 
-        // Р”РѕР±Р°РІР»СЏРµРј СЂРµР¶РёРј РѕС‚Р»Р°РґРєРё
+        // Добавляем режим отладки
         if (debugModeCheckbox.isSelected()) {
             String debugParam = " /Debug -attach";
             String protocol = debugProtocolCombo.getValue();
-            if (protocol != null && !"РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ".equals(protocol)) {
+            if (protocol != null && !"по умолчанию".equals(protocol)) {
                 debugParam += " " + protocol;
             }
             cmd86 += debugParam;
@@ -967,11 +966,11 @@ public class RunYBase extends Application {
 
     private void runCommand(String command, String platform) {
         if (command == null || command.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "РћС€РёР±РєР°", "РќРµС‚ РєРѕРјР°РЅРґС‹ РґР»СЏ Р·Р°РїСѓСЃРєР°!");
+            showAlert(Alert.AlertType.ERROR, "Ошибка", "Нет команды для запуска!");
             return;
         }
         if (SHOW_DEBUG_PANEL && debugArea != null) {
-            debugArea.appendText("=== Р—Р°РїСѓСЃРє (" + platform + ") ===\nРљРѕРјР°РЅРґР°: " + command + "\n");
+            debugArea.appendText("=== Запуск (" + platform + ") ===\nКоманда: " + command + "\n");
         }
         try {
             List<String> args = parseCommand(command);
@@ -986,34 +985,34 @@ public class RunYBase extends Application {
                 output.append(line).append("\n");
 
             boolean finished = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
-            String mode = designerRadio.isSelected() ? "РљРѕРЅС„РёРіСѓСЂР°С‚РѕСЂ"
-                    : thinRadio.isSelected() ? "РўРѕРЅРєРёР№ РєР»РёРµРЅС‚"
-                            : thickOrdinaryRadio.isSelected() ? "РўРѕР»СЃС‚С‹Р№ РєР»РёРµРЅС‚ (РћР±С‹С‡РЅРѕРµ)"
-                                    : "РўРѕР»СЃС‚С‹Р№ РєР»РёРµРЅС‚ (РЈРїСЂР°РІР»СЏРµРјРѕРµ)";
+            String mode = designerRadio.isSelected() ? "Конфигуратор"
+                    : thinRadio.isSelected() ? "Тонкий клиент"
+                            : thickOrdinaryRadio.isSelected() ? "Толстый клиент (Обычное)"
+                                    : "Толстый клиент (Управляемое)";
 
             if (finished) {
                 int code = process.exitValue();
                 if (code == 0) {
                     if (SHOW_RUN_MESSAGE) {
                         showAutoClosingAlert(
-                                mode + " СѓСЃРїРµС€РЅРѕ Р·Р°РїСѓС‰РµРЅ!\nР‘Р°Р·Р°: " + getCurrentAddress() + "\nРџР»Р°С‚С„РѕСЂРјР°: " + platform,
-                                "Р—Р°РїСѓСЃРє 1РЎ", 5);
+                                mode + " успешно запущен!\nБаза: " + getCurrentAddress() + "\nПлатформа: " + platform,
+                                "Запуск 1С", 5);
                     }
                 } else {
-                    showAlert(Alert.AlertType.ERROR, "РћС€РёР±РєР°", "РћС€РёР±РєР° Р·Р°РїСѓСЃРєР° " + mode + "!\nРљРѕРґ: " + code);
+                    showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка запуска " + mode + "!\nКод: " + code);
                 }
             } else {
                 if (SHOW_RUN_MESSAGE) {
-                    showAutoClosingAlert(mode + " Р·Р°РїСѓС‰РµРЅ (С„РѕРЅРѕРІС‹Р№ РїСЂРѕС†РµСЃСЃ).\nР‘Р°Р·Р°: " + getCurrentAddress(),
-                            "Р—Р°РїСѓСЃРє 1РЎ", 5);
+                    showAutoClosingAlert(mode + " запущен (фоновый процесс).\nБаза: " + getCurrentAddress(),
+                            "Запуск 1С", 5);
                 }
             }
             if (SHOW_DEBUG_PANEL && debugArea != null)
-                debugArea.appendText("=== РљРѕРЅРµС† Р·Р°РїСѓСЃРєР° ===\n\n");
+                debugArea.appendText("=== Конец запуска ===\n\n");
         } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "РћС€РёР±РєР°", "РћС€РёР±РєР° Р·Р°РїСѓСЃРєР°: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка запуска: " + e.getMessage());
             if (SHOW_DEBUG_PANEL && debugArea != null)
-                debugArea.appendText("РСЃРєР»СЋС‡РµРЅРёРµ: " + e + "\n");
+                debugArea.appendText("Исключение: " + e + "\n");
         }
     }
 
@@ -1061,13 +1060,13 @@ public class RunYBase extends Application {
 
     private void addContextMenu(TextInputControl control) {
         ContextMenu menu = new ContextMenu();
-        MenuItem paste = new MenuItem("Р’СЃС‚Р°РІРёС‚СЊ");
+        MenuItem paste = new MenuItem("Вставить");
         paste.setOnAction(e -> control.paste());
-        MenuItem cut = new MenuItem("Р’С‹СЂРµР·Р°С‚СЊ");
+        MenuItem cut = new MenuItem("Вырезать");
         cut.setOnAction(e -> control.cut());
-        MenuItem copy = new MenuItem("РљРѕРїРёСЂРѕРІР°С‚СЊ");
+        MenuItem copy = new MenuItem("Копировать");
         copy.setOnAction(e -> control.copy());
-        MenuItem selectAll = new MenuItem("Р’С‹РґРµР»РёС‚СЊ РІСЃС‘");
+        MenuItem selectAll = new MenuItem("Выделить всё");
         selectAll.setOnAction(e -> control.selectAll());
         menu.getItems().addAll(paste, cut, copy, new javafx.scene.control.SeparatorMenuItem(), selectAll);
         control.setContextMenu(menu);
@@ -1079,7 +1078,7 @@ public class RunYBase extends Application {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
-        showAlert(Alert.AlertType.INFORMATION, "РЈСЃРїРµС€РЅРѕ", "РљРѕРјР°РЅРґР° СЃРєРѕРїРёСЂРѕРІР°РЅР° РІ Р±СѓС„РµСЂ РѕР±РјРµРЅР°!");
+        showAlert(Alert.AlertType.INFORMATION, "Успешно", "Команда скопирована в буфер обмена!");
     }
 
     private static List<BaseEntry> loadAndSortDatabases()
@@ -1088,8 +1087,8 @@ public class RunYBase extends Application {
         Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
 
         if (!Files.exists(ibasesPath)) {
-            Platform.runLater(() -> showAlertStatic(Alert.AlertType.ERROR, "РћС€РёР±РєР°",
-                    "Р¤Р°Р№Р» СЃРїРёСЃРєР° Р±Р°Р· РЅРµ РЅР°Р№РґРµРЅ:\n" + ibasesPath.toString()));
+            Platform.runLater(() -> showAlertStatic(Alert.AlertType.ERROR, "Ошибка",
+                    "Файл списка баз не найден:\n" + ibasesPath.toString()));
             return new ArrayList<>();
         }
 
@@ -1112,13 +1111,13 @@ public class RunYBase extends Application {
             List<BaseEntry> baseEntries = loadAndSortDatabases();
 
             if (baseEntries.isEmpty()) {
-                showAlert(Alert.AlertType.INFORMATION, "РЎРїРёСЃРѕРє Р±Р°Р·", "РќРµС‚ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅС‹С… Р±Р°Р· 1РЎ");
+                showAlert(Alert.AlertType.INFORMATION, "Список баз", "Нет зарегистрированных баз 1С");
                 return;
             }
 
             Stage dialog = new Stage();
             dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.setTitle("Р’С‹Р±РѕСЂ Р±Р°Р·С‹ 1РЎ");
+            dialog.setTitle("Выбор базы 1С");
             dialog.setResizable(true);
 
             ListView<BaseEntry> listView = new ListView<>(FXCollections.observableArrayList(baseEntries));
@@ -1134,7 +1133,7 @@ public class RunYBase extends Application {
                 dialog.close();
             });
 
-            Button cancelButton = new Button("РћС‚РјРµРЅР°");
+            Button cancelButton = new Button("Отмена");
             cancelButton.setOnAction(e -> dialog.close());
 
             listView.setOnMouseClicked(e -> {
@@ -1167,7 +1166,7 @@ public class RunYBase extends Application {
             dialog.showAndWait();
 
         } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "РћС€РёР±РєР°", "РћС€РёР±РєР° РїСЂРё С‡С‚РµРЅРёРё СЃРїРёСЃРєР° Р±Р°Р·:\n" + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка при чтении списка баз:\n" + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1259,7 +1258,7 @@ public class RunYBase extends Application {
     }
 }
 
-// ========== Р’РЎРџРћРњРћР“РђРўР•Р›Р¬РќР«Р• РљР›РђРЎРЎР« ==========
+// ========== ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ ==========
 
 class BaseEntry {
     String name;
@@ -1324,4 +1323,3 @@ class UserCredentials {
         return password;
     }
 }
-
