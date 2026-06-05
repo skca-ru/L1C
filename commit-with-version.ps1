@@ -15,10 +15,11 @@ if ($content -match 'private static final String VERSION\s*=\s*"(\d{4}\.\d{2}\.\
     Write-Host "Current version: $currentVersion" -ForegroundColor Cyan
 
     # Parse version (YYYY.MM.DD.PPP)
-    $year = $currentVersion.Substring(0, 4)
-    $month = $currentVersion.Substring(5, 2)
-    $day = $currentVersion.Substring(8, 2)
-    $patch = [int]$currentVersion.Substring(12, 3)
+    $parts = $currentVersion -split '\.'
+    $year = $parts[0]
+    $month = $parts[1]
+    $day = $parts[2]
+    $patch = [int]$parts[3]
 
     # Increment patch
     $patch++
