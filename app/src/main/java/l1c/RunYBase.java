@@ -213,12 +213,12 @@ public class RunYBase extends Application {
         designerRadio.setSelected(true);
         thinRadio = new RadioButton("Тонкий клиент");
         thinRadio.setToggleGroup(modeGroup);
-        thickOrdinaryRadio = new RadioButton("Толстый клиент (Обычное приложение)");
-        thickOrdinaryRadio.setToggleGroup(modeGroup);
         thickManagedRadio = new RadioButton("Толстый клиент (Управляемое приложение)");
         thickManagedRadio.setToggleGroup(modeGroup);
+        thickOrdinaryRadio = new RadioButton("Толстый клиент (Обычное приложение)");
+        thickOrdinaryRadio.setToggleGroup(modeGroup);
 
-        modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickOrdinaryRadio, thickManagedRadio);
+        modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio);
         contentBox.getChildren().add(modePanel);
 
         debugModeCheckbox = new CheckBox("Режим отладки");
