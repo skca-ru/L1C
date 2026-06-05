@@ -113,7 +113,7 @@ public class RunYBase extends Application {
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
     private static final String COLOR_BG             = "#FFFFFF";
     private static final String COLOR_BUTTON_BG      = "#E6C878";
-    private static final String COLOR_BUTTON_COPY_BG = "#F3E4BC";
+    private static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
     private static final String COLOR_BUTTON_FG      = "#000000";
     private static final String COLOR_BUTTON_BORDER  = "#C0A050";
     private static final String COLOR_ACCENT         = "#C8A046";
@@ -265,10 +265,10 @@ public class RunYBase extends Application {
 
         VBox buttonPanel86 = new VBox(5);
         Button copy86 = createButton("Copy");
-        copy86.setStyle(copy86.getStyle() + "-fx-background-color: " + COLOR_BUTTON_COPY_BG + ";");
+        copy86.setStyle(copy86.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
         copy86.setOnAction(e -> copyToClipboard(outputArea86.getText()));
         Button run86 = createButton("Run");
-        run86.setStyle(run86.getStyle() + "-fx-background-color: " + COLOR_BUTTON_COPY_BG + ";");
+        run86.setStyle(run86.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
         run86.setOnAction(e -> runCommand(outputArea86.getText(), "x86"));
         buttonPanel86.getChildren().addAll(copy86, run86);
 
@@ -290,10 +290,10 @@ public class RunYBase extends Application {
 
         VBox buttonPanel64 = new VBox(5);
         Button copy64 = createButton("Copy");
-        copy64.setStyle(copy64.getStyle() + "-fx-background-color: " + COLOR_BUTTON_COPY_BG + ";");
+        copy64.setStyle(copy64.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
         copy64.setOnAction(e -> copyToClipboard(outputArea.getText()));
         Button run64 = createButton("Run");
-        run64.setStyle(run64.getStyle() + "-fx-background-color: " + COLOR_BUTTON_COPY_BG + ";");
+        run64.setStyle(run64.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
         run64.setOnAction(e -> runCommand(outputArea.getText(), "x64"));
         buttonPanel64.getChildren().addAll(copy64, run64);
 
