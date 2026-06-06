@@ -80,6 +80,24 @@ public class RunYBase extends Application {
     private static final int MAX_HISTORY_SIZE        = 20;
     private static final String HISTORY_DIR          = ".1c_launcher";
     private static final String HISTORY_FILE         = "history.xml";
+    private static final String APP_MODE_INFO        = """
+            Режимы запуска 1С:
+
+            • Конфигуратор — запуск для разработки и поддержки конфигураций.
+              Требуется доступ к базе и права конфигуратора.
+
+            • Тонкий клиент — запуск 1С:Предприятия для работы с управляемыми 
+              приложениями через сетевое соединение с сервером 1С.
+              Параметр: /Enterprise
+
+            • Толстый клиент (Управляемое приложение) — современный интерфейс.
+              Для баз с управляемым приложением.
+              Параметр: /Enterprise /RunModeManagedApplication
+
+            • Толстый клиент (Обычное приложение) — классический интерфейс 1С.
+              Для баз с обычным приложением или гибридных.
+              Параметр: /Enterprise /RunModeOrdinaryApplication
+            """;
     private static final String APP_ARCH_INFO        = """
             Параметр /AppArch указывает разрядность используемого клиентского приложения на 64-разрядных ОС Windows.
 
@@ -217,7 +235,11 @@ public class RunYBase extends Application {
         thickOrdinaryRadio = new RadioButton("Толстый клиент (Обычное приложение)");
         thickOrdinaryRadio.setToggleGroup(modeGroup);
 
-        modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio);
+        Button modeHelpButton = createHelpButton();
+        modeHelpButton.setTooltip(new Tooltip(APP_MODE_INFO));
+        modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска", APP_MODE_INFO));
+
+        modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio, modeHelpButton);
         contentBox.getChildren().add(modePanel);
 
         debugModeCheckbox = new CheckBox("Режим отладки");
@@ -922,7 +944,7 @@ public class RunYBase extends Application {
         if (designerRadio.isSelected())
             return "DESIGNER";
         if (thinRadio.isSelected())
-            return "ENTERPRISE /ThinClient";
+            return "ENTERPRISE";
         if (thickOrdinaryRadio.isSelected())
             return "ENTERPRISE /RunModeOrdinaryApplication";
         return "ENTERPRISE /RunModeManagedApplication";
