@@ -263,11 +263,18 @@ public class RunYBase extends Application {
         HBox.setHgrow(outputArea86, Priority.ALWAYS);
 
         VBox buttonPanel86 = new VBox(5);
+        buttonPanel86.setAlignment(Pos.CENTER);
         Button copy86 = createButton("Copy");
         copy86.setStyle(copy86.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        copy86.setMinWidth(80);
+        copy86.setPrefWidth(80);
+        copy86.setMaxWidth(80);
         copy86.setOnAction(e -> copyToClipboard(outputArea86.getText()));
         Button run86 = createButton("Run");
         run86.setStyle(run86.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        run86.setMinWidth(80);
+        run86.setPrefWidth(80);
+        run86.setMaxWidth(80);
         run86.setOnAction(e -> runCommand(outputArea86.getText(), "x86"));
         buttonPanel86.getChildren().addAll(copy86, run86);
 
@@ -288,11 +295,18 @@ public class RunYBase extends Application {
         HBox.setHgrow(outputArea, Priority.ALWAYS);
 
         VBox buttonPanel64 = new VBox(5);
+        buttonPanel64.setAlignment(Pos.CENTER);
         Button copy64 = createButton("Copy");
         copy64.setStyle(copy64.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        copy64.setMinWidth(80);
+        copy64.setPrefWidth(80);
+        copy64.setMaxWidth(80);
         copy64.setOnAction(e -> copyToClipboard(outputArea.getText()));
         Button run64 = createButton("Run");
         run64.setStyle(run64.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        run64.setMinWidth(80);
+        run64.setPrefWidth(80);
+        run64.setMaxWidth(80);
         run64.setOnAction(e -> runCommand(outputArea.getText(), "x64"));
         buttonPanel64.getChildren().addAll(copy64, run64);
 
@@ -356,6 +370,9 @@ public class RunYBase extends Application {
         button.setMnemonicParsing(true);
 
         button.setUserData(bgColor); // Сохраняем базовый цвет
+
+        // Устанавливаем минимальную высоту для всех кнопок
+        button.setMinHeight(30);
 
         button.setStyle(String.format("""
                 -fx-background-color: %s;
