@@ -80,51 +80,6 @@ public class RunYBase extends Application {
     private static final int MAX_HISTORY_SIZE        = 20;
     private static final String HISTORY_DIR          = ".1c_launcher";
     private static final String HISTORY_FILE         = "history.xml";
-    private static final String APP_MODE_INFO        = """
-            Режимы запуска 1С:
-
-            • Конфигуратор — запуск для разработки и поддержки конфигураций.
-              Требуется доступ к базе и права конфигуратора.
-
-            • Предприятие — запуск 1С:Предприятия в режиме работы с базой данных.
-              Клиент (тонкий или толстый) выбирается платформой автоматически 
-              в зависимости от настроек информационной базы.
-              Команда: ENTERPRISE
-
-            • Толстый клиент (Управляемое приложение) — современный интерфейс.
-              Для баз с управляемым приложением.
-              Команда: ENTERPRISE /RunModeManagedApplication
-
-            • Толстый клиент (Обычное приложение) — классический интерфейс 1С.
-              Для баз с обычным приложением или гибридных.
-              Команда: ENTERPRISE /RunModeOrdinaryApplication
-            """;
-    private static final String APP_ARCH_INFO        = """
-            Параметр /AppArch указывает разрядность используемого клиентского приложения на 64-разрядных ОС Windows.
-
-            Доступные значения:
-            • x86 — использовать только 32-разрядные версии
-            • x86_64 — использовать только 64-разрядные версии
-            • x86_prt — поиск актуальной версии, при наличии обеих выбрать 32-разрядную
-            • x86_64_prt — поиск актуальной версии, при наличии обеих выбрать 64-разрядную""";
-    private static final String DEBUG_INFO           = """
-            /Debug [<режим>] [-attach]
-            — указывает, что данное клиентское приложение будет запущено в режиме отладки.
-            Протокол, используемый для работы отладчика, определяется параметром <режим>:
-            -tcp – для отладки используется протокол TCP/IP;
-            -http – для отладки используется протокол HTTP.
-            Если в командной строке указан параметр -attach, то это означает, что отладчик будет автоматически подключать предметы отладки (клиентский и серверный) запускаемого приложения, которые будут зарегистрированы на сервере отладки. Параметр используется только для отладки по протоколу HTTP.""";
-    private static final String DEBUG_PROTOCOL_INFO  = """
-            Режим отладки:
-            • по умолчанию — /Debug (протокол выбирается платформой);
-            • -tcp — /Debug -tcp (протокол TCP/IP);
-            • -http — /Debug -http (протокол HTTP).""";
-    private static final String HISTORY_COMMENT ="""
-        Файл истории адресов баз 1С.
-        Содержит последние использованные адреса для быстрого выбора.
-        Если удалить или очистить этот файл, история будет восстановлена при следующем запуске программы (пустая).
-        
-        Рекомендуется не редактировать файл вручную. Если всё же редактируете, сделайте резервную копию.""";
 
     // #endregion =================================
 
@@ -237,8 +192,8 @@ public class RunYBase extends Application {
         thickOrdinaryRadio.setToggleGroup(modeGroup);
 
         Button modeHelpButton = createHelpButton();
-        modeHelpButton.setTooltip(new Tooltip(APP_MODE_INFO));
-        modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска", APP_MODE_INFO));
+        modeHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_MODE_INFO));
+        modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска", RunYBaseHelpTexts.APP_MODE_INFO));
 
         modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio, modeHelpButton);
         contentBox.getChildren().add(modePanel);
@@ -249,18 +204,18 @@ public class RunYBase extends Application {
 
         debugProtocolCombo = new ComboBox<>(FXCollections.observableArrayList("по умолчанию", "-tcp", "-http"));
         debugProtocolCombo.setValue("по умолчанию");
-        debugProtocolCombo.setTooltip(new Tooltip(DEBUG_PROTOCOL_INFO));
+        debugProtocolCombo.setTooltip(new Tooltip(RunYBaseHelpTexts.DEBUG_PROTOCOL_INFO));
 
         Button debugHelpButton = createHelpButton();
-        debugHelpButton.setTooltip(new Tooltip(DEBUG_INFO));
-        debugHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", DEBUG_INFO));
+        debugHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.DEBUG_INFO));
+        debugHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", RunYBaseHelpTexts.DEBUG_INFO));
 
         priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
         priorityPlatformCheckbox.setTooltip(new Tooltip("Добавить параметры /AppArch для разрядности платформы"));
 
         Button helpButton = createHelpButton();
-        helpButton.setTooltip(new Tooltip(APP_ARCH_INFO));
-        helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch", APP_ARCH_INFO));
+        helpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_ARCH_INFO));
+        helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch", RunYBaseHelpTexts.APP_ARCH_INFO));
 
         HBox debugOption = createHelpOption(debugModeCheckbox, debugProtocolCombo, debugHelpButton);
         HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
@@ -841,7 +796,7 @@ public class RunYBase extends Application {
             Element root = doc.createElement("history");
             doc.appendChild(root);
 
-            root.appendChild(doc.createComment( HISTORY_COMMENT));
+            root.appendChild(doc.createComment(RunYBaseHelpTexts.HISTORY_COMMENT));
 
             Element addresses = doc.createElement("addresses");
             root.appendChild(addresses);
@@ -882,7 +837,7 @@ public class RunYBase extends Application {
             Element root = doc.createElement("history");
             doc.appendChild(root);
 
-            root.appendChild(doc.createComment(HISTORY_COMMENT));
+            root.appendChild(doc.createComment(RunYBaseHelpTexts.HISTORY_COMMENT));
 
             Element addresses = doc.createElement("addresses");
             root.appendChild(addresses);
