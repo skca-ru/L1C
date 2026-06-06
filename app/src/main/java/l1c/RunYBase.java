@@ -86,17 +86,18 @@ public class RunYBase extends Application {
             • Конфигуратор — запуск для разработки и поддержки конфигураций.
               Требуется доступ к базе и права конфигуратора.
 
-            • Тонкий клиент — запуск 1С:Предприятия для работы с управляемыми 
-              приложениями через сетевое соединение с сервером 1С.
-              Параметр: /Enterprise
+            • Предприятие — запуск 1С:Предприятия в режиме работы с базой данных.
+              Клиент (тонкий или толстый) выбирается платформой автоматически 
+              в зависимости от настроек информационной базы.
+              Команда: ENTERPRISE
 
             • Толстый клиент (Управляемое приложение) — современный интерфейс.
               Для баз с управляемым приложением.
-              Параметр: /Enterprise /RunModeManagedApplication
+              Команда: ENTERPRISE /RunModeManagedApplication
 
             • Толстый клиент (Обычное приложение) — классический интерфейс 1С.
               Для баз с обычным приложением или гибридных.
-              Параметр: /Enterprise /RunModeOrdinaryApplication
+              Команда: ENTERPRISE /RunModeOrdinaryApplication
             """;
     private static final String APP_ARCH_INFO        = """
             Параметр /AppArch указывает разрядность используемого клиентского приложения на 64-разрядных ОС Windows.
@@ -228,7 +229,7 @@ public class RunYBase extends Application {
         designerRadio = new RadioButton("Конфигуратор");
         designerRadio.setToggleGroup(modeGroup);
         designerRadio.setSelected(true);
-        thinRadio = new RadioButton("Тонкий клиент");
+        thinRadio = new RadioButton("Предприятие");
         thinRadio.setToggleGroup(modeGroup);
         thickManagedRadio = new RadioButton("Толстый клиент (Управляемое приложение)");
         thickManagedRadio.setToggleGroup(modeGroup);
