@@ -928,6 +928,45 @@ public class RunYBase extends Application {
         return "ENTERPRISE /RunModeManagedApplication";
     }
 
+    /**
+     * Формирует строку запуска для указанной разрядности платформы
+     * @param platformPath путь к exe файлу (с учётом разрядности)
+     * @param appArch значение параметра /AppArch (x86 или x86_64)
+     * @param escaped экранированный адрес базы
+     * @param commandPart часть команды (DESIGNER или ENTERPRISE ...)
+     * @param cred учётные данные пользователя (могут быть null)
+     * @return сформированная строка запуска
+     */
+    private String buildCommand(String platformPath, String appArch, String escaped,
+                                String commandPart, UserCredentials cred) {
+        StringBuilder cmd = new StringBuilder();
+        cmd.append("\"").append(platformPath).append("\" ");
+        cmd.append(commandPart).append(" ");
+        cmd.append("/IBConnectionString \"").append(escaped).append("\"");
+
+        if (cred != null && !cred.getUsername().isEmpty()) {
+            cmd.append(" /N \"").append(cred.getUsername()).append("\"");
+            if (!cred.getPassword().isEmpty()) {
+                cmd.append(" /P \"").append(cred.getPassword()).append("\"");
+            }
+        }
+
+        if (priorityPlatformCheckbox.isSelected()) {
+            cmd.append(" /AppArch ").append(appArch);
+        }
+
+        if (debugModeCheckbox.isSelected()) {
+            String debugParam = " /Debug -attach";
+            String protocol = debugProtocolCombo.getValue();
+            if (protocol != null && !"по умолчанию".equals(protocol)) {
+                debugParam += " " + protocol;
+            }
+            cmd.append(debugParam);
+        }
+
+        return cmd.toString();
+    }
+
     private void handleButtonClick() {
         String text = getCurrentAddress();
         if (text.isEmpty()) {
@@ -943,36 +982,23 @@ public class RunYBase extends Application {
         outputArea.setText("");
 
         String escaped = text.replace("\"", "\"\"");
-        String cmd86 = "\"C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe\" " + commandPart
-                + " /IBConnectionString \"" + escaped + "\"";
-        String cmd64 = "\"C:\\Program Files\\1cv8\\common\\1cestart.exe\" " + commandPart + " /IBConnectionString \""
-                + escaped + "\"";
-
         UserCredentials cred = credentialsMap.get(text);
-        if (cred != null && !cred.getUsername().isEmpty()) {
-            cmd86 += " /N \"" + cred.getUsername() + "\"";
-            cmd64 += " /N \"" + cred.getUsername() + "\"";
-            if (!cred.getPassword().isEmpty()) {
-                cmd86 += " /P \"" + cred.getPassword() + "\"";
-                cmd64 += " /P \"" + cred.getPassword() + "\"";
-            }
-        }
 
-        if (priorityPlatformCheckbox.isSelected()) {
-            cmd86 += " /AppArch x86";
-            cmd64 += " /AppArch x86_64";
-        }
+        String cmd86 = buildCommand(
+            "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
+            "x86",
+            escaped,
+            commandPart,
+            cred
+        );
 
-        // Добавляем режим отладки
-        if (debugModeCheckbox.isSelected()) {
-            String debugParam = " /Debug -attach";
-            String protocol = debugProtocolCombo.getValue();
-            if (protocol != null && !"по умолчанию".equals(protocol)) {
-                debugParam += " " + protocol;
-            }
-            cmd86 += debugParam;
-            cmd64 += debugParam;
-        }
+        String cmd64 = buildCommand(
+            "C:\\Program Files\\1cv8\\common\\1cestart.exe",
+            "x86_64",
+            escaped,
+            commandPart,
+            cred
+        );
 
         outputArea86.setText(cmd86);
         outputArea.setText(cmd64);
