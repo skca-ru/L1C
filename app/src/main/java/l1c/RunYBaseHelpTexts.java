@@ -66,6 +66,10 @@ public final class RunYBaseHelpTexts {
             или  Srvr="127.0.0.1";Ref="Base"
             """;
 
+    public static final String BASE_CONNECTION_PROMPT = """
+            для файловой 'File="C:\\1C\\Base";' для серверной 'Srvr="127.0.0.1";Ref="Base";'
+            """;
+
     private RunYBaseHelpTexts() {
         // Конструктор для предотвращения создания экземпляров
     }

@@ -146,7 +146,7 @@ public class RunYBase extends Application {
         
         ComboBoxWithButton<String> addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO);
         addressComboBox = addressControl.getComboBox();
-        addressControl.getActionButton().setOnAction(e -> selectDatabaseFromList());
+        addressControl.getChoiseButton().setOnAction(e -> selectDatabaseFromList());
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
@@ -1330,71 +1330,4 @@ class UserCredentials {
     public String getPassword() {
         return password;
     }
-}
-class ComboBoxWithButton<T> extends HBox {
-    private static final int ACTION_BUTTON_WIDTH = 25;
-    private final ComboBox<T> comboBox;
-    private final Button actionButton;
-    
-    public ComboBoxWithButton(String exampleTooltipText) {
-        super(0); // без промежутка
-        
-        comboBox = new ComboBox<>();
-        comboBox.setMaxWidth(Double.MAX_VALUE);
-        comboBox.setEditable(true);
-        comboBox.setPromptText("для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
-        
-        Tooltip exampleTooltip = new Tooltip(exampleTooltipText);
-        exampleTooltip.setStyle("""
-                -fx-background-color: #F3E4BC;
-                -fx-text-fill: #000000;
-                -fx-border-color: #C0A050;
-                -fx-border-radius: 3px;
-                -fx-background-radius: 3px;
-                -fx-padding: 5 10 5 10;
-                -fx-font-size: 13px;
-        """);
-        comboBox.setTooltip(exampleTooltip);
-        
-        // Показывать tooltip только когда поле пустое
-        comboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal == null || newVal.trim().isEmpty()) {
-                comboBox.setTooltip(exampleTooltip);
-            } else {
-                comboBox.setTooltip(null);
-            }
-        });
-        
-        actionButton = new Button("…");
-        actionButton.setPrefWidth(ACTION_BUTTON_WIDTH);
-        actionButton.setMaxWidth(ACTION_BUTTON_WIDTH);
-        actionButton.setMinWidth(ACTION_BUTTON_WIDTH);
-        
-        // Стилизация как единого элемента
-        comboBox.setStyle("""
-                -fx-border-color: #a0a0a0;
-                -fx-border-width: 1px 0 1px 1px;
-                -fx-border-radius: 3px 0 0 3px;
-                -fx-background-radius: 3px 0 0 3px;
-        """);
-        
-        actionButton.setStyle("""
-                -fx-background-color: white;
-                -fx-border-color: #a0a0a0;
-                -fx-border-width: 1px 1px 1px 0;
-                -fx-border-radius: 0 3px 3px 0;
-                -fx-background-radius: 0 3px 3px 0;
-                -fx-cursor: hand;
-        """);
-        
-        // Действие для кнопки
-        //        actionButton.setOnAction(e -> selectDatabaseFromList());
-        
-        getChildren().addAll(comboBox, actionButton);
-        HBox.setHgrow(comboBox, Priority.ALWAYS);
-        setMaxWidth(Double.MAX_VALUE);
-    }
-    
-    public ComboBox<T> getComboBox() { return comboBox; }
-    public Button getActionButton() { return actionButton; }
 }
