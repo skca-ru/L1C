@@ -1,6 +1,5 @@
 package l1c;
 
-import javafx.geometry.Insets;
 import javafx.scene.layout.Priority;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -16,8 +15,8 @@ class ComboBoxWithButton<T> extends HBox {
     private final ComboBox<T> comboBox;
     private final Button choiceButton;
     private String adressInfoBase;
-    private Tooltip currentAdressTooltip;
-    private final Tooltip exampleTooltip;
+    private final Tooltip dynamicTooltip;
+    private final String exampleTooltipText;
 
     // Цвета для рамки при фокусе
     private static final String FOCUS_BORDER_COLOR = "#0078D7";
@@ -30,13 +29,17 @@ class ComboBoxWithButton<T> extends HBox {
                     -fx-border-color: white;
                     -fx-border-width: 0;
                 """);
+        
+        this.exampleTooltipText = exampleTooltipText;
+        
         comboBox = new ComboBox<>();
         comboBox.setMaxWidth(Double.MAX_VALUE);
         comboBox.setEditable(true);
         comboBox.setPromptText(RunYBaseHelpTexts.BASE_CONNECTION_PROMPT);
 
-        exampleTooltip = new Tooltip(exampleTooltipText);
-        exampleTooltip.setStyle("""
+        // Создаём один тултип на все случаи
+        dynamicTooltip = new Tooltip(exampleTooltipText);
+        dynamicTooltip.setStyle("""
                         -fx-background-color: #F3E4BC;
                         -fx-text-fill: #000000;
                         -fx-border-color: #C0A050;
@@ -45,9 +48,9 @@ class ComboBoxWithButton<T> extends HBox {
                         -fx-padding: 5 10 5 10;
                         -fx-font-size: 13px;
                 """);
-        comboBox.setTooltip(exampleTooltip);
+        comboBox.setTooltip(dynamicTooltip);
 
-        // Показывать tooltip только когда поле пустое
+        // Показывать tooltip если необходимо
         comboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
             updateTooltip();
         });
@@ -65,8 +68,7 @@ class ComboBoxWithButton<T> extends HBox {
             updateBorderStyle(isNowFocused);
         });
 
-        // Также слушаем фокус на самой кнопке (на случай если пользователь кликнет на
-        // неё)
+        // Также слушаем фокус на самой кнопке (на случай если пользователь кликнет на неё)
         choiceButton.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
             updateBorderStyle(isNowFocused);
         });
@@ -84,29 +86,15 @@ class ComboBoxWithButton<T> extends HBox {
 
         if (currentText == null || currentText.trim().isEmpty()) {
             // Поле пустое → показываем пример
-            comboBox.setTooltip(exampleTooltip);
+            dynamicTooltip.setText(exampleTooltipText);
+            comboBox.setTooltip(dynamicTooltip);
+        } else if (adressInfoBase != null && !adressInfoBase.trim().isEmpty()) {
+            // Поле заполнено и есть адрес → показываем адрес
+            dynamicTooltip.setText(adressInfoBase);
+            comboBox.setTooltip(dynamicTooltip);
         } else {
-            // Поле заполнено → показываем adressInfoBase если он заполнен
-            if (adressInfoBase != null && !adressInfoBase.trim().isEmpty()) {
-                if (currentAdressTooltip == null) {
-                    currentAdressTooltip = new Tooltip(adressInfoBase);
-                    currentAdressTooltip.setStyle("""
-                            -fx-background-color: #F3E4BC;
-                            -fx-text-fill: #000000;
-                            -fx-border-color: #C0A050;
-                            -fx-border-radius: 3px;
-                            -fx-background-radius: 3px;
-                            -fx-padding: 5 10 5 10;
-                            -fx-font-size: 13px;
-                    """);
-                } else {
-                    currentAdressTooltip.setText(adressInfoBase);
-                }
-                comboBox.setTooltip(currentAdressTooltip);
-            } else {
-                // adressInfoBase пустой → скрываем tooltip
-                comboBox.setTooltip(null);
-            }
+            // Поле заполнено, но адрес пустой → скрываем tooltip
+            comboBox.setTooltip(null);
         }
     }
 
