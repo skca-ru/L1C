@@ -1,10 +1,13 @@
 package l1c;
 
 import javafx.scene.layout.Priority;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
+import javafx.collections.ObservableList;
+import javafx.scene.layout.Priority;
 
 /**
  * Компонент ComboBox с дополнительной кнопкой справа
@@ -23,6 +26,10 @@ class ComboBoxWithButton<T> extends HBox {
     private static final String NORMAL_BORDER_COLOR = "#a0a0a0";
 
     public ComboBoxWithButton(String exampleTooltipText) {
+        this(exampleTooltipText, null);
+    }
+    public ComboBoxWithButton(String exampleTooltipText, 
+        ObservableList<T> items) {
         super(0); // без промежутка
         // без рамок
         setStyle("""
@@ -36,7 +43,10 @@ class ComboBoxWithButton<T> extends HBox {
         comboBox.setMaxWidth(Double.MAX_VALUE);
         comboBox.setEditable(true);
         comboBox.setPromptText(RunYBaseHelpTexts.BASE_CONNECTION_PROMPT);
-
+        if (items != null) {
+            comboBox.setItems(items);
+            
+        }
         // Создаём один тултип на все случаи
         dynamicTooltip = new Tooltip(exampleTooltipText);
         dynamicTooltip.setStyle("""

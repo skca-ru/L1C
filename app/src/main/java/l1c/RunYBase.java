@@ -145,8 +145,9 @@ public class RunYBase extends Application {
 
         historyList = FXCollections.observableArrayList(getHistoryList());
         
-        addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO);
+        addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
         addressComboBox = addressControl.getComboBox();
+        //addressComboBox.setItems(historyList);
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
         userCredentialsButton = createButton("П_ользователь");
