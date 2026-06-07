@@ -1,4 +1,4 @@
-﻿package l1c;
+package l1c;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -96,7 +96,8 @@ public class RunYBase extends Application {
     // @formatter:on
 
     private ComboBox<String> addressComboBox;
-    private TextArea outputArea86;
+    private ComboBoxWithButton<String> addressControl;
+     private TextArea outputArea86;
     private TextArea outputArea;
     private RadioButton designerRadio;
     private RadioButton thinRadio;
@@ -144,9 +145,9 @@ public class RunYBase extends Application {
 
         historyList = FXCollections.observableArrayList(getHistoryList());
         
-        ComboBoxWithButton<String> addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO);
+        addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO);
         addressComboBox = addressControl.getComboBox();
-        addressControl.getChoiseButton().setOnAction(e -> selectDatabaseFromList());
+        addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
@@ -1132,26 +1133,14 @@ public class RunYBase extends Application {
             listView.setCellFactory(lv -> new BaseEntryListCell());
 
             Button okButton = new Button("OK");
-            okButton.setOnAction(e -> {
-                BaseEntry selected = listView.getSelectionModel().getSelectedItem();
-                if (selected != null) {
-                    addressComboBox.setValue(selected.connect);
-                    updateUserButtonState();
-                }
-                dialog.close();
-            });
+            okButton.setOnAction(e -> selectCurrentBase(listView, dialog));
 
             Button cancelButton = new Button("Отмена");
             cancelButton.setOnAction(e -> dialog.close());
 
             listView.setOnMouseClicked(e -> {
                 if (e.getClickCount() == 2) {
-                    BaseEntry selected = listView.getSelectionModel().getSelectedItem();
-                    if (selected != null) {
-                        addressComboBox.setValue(selected.connect);
-                        updateUserButtonState();
-                        dialog.close();
-                    }
+                    selectCurrentBase(listView, dialog);
                 }
             });
 
@@ -1176,6 +1165,19 @@ public class RunYBase extends Application {
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка при чтении списка баз:\n" + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Выбирает текущую выделенную базу и закрывает диалог
+     */
+    private void selectCurrentBase(ListView<BaseEntry> listView, Stage dialog) {
+        BaseEntry selected = listView.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            addressComboBox.setValue(selected.connect);
+            addressControl.setAdressIB(selected.name);
+            updateUserButtonState();
+            dialog.close();
         }
     }
 
