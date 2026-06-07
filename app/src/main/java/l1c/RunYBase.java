@@ -168,57 +168,7 @@ public class RunYBase extends Application {
         // #endregion
 
         // #region Режим запуска
-        HBox modePanel = new HBox(15);
-        modePanel.setAlignment(Pos.CENTER_LEFT);
-        modePanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
-        modePanel.setPadding(new Insets(5, 0, 5, 0));
-
-        Label modeLabel = new Label("Режим запуска:");
-        modeLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-
-        modeGroup = new ToggleGroup();
-        designerRadio = new RadioButton("Конфигуратор");
-        designerRadio.setToggleGroup(modeGroup);
-        designerRadio.setSelected(true);
-        thinRadio = new RadioButton("Предприятие");
-        thinRadio.setToggleGroup(modeGroup);
-        thickManagedRadio = new RadioButton("Толстый клиент (Управляемое приложение)");
-        thickManagedRadio.setToggleGroup(modeGroup);
-        thickOrdinaryRadio = new RadioButton("Толстый клиент (Обычное приложение)");
-        thickOrdinaryRadio.setToggleGroup(modeGroup);
-
-        Button modeHelpButton = createHelpButton();
-        modeHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_MODE_INFO));
-        modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска", RunYBaseHelpTexts.APP_MODE_INFO));
-
-        modePanel.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio, modeHelpButton);
-        contentBox.getChildren().add(modePanel);
-
-        debugModeCheckbox = new CheckBox("Режим отладки");
-        debugModeCheckbox.setSelected(true); // по умолчанию включено
-        debugModeCheckbox.setTooltip(new Tooltip("Добавить параметр /Debug для запуска в режиме отладки"));
-
-        debugProtocolCombo = new ComboBox<>(FXCollections.observableArrayList("по умолчанию", "-tcp", "-http"));
-        debugProtocolCombo.setValue("по умолчанию");
-        debugProtocolCombo.setTooltip(new Tooltip(RunYBaseHelpTexts.DEBUG_PROTOCOL_INFO));
-
-        Button debugHelpButton = createHelpButton();
-        debugHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.DEBUG_INFO));
-        debugHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", RunYBaseHelpTexts.DEBUG_INFO));
-
-        priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
-        priorityPlatformCheckbox.setTooltip(new Tooltip("Добавить параметры /AppArch для разрядности платформы"));
-
-        Button helpButton = createHelpButton();
-        helpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_ARCH_INFO));
-        helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch", RunYBaseHelpTexts.APP_ARCH_INFO));
-
-        HBox debugOption = createHelpOption(debugModeCheckbox, debugProtocolCombo, debugHelpButton);
-        HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
-        HBox optionsPanel = new HBox(15, debugOption, platformOption);
-        optionsPanel.setAlignment(Pos.CENTER_LEFT);
-        optionsPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
-        contentBox.getChildren().add(optionsPanel);
+        contentBox.getChildren().add(createModePanel());
         // #endregion
 
         contentBox.getChildren().add(new Label());
@@ -460,6 +410,72 @@ public class RunYBase extends Application {
         return menuBar;
     }
 
+    /**
+     * Создаёт панель с режимами запуска и опциями
+     * @return VBox с панелью режимов и опций
+     */
+    private VBox createModePanel() {
+        VBox panel = new VBox(8);
+        panel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
+        panel.setPadding(new Insets(5));
+
+        // Основная панель с переключателями режимов
+        HBox modeRow = new HBox(15);
+        modeRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label modeLabel = new Label("Режим запуска:");
+        modeLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+
+        modeGroup = new ToggleGroup();
+        designerRadio = new RadioButton("Конфигуратор");
+        designerRadio.setToggleGroup(modeGroup);
+        designerRadio.setSelected(true);
+        thinRadio = new RadioButton("Предприятие");
+        thinRadio.setToggleGroup(modeGroup);
+        thickManagedRadio = new RadioButton("Толстый клиент (Управляемое приложение)");
+        thickManagedRadio.setToggleGroup(modeGroup);
+        thickOrdinaryRadio = new RadioButton("Толстый клиент (Обычное приложение)");
+        thickOrdinaryRadio.setToggleGroup(modeGroup);
+
+        Button modeHelpButton = createHelpButton();
+        modeHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_MODE_INFO));
+        modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска",
+                RunYBaseHelpTexts.APP_MODE_INFO));
+
+        modeRow.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio,
+                modeHelpButton);
+
+        // Панель с опциями (отладка, приоритет платформы)
+        debugModeCheckbox = new CheckBox("Режим отладки");
+        debugModeCheckbox.setSelected(true);
+        debugModeCheckbox.setTooltip(new Tooltip("Добавить параметр /Debug для запуска в режиме отладки"));
+
+        debugProtocolCombo = new ComboBox<>(FXCollections.observableArrayList("по умолчанию", "-tcp", "-http"));
+        debugProtocolCombo.setValue("по умолчанию");
+        debugProtocolCombo.setTooltip(new Tooltip(RunYBaseHelpTexts.DEBUG_PROTOCOL_INFO));
+
+        Button debugHelpButton = createHelpButton();
+        debugHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.DEBUG_INFO));
+        debugHelpButton.setOnAction(
+                e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", RunYBaseHelpTexts.DEBUG_INFO));
+
+        priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
+        priorityPlatformCheckbox.setTooltip(new Tooltip("Добавить параметры /AppArch для разрядности платформы"));
+
+        Button helpButton = createHelpButton();
+        helpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_ARCH_INFO));
+        helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch",
+                RunYBaseHelpTexts.APP_ARCH_INFO));
+
+        HBox debugOption = createHelpOption(debugModeCheckbox, debugProtocolCombo, debugHelpButton);
+        HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
+        HBox optionsRow = new HBox(15, debugOption, platformOption);
+        optionsRow.setAlignment(Pos.CENTER_LEFT);
+
+        panel.getChildren().addAll(modeRow, optionsRow);
+        return panel;
+    }
+
     private void showAboutDialog() {
         String message = String.format(
             "Построитель команды запуска 1С\n\n" +
@@ -471,7 +487,7 @@ public class RunYBase extends Application {
             "• Koda-base",
             VERSION
         );
-        
+
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("О программе");
         alert.setHeaderText(null);
