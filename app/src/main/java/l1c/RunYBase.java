@@ -144,31 +144,9 @@ public class RunYBase extends Application {
 
         historyList = FXCollections.observableArrayList(getHistoryList());
         
-        ComboBoxWithButton<String> addressControl = new ComboBoxWithButton<>();
-        addressControl.setMaxWidth(Double.MAX_VALUE);
+        ComboBoxWithButton<String> addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO);
         addressComboBox = addressControl.getComboBox();
-        addressComboBox.setEditable(true);
-        addressComboBox.setPromptText("для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
         addressControl.getActionButton().setOnAction(e -> selectDatabaseFromList());
-        Tooltip exampleTooltip = new Tooltip(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO);
-        addressComboBox.setTooltip(exampleTooltip);
-        HBox.setHgrow(addressControl, Priority.ALWAYS);
-
-        // Показывать tooltip только когда поле пустое
-        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal == null || newVal.trim().isEmpty()) {
-                addressComboBox.setTooltip(exampleTooltip);
-            } else {
-                addressComboBox.setTooltip(null);
-            }
-        });
-
-        // Button selectButton = createFlatButton("…");
-        // selectButton.setTooltip(new Tooltip("Выбрать из списка зарегистрированных баз"));
-        // selectButton.setOnAction(e -> selectDatabaseFromList());
-        // selectButton.setMinSize(30, 30);
-        // selectButton.setMaxSize(30, 30);
-        // HBox.setMargin( selectButton, new Insets(0,0,0,-5));
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
@@ -178,6 +156,7 @@ public class RunYBase extends Application {
 
         inputPanel.getChildren().addAll(
             addressLabel, addressControl, userCredentialsButton, generateButton);
+        HBox.setHgrow(addressControl, Priority.ALWAYS);
         contentBox.getChildren().add(inputPanel);
         // #endregion
 
@@ -1353,14 +1332,39 @@ class UserCredentials {
     }
 }
 class ComboBoxWithButton<T> extends HBox {
-    private static final int ACTION_BUTTON_WIDTH = 15;
+    private static final int ACTION_BUTTON_WIDTH = 25;
     private final ComboBox<T> comboBox;
     private final Button actionButton;
     
-    public ComboBoxWithButton() {
+    public ComboBoxWithButton(String exampleTooltipText) {
         super(0); // без промежутка
+        
         comboBox = new ComboBox<>();
         comboBox.setMaxWidth(Double.MAX_VALUE);
+        comboBox.setEditable(true);
+        comboBox.setPromptText("для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
+        
+        Tooltip exampleTooltip = new Tooltip(exampleTooltipText);
+        exampleTooltip.setStyle("""
+                -fx-background-color: #F3E4BC;
+                -fx-text-fill: #000000;
+                -fx-border-color: #C0A050;
+                -fx-border-radius: 3px;
+                -fx-background-radius: 3px;
+                -fx-padding: 5 10 5 10;
+                -fx-font-size: 13px;
+        """);
+        comboBox.setTooltip(exampleTooltip);
+        
+        // Показывать tooltip только когда поле пустое
+        comboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.trim().isEmpty()) {
+                comboBox.setTooltip(exampleTooltip);
+            } else {
+                comboBox.setTooltip(null);
+            }
+        });
+        
         actionButton = new Button("…");
         actionButton.setPrefWidth(ACTION_BUTTON_WIDTH);
         actionButton.setMaxWidth(ACTION_BUTTON_WIDTH);
@@ -1386,8 +1390,9 @@ class ComboBoxWithButton<T> extends HBox {
         // Действие для кнопки
         //        actionButton.setOnAction(e -> selectDatabaseFromList());
         
-        HBox.setHgrow(comboBox, Priority.ALWAYS);
         getChildren().addAll(comboBox, actionButton);
+        HBox.setHgrow(comboBox, Priority.ALWAYS);
+        setMaxWidth(Double.MAX_VALUE);
     }
     
     public ComboBox<T> getComboBox() { return comboBox; }
