@@ -1,4 +1,4 @@
-package l1c;
+﻿package l1c;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -97,7 +99,7 @@ public class RunYBase extends Application {
 
     private ComboBox<String> addressComboBox;
     private ComboBoxWithButton<String> addressControl;
-     private TextArea outputArea86;
+    private TextArea outputArea86;
     private TextArea outputArea;
     private RadioButton designerRadio;
     private RadioButton thinRadio;
@@ -113,6 +115,8 @@ public class RunYBase extends Application {
     private Button userCredentialsButton;
 
     private static final java.util.Map<String, UserCredentials> credentialsMap = new java.util.HashMap<>();
+    // Для проверки есть адрес в списке зарегистрированных баз
+    private Map<String, String> registeredAddressMap = new HashMap<>();
 
     public static void main(String[] args) {
         launch(args);
@@ -144,10 +148,9 @@ public class RunYBase extends Application {
         addressLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
         historyList = FXCollections.observableArrayList(getHistoryList());
-        
+
         addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
         addressComboBox = addressControl.getComboBox();
-        //addressComboBox.setItems(historyList);
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
         userCredentialsButton = createButton("П_ользователь");
@@ -157,7 +160,7 @@ public class RunYBase extends Application {
         generateButton.setOnAction(e -> handleButtonClick());
 
         inputPanel.getChildren().addAll(
-            addressLabel, addressControl, userCredentialsButton, generateButton);
+                addressLabel, addressControl, userCredentialsButton, generateButton);
         HBox.setHgrow(addressControl, Priority.ALWAYS);
         contentBox.getChildren().add(inputPanel);
         // #endregion
@@ -178,7 +181,9 @@ public class RunYBase extends Application {
         outputArea86 = new TextArea();
         outputArea86.setWrapText(true);
         outputArea86.setPrefRowCount(4);
-        outputArea86.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+        outputArea86.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: "
+                + COLOR_INPUT_BG
+                + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
         HBox.setHgrow(outputArea86, Priority.ALWAYS);
 
         VBox buttonPanel86 = createRunCopyButtons(outputArea86, "x86");
@@ -195,7 +200,8 @@ public class RunYBase extends Application {
         outputArea = new TextArea();
         outputArea.setWrapText(true);
         outputArea.setPrefRowCount(4);
-        outputArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+        outputArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG
+                + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
         HBox.setHgrow(outputArea, Priority.ALWAYS);
 
         VBox buttonPanel64 = createRunCopyButtons(outputArea, "x64");
@@ -223,6 +229,7 @@ public class RunYBase extends Application {
                 saveHistoryToXml();
                 Platform.exit();
             }
+
         });
 
         primaryStage.setTitle(
@@ -244,7 +251,33 @@ public class RunYBase extends Application {
 
         addressComboBox.requestFocus();
 
-        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> updateUserButtonState());
+        // Загружаем список зарегистрированных баз для отображения имён
+        try {
+            List<BaseEntry> baseEntries = loadAndSortDatabases();
+            if (!baseEntries.isEmpty()) {
+                registeredAddressMap.clear();
+                for (BaseEntry entry : baseEntries) {
+                    registeredAddressMap.put(entry.connect, entry.name);
+                }
+            }
+        } catch (Exception e) {
+            // Игнорируем ошибку — просто не будем показывать имена баз
+        }
+
+        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            updateUserButtonState(); // существующая логика
+
+            if (newVal != null && !newVal.trim().isEmpty()) {
+                String baseName = registeredAddressMap.get(newVal);
+                if (baseName != null) {
+                    addressControl.setAdressIB(baseName); // показываем имя базы
+                } else {
+                    addressControl.setAdressIB(null); // адрес не найден — скрываем
+                }
+            } else {
+                addressControl.setAdressIB(null); // поле пустое
+            }
+        });
         updateUserButtonState();
     }
 
@@ -347,6 +380,7 @@ public class RunYBase extends Application {
 
     /**
      * Создаёт VBox с кнопками Copy и Run для TextArea с командой
+     * 
      * @param textArea TextArea с командой
      * @param platform название платформы для отображения (x86, x64 и т.д.)
      * @return VBox с кнопками
@@ -354,21 +388,21 @@ public class RunYBase extends Application {
     private VBox createRunCopyButtons(TextArea textArea, String platform) {
         VBox buttonPanel = new VBox(5);
         buttonPanel.setAlignment(Pos.CENTER);
-        
+
         Button copyButton = createButton("Copy");
         copyButton.setStyle(copyButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
         copyButton.setOnAction(e -> copyToClipboard(textArea.getText()));
-        
+
         Button runButton = createButton("Run");
         runButton.setStyle(runButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
         runButton.setMinWidth(80);
         runButton.setPrefWidth(80);
         runButton.setMaxWidth(80);
         runButton.setOnAction(e -> runCommand(textArea.getText(), platform));
-        
+
         buttonPanel.getChildren().addAll(copyButton, runButton);
         return buttonPanel;
     }
@@ -379,8 +413,8 @@ public class RunYBase extends Application {
 
         // Меню Файл
         Menu fileMenu = new Menu("_Файл");
-        fileMenu.setStyle("-fx-padding: 5 10 5 10;"); 
-        
+        fileMenu.setStyle("-fx-padding: 5 10 5 10;");
+
         MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
         exitItem.setOnAction(e -> {
@@ -388,17 +422,17 @@ public class RunYBase extends Application {
             saveHistoryToXml();
             Platform.exit();
         });
-        
+
         fileMenu.getItems().addAll(exitItem);
         menuBar.getMenus().add(fileMenu);
 
         // Меню Помощь
         Menu helpMenu = new Menu("_Помощь");
         helpMenu.setStyle("-fx-padding: 5 10 5 10;");
-        
+
         MenuItem aboutItem = new MenuItem("О _программе");
         aboutItem.setOnAction(e -> showAboutDialog());
-        
+
         helpMenu.getItems().add(aboutItem);
         menuBar.getMenus().add(helpMenu);
 
@@ -473,15 +507,14 @@ public class RunYBase extends Application {
 
     private void showAboutDialog() {
         String message = String.format(
-            "Построитель команды запуска 1С\n\n" +
-            "Версия: %s\n\n" +
-            "Программа для удобного формирования\n" +
-            "команд запуска 1С: Предприятие и Конфигуратор.\n\n" +
-            "Разработано с использованием:\n" +
-            "• Koda-pro\n" +
-            "• Koda-base",
-            VERSION
-        );
+                "Построитель команды запуска 1С\n\n" +
+                        "Версия: %s\n\n" +
+                        "Программа для удобного формирования\n" +
+                        "команд запуска 1С: Предприятие и Конфигуратор.\n\n" +
+                        "Разработано с использованием:\n" +
+                        "• Koda-pro\n" +
+                        "• Koda-base",
+                VERSION);
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("О программе");
@@ -512,7 +545,7 @@ public class RunYBase extends Application {
         button.setFocusTraversable(false);
 
         button.setCursor(javafx.scene.Cursor.HAND);
-        
+
         return button;
     }
 
@@ -621,8 +654,10 @@ public class RunYBase extends Application {
 
     /**
      * Увеличивает яркость цвета на заданный коэффициент
+     * 
      * @param hexColor HEX цвет (например "#E6C878")
-     * @param factor коэффициент яркости (1.0 - без изменения, >1.0 - светлее, <1.0 - темнее)
+     * @param factor   коэффициент яркости (1.0 - без изменения, >1.0 - светлее,
+     *                 <1.0 - темнее)
      * @return новый HEX цвет
      */
     private String adjustColorBrightness(String hexColor, double factor) {
@@ -632,9 +667,9 @@ public class RunYBase extends Application {
             int g = Integer.parseInt(hex.substring(2, 4), 16);
             int b = Integer.parseInt(hex.substring(4, 6), 16);
 
-            r = Math.min(255, (int)(r * factor));
-            g = Math.min(255, (int)(g * factor));
-            b = Math.min(255, (int)(b * factor));
+            r = Math.min(255, (int) (r * factor));
+            g = Math.min(255, (int) (g * factor));
+            b = Math.min(255, (int) (b * factor));
 
             return String.format("#%02X%02X%02X", r, g, b);
         } catch (Exception e) {
@@ -913,15 +948,16 @@ public class RunYBase extends Application {
 
     /**
      * Формирует строку запуска для указанной разрядности платформы
+     * 
      * @param platformPath путь к exe файлу (с учётом разрядности)
-     * @param appArch значение параметра /AppArch (x86 или x86_64)
-     * @param escaped экранированный адрес базы
-     * @param commandPart часть команды (DESIGNER или ENTERPRISE ...)
-     * @param cred учётные данные пользователя (могут быть null)
+     * @param appArch      значение параметра /AppArch (x86 или x86_64)
+     * @param escaped      экранированный адрес базы
+     * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
+     * @param cred         учётные данные пользователя (могут быть null)
      * @return сформированная строка запуска
      */
     private String buildCommand(String platformPath, String appArch, String escaped,
-                                String commandPart, UserCredentials cred) {
+            String commandPart, UserCredentials cred) {
         StringBuilder cmd = new StringBuilder();
         cmd.append("\"").append(platformPath).append("\" ");
         cmd.append(commandPart).append(" ");
@@ -968,20 +1004,18 @@ public class RunYBase extends Application {
         UserCredentials cred = credentialsMap.get(text);
 
         String cmd86 = buildCommand(
-            "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
-            "x86",
-            escaped,
-            commandPart,
-            cred
-        );
+                "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
+                "x86",
+                escaped,
+                commandPart,
+                cred);
 
         String cmd64 = buildCommand(
-            "C:\\Program Files\\1cv8\\common\\1cestart.exe",
-            "x86_64",
-            escaped,
-            commandPart,
-            cred
-        );
+                "C:\\Program Files\\1cv8\\common\\1cestart.exe",
+                "x86_64",
+                escaped,
+                commandPart,
+                cred);
 
         outputArea86.setText(cmd86);
         outputArea.setText(cmd64);
