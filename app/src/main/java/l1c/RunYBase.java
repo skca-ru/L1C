@@ -1,4 +1,4 @@
-﻿package l1c;
+package l1c;
 
 import java.io.BufferedReader;
 import java.io.IOException;
