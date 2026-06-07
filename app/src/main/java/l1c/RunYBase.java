@@ -62,9 +62,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -80,23 +77,22 @@ public class RunYBase extends Application {
     private static final int MAX_HISTORY_SIZE        = 20;
     private static final String HISTORY_DIR          = ".1c_launcher";
     private static final String HISTORY_FILE         = "history.xml";
-
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
-    private static final String COLOR_BG             = "#FFFFFF";
-    private static final String COLOR_BUTTON_BG      = "#E6C878";
+    private static final String COLOR_BG              = "#FFFFFF";
+    private static final String COLOR_BUTTON_BG       = "#E6C878";
     private static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
-    private static final String COLOR_BUTTON_FG      = "#000000";
-    private static final String COLOR_BUTTON_BORDER  = "#C0A050";
-    private static final String COLOR_ACCENT         = "#C8A046";
-    private static final String COLOR_TEXT_FG        = "#000000";
-    private static final String COLOR_INPUT_BG       = "#FFFFFF";
-    private static final String COLOR_OUTPUT_BG      = "#FAFAFA";
-    private static final String COLOR_PANEL_BG       = "#FFFFFF";
-    private static final String COLOR_USER_HAS_CRED  = "#B2DAB2";
-    private static final String COLOR_USER_NO_CRED   = "#F3E4BC";
-    // #endregion =================================
+    private static final String COLOR_BUTTON_FG       = "#000000";
+    private static final String COLOR_BUTTON_BORDER   = "#C0A050";
+    private static final String COLOR_ACCENT          = "#C8A046";
+    private static final String COLOR_TEXT_FG         = "#000000";
+    private static final String COLOR_INPUT_BG        = "#FFFFFF";
+    private static final String COLOR_OUTPUT_BG       = "#FAFAFA";
+    private static final String COLOR_PANEL_BG        = "#FFFFFF";
+    private static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
+    private static final String COLOR_USER_NO_CRED    = "#F3E4BC";
+    // #endregion ==================================
     // @formatter:on
 
     private ComboBox<String> addressComboBox;
