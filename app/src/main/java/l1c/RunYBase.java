@@ -118,6 +118,9 @@ public class RunYBase extends Application {
     // Для проверки есть адрес в списке зарегистрированных баз
     private Map<String, String> registeredAddressMap = new HashMap<>();
 
+    // Контейнер для всех элементов интерфейса
+    private VBox contentBox;
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -136,33 +139,12 @@ public class RunYBase extends Application {
         borderRoot.setTop(menuBar);
 
         // Все остальные элементы помещаем в VBox с отступами
-        VBox contentBox = new VBox(8);
+        contentBox = new VBox(8);
         contentBox.setPadding(new Insets(10));
         contentBox.setStyle("-fx-background-color: " + COLOR_BG + ";");
 
-        // #region ОбластьАдресаБД
-        HBox inputPanel = new HBox(5);
-        inputPanel.setAlignment(Pos.CENTER_LEFT);
-
-        Label addressLabel = new Label("Адрес БД:");
-        addressLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-
-        historyList = FXCollections.observableArrayList(getHistoryList());
-
-        addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
-        addressComboBox = addressControl.getComboBox();
-        addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
-
-        userCredentialsButton = createButton("П_ользователь");
-        userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
-
-        Button generateButton = createButton("С_формировать");
-        generateButton.setOnAction(e -> handleButtonClick());
-
-        inputPanel.getChildren().addAll(
-                addressLabel, addressControl, userCredentialsButton, generateButton);
-        HBox.setHgrow(addressControl, Priority.ALWAYS);
-        contentBox.getChildren().add(inputPanel);
+        // #region Область Адреса БД
+        contentBox.getChildren().add(createAddressPanel());
         // #endregion
 
         // #region Режим запуска
@@ -171,42 +153,10 @@ public class RunYBase extends Application {
 
         contentBox.getChildren().add(new Label());
 
-        // x86
-        Label label86 = new Label("Команда для 32-битной платформы (x86):");
-        label86.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-        contentBox.getChildren().add(label86);
-
-        HBox p86 = new HBox(5);
-        p86.setAlignment(Pos.CENTER_LEFT);
-        outputArea86 = new TextArea();
-        outputArea86.setWrapText(true);
-        outputArea86.setPrefRowCount(4);
-        outputArea86.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: "
-                + COLOR_INPUT_BG
-                + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
-        HBox.setHgrow(outputArea86, Priority.ALWAYS);
-
-        VBox buttonPanel86 = createRunCopyButtons(outputArea86, "x86");
-        p86.getChildren().addAll(outputArea86, buttonPanel86);
-        contentBox.getChildren().add(p86);
-
-        // x64
-        Label label64 = new Label("Команда для 64-битной платформы (x64):");
-        label64.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-        contentBox.getChildren().add(label64);
-
-        HBox p64 = new HBox(5);
-        p64.setAlignment(Pos.CENTER_LEFT);
-        outputArea = new TextArea();
-        outputArea.setWrapText(true);
-        outputArea.setPrefRowCount(4);
-        outputArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG
-                + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
-        HBox.setHgrow(outputArea, Priority.ALWAYS);
-
-        VBox buttonPanel64 = createRunCopyButtons(outputArea, "x64");
-        p64.getChildren().addAll(outputArea, buttonPanel64);
-        contentBox.getChildren().add(p64);
+        // #region Блоки вывода команд для платформ
+        createPlatformPanel("x86", 32);
+        createPlatformPanel("x64", 64);
+        // #endregion
 
         if (SHOW_DEBUG_PANEL) {
             contentBox.getChildren().add(new Label("Отладка (вывод команды и ошибок):"));
@@ -503,6 +453,73 @@ public class RunYBase extends Application {
 
         panel.getChildren().addAll(modeRow, optionsRow);
         return panel;
+    }
+
+    /**
+     * Создаёт блок вывода команды для указанной платформы
+     * @param platformName название платформы (x86 или x64)
+     * @param bits разрядность (32 или 64)
+     */
+    private void createPlatformPanel(String platformName, int bits) {
+        // Метка с названием платформы
+        String label = String.format("Команда для %d-битной платформы (%s):", bits, platformName);
+        Label platformLabel = new Label(label);
+        platformLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+        contentBox.getChildren().add(platformLabel);
+
+        // HBox с TextArea и кнопками
+        HBox platformRow = new HBox(5);
+        platformRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Создаём TextArea
+        TextArea textArea = new TextArea();
+        textArea.setWrapText(true);
+        textArea.setPrefRowCount(4);
+        textArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG
+                + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+        HBox.setHgrow(textArea, Priority.ALWAYS);
+
+        // Сохраняем ссылку на TextArea в зависимости от разрядности
+        if (bits == 32) {
+            outputArea86 = textArea;
+        } else {
+            outputArea = textArea;
+        }
+
+        // Создаём панель с кнопками
+        VBox buttonPanel = createRunCopyButtons(textArea, platformName);
+        platformRow.getChildren().addAll(textArea, buttonPanel);
+        contentBox.getChildren().add(platformRow);
+    }
+
+    /**
+     * Создаёт панель с полем ввода адреса базы данных
+     * @return HBox с панелью адреса
+     */
+    private HBox createAddressPanel() {
+        HBox inputPanel = new HBox(5);
+        inputPanel.setAlignment(Pos.CENTER_LEFT);
+
+        Label addressLabel = new Label("Адрес БД:");
+        addressLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+
+        historyList = FXCollections.observableArrayList(getHistoryList());
+
+        addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
+        addressComboBox = addressControl.getComboBox();
+        addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
+
+        userCredentialsButton = createButton("П_ользователь");
+        userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
+
+        Button generateButton = createButton("С_формировать");
+        generateButton.setOnAction(e -> handleButtonClick());
+
+        inputPanel.getChildren().addAll(
+                addressLabel, addressControl, userCredentialsButton, generateButton);
+        HBox.setHgrow(addressControl, Priority.ALWAYS);
+
+        return inputPanel;
     }
 
     private void showAboutDialog() {
