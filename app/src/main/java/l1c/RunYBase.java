@@ -143,18 +143,32 @@ public class RunYBase extends Application {
         addressLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
         historyList = FXCollections.observableArrayList(getHistoryList());
-        addressComboBox = new ComboBox<>(historyList);
+        
+        ComboBoxWithButton<String> addressControl = new ComboBoxWithButton<>();
+        addressControl.setMaxWidth(Double.MAX_VALUE);
+        addressComboBox = addressControl.getComboBox();
         addressComboBox.setEditable(true);
         addressComboBox.setPromptText("для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
-        addressComboBox.setTooltip(new Tooltip("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\""));
-        addressComboBox.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(addressComboBox, Priority.ALWAYS);
+        addressControl.getActionButton().setOnAction(e -> selectDatabaseFromList());
+        Tooltip exampleTooltip = new Tooltip(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO);
+        addressComboBox.setTooltip(exampleTooltip);
+        HBox.setHgrow(addressControl, Priority.ALWAYS);
 
-        Button selectButton = createFlatButton("…");
-        selectButton.setTooltip(new Tooltip("Выбрать из списка зарегистрированных баз"));
-        selectButton.setOnAction(e -> selectDatabaseFromList());
-        selectButton.setMinSize(30, 30);
-        selectButton.setMaxSize(30, 30);
+        // Показывать tooltip только когда поле пустое
+        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.trim().isEmpty()) {
+                addressComboBox.setTooltip(exampleTooltip);
+            } else {
+                addressComboBox.setTooltip(null);
+            }
+        });
+
+        // Button selectButton = createFlatButton("…");
+        // selectButton.setTooltip(new Tooltip("Выбрать из списка зарегистрированных баз"));
+        // selectButton.setOnAction(e -> selectDatabaseFromList());
+        // selectButton.setMinSize(30, 30);
+        // selectButton.setMaxSize(30, 30);
+        // HBox.setMargin( selectButton, new Insets(0,0,0,-5));
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
@@ -163,7 +177,7 @@ public class RunYBase extends Application {
         generateButton.setOnAction(e -> handleButtonClick());
 
         inputPanel.getChildren().addAll(
-            addressLabel, addressComboBox, selectButton, userCredentialsButton, generateButton);
+            addressLabel, addressControl, userCredentialsButton, generateButton);
         contentBox.getChildren().add(inputPanel);
         // #endregion
 
@@ -1337,4 +1351,45 @@ class UserCredentials {
     public String getPassword() {
         return password;
     }
+}
+class ComboBoxWithButton<T> extends HBox {
+    private static final int ACTION_BUTTON_WIDTH = 15;
+    private final ComboBox<T> comboBox;
+    private final Button actionButton;
+    
+    public ComboBoxWithButton() {
+        super(0); // без промежутка
+        comboBox = new ComboBox<>();
+        comboBox.setMaxWidth(Double.MAX_VALUE);
+        actionButton = new Button("…");
+        actionButton.setPrefWidth(ACTION_BUTTON_WIDTH);
+        actionButton.setMaxWidth(ACTION_BUTTON_WIDTH);
+        actionButton.setMinWidth(ACTION_BUTTON_WIDTH);
+        
+        // Стилизация как единого элемента
+        comboBox.setStyle("""
+                -fx-border-color: #a0a0a0;
+                -fx-border-width: 1px 0 1px 1px;
+                -fx-border-radius: 3px 0 0 3px;
+                -fx-background-radius: 3px 0 0 3px;
+        """);
+        
+        actionButton.setStyle("""
+                -fx-background-color: white;
+                -fx-border-color: #a0a0a0;
+                -fx-border-width: 1px 1px 1px 0;
+                -fx-border-radius: 0 3px 3px 0;
+                -fx-background-radius: 0 3px 3px 0;
+                -fx-cursor: hand;
+        """);
+        
+        // Действие для кнопки
+        //        actionButton.setOnAction(e -> selectDatabaseFromList());
+        
+        HBox.setHgrow(comboBox, Priority.ALWAYS);
+        getChildren().addAll(comboBox, actionButton);
+    }
+    
+    public ComboBox<T> getComboBox() { return comboBox; }
+    public Button getActionButton() { return actionButton; }
 }
