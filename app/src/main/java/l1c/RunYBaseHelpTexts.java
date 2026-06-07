@@ -61,6 +61,15 @@ public final class RunYBaseHelpTexts {
             Рекомендуется не редактировать файл вручную. Если всё же редактируете, сделайте резервную копию.
             """;
 
+    public static final String ADDRESS_EXAMPLE_INFO = """
+            Введите адрес, например File="C:\\1C\\Base"
+            или  Srvr="127.0.0.1";Ref="Base"
+            """;
+
+    public static final String BASE_CONNECTION_PROMPT = """
+            для файловой 'File="C:\\1C\\Base";' для серверной 'Srvr="127.0.0.1";Ref="Base";'
+            """;
+
     private RunYBaseHelpTexts() {
         // Конструктор для предотвращения создания экземпляров
     }

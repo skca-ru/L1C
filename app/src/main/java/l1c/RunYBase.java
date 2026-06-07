@@ -1,4 +1,4 @@
-﻿package l1c;
+package l1c;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -96,7 +96,8 @@ public class RunYBase extends Application {
     // @formatter:on
 
     private ComboBox<String> addressComboBox;
-    private TextArea outputArea86;
+    private ComboBoxWithButton<String> addressControl;
+     private TextArea outputArea86;
     private TextArea outputArea;
     private RadioButton designerRadio;
     private RadioButton thinRadio;
@@ -143,18 +144,11 @@ public class RunYBase extends Application {
         addressLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
         historyList = FXCollections.observableArrayList(getHistoryList());
-        addressComboBox = new ComboBox<>(historyList);
-        addressComboBox.setEditable(true);
-        addressComboBox.setPromptText("для файловой 'File=\"C:\\1C\\Base\";' для серверной 'Srvr=\"127.0.0.1\";Ref=\"Base\";'");
-        addressComboBox.setTooltip(new Tooltip("Например File=\"C:\\1C\\Base\"  или  Srvr=\"127.0.0.1\";Ref=\"Base\""));
-        addressComboBox.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(addressComboBox, Priority.ALWAYS);
-
-        Button selectButton = createFlatButton("…");
-        selectButton.setTooltip(new Tooltip("Выбрать из списка зарегистрированных баз"));
-        selectButton.setOnAction(e -> selectDatabaseFromList());
-        selectButton.setMinSize(30, 30);
-        selectButton.setMaxSize(30, 30);
+        
+        addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
+        addressComboBox = addressControl.getComboBox();
+        //addressComboBox.setItems(historyList);
+        addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
@@ -163,7 +157,8 @@ public class RunYBase extends Application {
         generateButton.setOnAction(e -> handleButtonClick());
 
         inputPanel.getChildren().addAll(
-            addressLabel, addressComboBox, selectButton, userCredentialsButton, generateButton);
+            addressLabel, addressControl, userCredentialsButton, generateButton);
+        HBox.setHgrow(addressControl, Priority.ALWAYS);
         contentBox.getChildren().add(inputPanel);
         // #endregion
 
@@ -1155,26 +1150,14 @@ public class RunYBase extends Application {
             listView.setCellFactory(lv -> new BaseEntryListCell());
 
             Button okButton = new Button("OK");
-            okButton.setOnAction(e -> {
-                BaseEntry selected = listView.getSelectionModel().getSelectedItem();
-                if (selected != null) {
-                    addressComboBox.setValue(selected.connect);
-                    updateUserButtonState();
-                }
-                dialog.close();
-            });
+            okButton.setOnAction(e -> selectCurrentBase(listView, dialog));
 
             Button cancelButton = new Button("Отмена");
             cancelButton.setOnAction(e -> dialog.close());
 
             listView.setOnMouseClicked(e -> {
                 if (e.getClickCount() == 2) {
-                    BaseEntry selected = listView.getSelectionModel().getSelectedItem();
-                    if (selected != null) {
-                        addressComboBox.setValue(selected.connect);
-                        updateUserButtonState();
-                        dialog.close();
-                    }
+                    selectCurrentBase(listView, dialog);
                 }
             });
 
@@ -1199,6 +1182,19 @@ public class RunYBase extends Application {
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка при чтении списка баз:\n" + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Выбирает текущую выделенную базу и закрывает диалог
+     */
+    private void selectCurrentBase(ListView<BaseEntry> listView, Stage dialog) {
+        BaseEntry selected = listView.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            addressComboBox.setValue(selected.connect);
+            addressControl.setAdressIB(selected.name);
+            updateUserButtonState();
+            dialog.close();
         }
     }
 
