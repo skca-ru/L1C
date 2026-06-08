@@ -1,7 +1,59 @@
-# Ignore Gradle project-specific cache directory
-.gradle
+# Compiled Java
+*.class
+*.jar
+*.war
+*.ear
 
-# Ignore Gradle build output directory
-build
-bin
-app/biuld.*
+# Gradle build output
+.gradle/
+build/
+**/build/
+
+# Gradle wrapper jar (опционально, но лучше не исключать, если он уже в репозитории)
+# gradle/wrapper/gradle-wrapper.jar
+
+# VS Code (если используете)
+.vscode/
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# NetBeans
+nbproject/
+nb-configuration.xml
+
+# Windows specific
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# macOS specific
+.DS_Store
+
+# Logs
+*.log
+
+# Local configuration (не версионировать)
+local.properties
+gradle-local.properties
+
+# Downloaded dependencies (обычно не хранят)
+lib/
+dependency-reduced-pom.xml
+
+# Скомпилированные исходники
+*.class
+*.lock

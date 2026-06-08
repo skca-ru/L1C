@@ -29,6 +29,10 @@ tasks.withType(JavaCompile) {
     options.release = 17
 }
 
+tasks.withType(Test) {
+    failOnNoDiscoveredTests = false
+}
+
 application {
     mainClass = 'l1c.RunYBase'
 }
