@@ -73,7 +73,7 @@ public class RunYBase extends Application {
 
     // @formatter:off
     // #region ========== НАСТРОЙКИ ==========
-    private static final String VERSION              = "2026.06.05.002";
+    private static final String VERSION              = "2026.06.08.003";
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
     private static final int MAX_HISTORY_SIZE        = 20;

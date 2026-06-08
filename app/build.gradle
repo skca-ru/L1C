@@ -35,7 +35,7 @@ application {
 
 jar {
     archiveBaseName.set('launcher1c')
-    archiveVersion.set('1.0.0')
+    archiveVersion.set('26.6.8')
     
     manifest {
         attributes 'Main-Class': 'l1c.RunYBase'
