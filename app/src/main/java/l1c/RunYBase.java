@@ -62,6 +62,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
@@ -128,7 +129,6 @@ public class RunYBase extends Application {
     @Override
     public void start(Stage primaryStage) {
         loadCredentials();
-        loadHistoryFromXml();
 
         // Создаём меню
         MenuBar menuBar = createMenuBar();
@@ -143,15 +143,14 @@ public class RunYBase extends Application {
         contentBox.setPadding(new Insets(10));
         contentBox.setStyle("-fx-background-color: " + COLOR_BG + ";");
 
-        // #region Область Адреса БД
+        // --- Область Адреса БД ---
         contentBox.getChildren().add(createAddressPanel());
-        // #endregion
 
-        // #region Режим запуска
+        // --- Режим запуска ---
         contentBox.getChildren().add(createModePanel());
-        // #endregion
 
-        contentBox.getChildren().add(new Label());
+        // Разделитель между секциями (дополнительный отступ)
+        contentBox.getChildren().add(new Region());
 
         // #region Блоки вывода команд для платформ
         createPlatformPanel("x86", 32);
@@ -213,22 +212,6 @@ public class RunYBase extends Application {
         } catch (Exception e) {
             // Игнорируем ошибку — просто не будем показывать имена баз
         }
-
-        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
-            updateUserButtonState(); // существующая логика
-
-            if (newVal != null && !newVal.trim().isEmpty()) {
-                String baseName = registeredAddressMap.get(newVal);
-                if (baseName != null) {
-                    addressControl.setAdressIB(baseName); // показываем имя базы
-                } else {
-                    addressControl.setAdressIB(null); // адрес не найден — скрываем
-                }
-            } else {
-                addressControl.setAdressIB(null); // поле пустое
-            }
-        });
-        updateUserButtonState();
     }
 
     private Button createButton(String text) {
@@ -518,6 +501,23 @@ public class RunYBase extends Application {
         inputPanel.getChildren().addAll(
                 addressLabel, addressControl, userCredentialsButton, generateButton);
         HBox.setHgrow(addressControl, Priority.ALWAYS);
+
+        // Настройка слушателя для отображения имени базы при изменении адреса
+        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            updateUserButtonState();
+
+            if (newVal != null && !newVal.trim().isEmpty()) {
+                String baseName = registeredAddressMap.get(newVal);
+                if (baseName != null) {
+                    addressControl.setAdressIB(baseName);
+                } else {
+                    addressControl.setAdressIB(null);
+                }
+            } else {
+                addressControl.setAdressIB(null);
+            }
+        });
+        updateUserButtonState();
 
         return inputPanel;
     }
@@ -840,10 +840,6 @@ public class RunYBase extends Application {
             createDefaultHistoryFile(path);
         }
         return list;
-    }
-
-    private static void loadHistoryFromXml() {
-        // данные уже загружены через getHistoryList()
     }
 
     private static void createDefaultHistoryFile(Path path) {
