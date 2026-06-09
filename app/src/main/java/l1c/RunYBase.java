@@ -77,9 +77,7 @@ public class RunYBase extends Application {
     private static final String VERSION              = "2026.06.08.003";
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
-    private static final int MAX_HISTORY_SIZE        = 20;
     private static final String HISTORY_DIR          = ".1c_launcher";
-    private static final String HISTORY_FILE         = "history.xml";
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
@@ -98,6 +96,7 @@ public class RunYBase extends Application {
     // #endregion ==================================
     // @formatter:on
 
+    private HistoryManager historyManager;
     private ComboBox<String> addressComboBox;
     private ComboBoxWithButton<String> addressControl;
     private TextArea outputArea86;
@@ -175,7 +174,7 @@ public class RunYBase extends Application {
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
                 saveCredentials();
-                saveHistoryToXml();
+                // saveHistoryToXml();
                 Platform.exit();
             }
 
@@ -186,7 +185,7 @@ public class RunYBase extends Application {
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(e -> {
             saveCredentials();
-            saveHistoryToXml();
+            // saveHistoryToXml();
         });
         primaryStage.show();
 
@@ -352,7 +351,7 @@ public class RunYBase extends Application {
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
         exitItem.setOnAction(e -> {
             saveCredentials();
-            saveHistoryToXml();
+            // saveHistoryToXml();
             Platform.exit();
         });
 
@@ -374,6 +373,7 @@ public class RunYBase extends Application {
 
     /**
      * Создаёт панель с режимами запуска и опциями
+     * 
      * @return VBox с панелью режимов и опций
      */
     private VBox createModePanel() {
@@ -440,8 +440,9 @@ public class RunYBase extends Application {
 
     /**
      * Создаёт блок вывода команды для указанной платформы
+     * 
      * @param platformName название платформы (x86 или x64)
-     * @param bits разрядность (32 или 64)
+     * @param bits         разрядность (32 или 64)
      */
     private void createPlatformPanel(String platformName, int bits) {
         // Метка с названием платформы
@@ -477,6 +478,7 @@ public class RunYBase extends Application {
 
     /**
      * Создаёт панель с полем ввода адреса базы данных
+     * 
      * @return HBox с панелью адреса
      */
     private HBox createAddressPanel() {
@@ -486,7 +488,9 @@ public class RunYBase extends Application {
         Label addressLabel = new Label("Адрес БД:");
         addressLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
-        historyList = FXCollections.observableArrayList(getHistoryList());
+        // historyList = FXCollections.observableArrayList(getHistoryList());
+        historyManager = new HistoryManager();
+        ObservableList<String> historyList = historyManager.getHistoryList();
 
         addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
         addressComboBox = addressControl.getComboBox();
@@ -802,119 +806,10 @@ public class RunYBase extends Application {
         }
     }
 
-    // -----------------------------------------------------------------
     // Работа с историей в XML (домашняя папка)
-    // -----------------------------------------------------------------
-    private static Path getHistoryPath() {
-        String userHome = System.getProperty("user.home");
-        Path dir = Paths.get(userHome, HISTORY_DIR);
-        try {
-            Files.createDirectories(dir);
-        } catch (IOException e) {
-            System.err.println("Не удалось создать директорию для истории: " + dir);
-        }
-        return dir.resolve(HISTORY_FILE);
-    }
-
-    private static List<String> getHistoryList() {
-        List<String> list = new ArrayList<>();
-        Path path = getHistoryPath();
-        if (!Files.exists(path)) {
-            createDefaultHistoryFile(path);
-            return list;
-        }
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(path.toFile());
-            NodeList addrNodes = doc.getElementsByTagName("address");
-            for (int i = 0; i < addrNodes.getLength(); i++) {
-                String addr = addrNodes.item(i).getTextContent();
-                if (addr != null && !addr.trim().isEmpty() && !list.contains(addr.trim())) {
-                    list.add(addr.trim());
-                }
-            }
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            System.err.println("Ошибка загрузки истории из XML. Будет создан новый файл.");
-            e.printStackTrace();
-            createDefaultHistoryFile(path);
-        }
-        return list;
-    }
-
-    private static void createDefaultHistoryFile(Path path) {
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-
-            Element root = doc.createElement("history");
-            doc.appendChild(root);
-
-            root.appendChild(doc.createComment(RunYBaseHelpTexts.HISTORY_COMMENT));
-
-            Element addresses = doc.createElement("addresses");
-            root.appendChild(addresses);
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(path.toFile());
-            transformer.transform(source, result);
-        } catch (Exception e) {
-            System.err.println("Не удалось создать файл истории по умолчанию: " + path);
-            e.printStackTrace();
-        }
-    }
-
     private void addToHistory(String address) {
-        if (address == null || address.isEmpty())
-            return;
-        historyList.remove(address);
-        historyList.add(0, address);
-        while (historyList.size() > MAX_HISTORY_SIZE) {
-            historyList.remove(historyList.size() - 1);
-        }
+        historyManager.addToHistory(address);
         addressComboBox.setValue(address);
-        saveHistoryToXml();
-    }
-
-    private void saveHistoryToXml() {
-        Path path = getHistoryPath();
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-
-            Element root = doc.createElement("history");
-            doc.appendChild(root);
-
-            root.appendChild(doc.createComment(RunYBaseHelpTexts.HISTORY_COMMENT));
-
-            Element addresses = doc.createElement("addresses");
-            root.appendChild(addresses);
-
-            for (String addr : historyList) {
-                Element addrElem = doc.createElement("address");
-                addrElem.setTextContent(addr);
-                addresses.appendChild(addrElem);
-            }
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(path.toFile());
-            transformer.transform(source, result);
-        } catch (Exception e) {
-            System.err.println("Ошибка сохранения истории в XML: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 
     private static boolean isDatabaseAddress(String text) {
