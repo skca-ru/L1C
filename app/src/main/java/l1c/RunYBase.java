@@ -174,7 +174,6 @@ public class RunYBase extends Application {
         Scene scene = new Scene(borderRoot, 1050, SHOW_DEBUG_PANEL ? 700 : 500);
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
-                saveCredentials();
                 // saveHistoryToXml();
                 Platform.exit();
             }
@@ -185,7 +184,6 @@ public class RunYBase extends Application {
                 "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(e -> {
-            saveCredentials();
             // saveHistoryToXml();
         });
         primaryStage.show();
@@ -351,7 +349,6 @@ public class RunYBase extends Application {
         MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
         exitItem.setOnAction(e -> {
-            saveCredentials();
             // saveHistoryToXml();
             Platform.exit();
         });
@@ -575,7 +572,7 @@ public class RunYBase extends Application {
         if (userCredentialsButton == null)
             return;
         String address = getCurrentAddress();
-        UserCredentials cred = credentialsMap.get(address);
+        UserCredentials cred = credentialsManager.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
             userCredentialsButton.setUserData(COLOR_USER_HAS_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
@@ -603,75 +600,7 @@ public class RunYBase extends Application {
         }
         return dir.resolve("credentials.xml");
     }
-
-    private static void loadCredentials() {
-        Path path = getCredentialsPath();
-        if (!Files.exists(path)) {
-            return;
-        }
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(path.toFile());
-
-            NodeList credNodes = doc.getElementsByTagName("credential");
-            for (int i = 0; i < credNodes.getLength(); i++) {
-                Element elem = (Element) credNodes.item(i);
-                String address = getTagValue("address", elem);
-                String username = getTagValue("username", elem);
-                String encryptedPassword = getTagValue("password", elem);
-
-                if (address != null && username != null && !address.isEmpty()) {
-                    String password = encryptedPassword != null ? decrypt(encryptedPassword) : "";
-                    credentialsMap.put(address, new UserCredentials(username, password));
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Ошибка загрузки учётных данных: " + e.getMessage());
-        }
-    }
-
-    private static void saveCredentials() {
-        Path path = getCredentialsPath();
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-
-            Element root = doc.createElement("credentials");
-            doc.appendChild(root);
-
-            for (java.util.Map.Entry<String, UserCredentials> entry : credentialsMap.entrySet()) {
-                Element credElem = doc.createElement("credential");
-
-                Element addrElem = doc.createElement("address");
-                addrElem.setTextContent(entry.getKey());
-                credElem.appendChild(addrElem);
-
-                Element userElem = doc.createElement("username");
-                userElem.setTextContent(entry.getValue().getUsername());
-                credElem.appendChild(userElem);
-
-                Element passElem = doc.createElement("password");
-                passElem.setTextContent(encrypt(entry.getValue().getPassword()));
-                credElem.appendChild(passElem);
-
-                root.appendChild(credElem);
-            }
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(path.toFile());
-            transformer.transform(source, result);
-        } catch (Exception e) {
-            System.err.println("Ошибка сохранения учётных данных: " + e.getMessage());
-        }
-    }
-
+ 
     private static final String KEY = "1C_Launcher_2026_Secret_Key";
 
     /**
@@ -699,30 +628,6 @@ public class RunYBase extends Application {
         }
     }
 
-    private static String encrypt(String input) {
-        if (input == null || input.isEmpty())
-            return "";
-        byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
-        byte[] keyBytes = KEY.getBytes(StandardCharsets.UTF_8);
-        byte[] result = new byte[inputBytes.length];
-        for (int i = 0; i < inputBytes.length; i++) {
-            result[i] = (byte) (inputBytes[i] ^ keyBytes[i % keyBytes.length]);
-        }
-        return Base64.getEncoder().encodeToString(result);
-    }
-
-    private static String decrypt(String input) {
-        if (input == null || input.isEmpty())
-            return "";
-        byte[] inputBytes = Base64.getDecoder().decode(input);
-        byte[] keyBytes = KEY.getBytes(StandardCharsets.UTF_8);
-        byte[] result = new byte[inputBytes.length];
-        for (int i = 0; i < inputBytes.length; i++) {
-            result[i] = (byte) (inputBytes[i] ^ keyBytes[i % keyBytes.length]);
-        }
-        return new String(result, StandardCharsets.UTF_8);
-    }
-
     private void showUserCredentialsDialog() {
         String address = getCurrentAddress();
         if (address.isEmpty()) {
@@ -730,7 +635,7 @@ public class RunYBase extends Application {
             return;
         }
 
-        UserCredentials existing = credentialsMap.get(address);
+        UserCredentials existing = credentialsManager.get(address);
         String currentUsername = existing != null ? existing.getUsername() : "";
         String currentPassword = existing != null ? existing.getPassword() : "";
 
@@ -767,13 +672,11 @@ public class RunYBase extends Application {
                 String password = passwordField.getText();
 
                 if (!username.isEmpty()) {
-                    credentialsMap.put(address, new UserCredentials(username, password));
-                    saveCredentials();
+                    credentialsManager.put(address, new UserCredentials(username, password));
                     showAlert(Alert.AlertType.INFORMATION, "Успешно",
                             "Учётные данные сохранены для адреса:\n" + address);
                 } else if (existing != null) {
-                    credentialsMap.remove(address);
-                    saveCredentials();
+                    credentialsManager.remove(address);
                     showAlert(Alert.AlertType.INFORMATION, "Удалено", "Учётные данные удалены для адреса:\n" + address);
                 }
                 updateUserButtonState();
@@ -782,7 +685,7 @@ public class RunYBase extends Application {
     }
 
     private void askAndRunWithCredentials(String address, String baseCommand) {
-        UserCredentials cred = credentialsMap.get(address);
+        UserCredentials cred = credentialsManager.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Запуск с учётными данными");
@@ -910,7 +813,7 @@ public class RunYBase extends Application {
         outputArea.setText("");
 
         String escaped = text.replace("\"", "\"\"");
-        UserCredentials cred = credentialsMap.get(text);
+        UserCredentials cred = credentialsManager.get(text);
 
         String cmd86 = buildCommand(
                 "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
