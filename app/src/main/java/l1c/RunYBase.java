@@ -111,10 +111,10 @@ public class RunYBase extends Application {
     private ComboBox<String> debugProtocolCombo;
     private TextArea debugArea;
     private ObservableList<String> historyList;
+    private CredentialsManager credentialsManager;
 
     private Button userCredentialsButton;
 
-    private static final java.util.Map<String, UserCredentials> credentialsMap = new java.util.HashMap<>();
     // Для проверки есть адрес в списке зарегистрированных баз
     private Map<String, String> registeredAddressMap = new HashMap<>();
 
@@ -127,7 +127,8 @@ public class RunYBase extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        loadCredentials();
+    
+        credentialsManager = new CredentialsManager();
 
         // Создаём меню
         MenuBar menuBar = createMenuBar();
