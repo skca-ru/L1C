@@ -5,6 +5,18 @@ package l1c;
  */
 public final class RunYBaseHelpTexts {
 
+    // Стили для всплывающих подсказок (Tooltip)
+    public static final String TOOLTIP_STYLE = """
+            -fx-background-color: #F3E4BC;
+            -fx-text-fill: #000000;
+            -fx-border-color: #C0A050;
+            -fx-border-radius: 3px;
+            -fx-background-radius: 3px;
+            -fx-padding: 5 10 5 10;
+            -fx-font-size: 13px;
+            -fx-font-weight: normal;
+            """;
+
     public static final String APP_MODE_INFO = """
             Режимы запуска 1С:
 
@@ -53,6 +65,14 @@ public final class RunYBaseHelpTexts {
             • -http — /Debug -http (протокол HTTP).
             """;
 
+    public static final String DEBUG_MODE_TOOLTIP = """
+            Добавить параметр /Debug для запуска в режиме отладки
+            """;
+
+    public static final String APP_ARCH_TOOLTIP = """
+            Добавить параметры /AppArch для разрядности платформы
+            """;
+
     public static final String HISTORY_COMMENT = """
             Файл истории адресов баз 1С.
             Содержит последние использованные адреса для быстрого выбора.
@@ -68,6 +88,14 @@ public final class RunYBaseHelpTexts {
 
     public static final String BASE_CONNECTION_PROMPT = """
             для файловой 'File="C:\\1C\\Base";' для серверной 'Srvr="127.0.0.1";Ref="Base";'
+            """;
+
+    public static final String USER_CRED_HAS_CRED_TOOLTIP = """
+            Учётные данные сохранены: %s
+            """;
+
+    public static final String USER_CRED_NO_CRED_TOOLTIP = """
+            Нажмите чтобы задать учётные данные
             """;
 
     private RunYBaseHelpTexts() {

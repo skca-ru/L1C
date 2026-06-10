@@ -49,15 +49,7 @@ class ComboBoxWithButton<T> extends HBox {
         }
         // Создаём один тултип на все случаи
         dynamicTooltip = new Tooltip(exampleTooltipText);
-        dynamicTooltip.setStyle("""
-                        -fx-background-color: #F3E4BC;
-                        -fx-text-fill: #000000;
-                        -fx-border-color: #C0A050;
-                        -fx-border-radius: 3px;
-                        -fx-background-radius: 3px;
-                        -fx-padding: 5 10 5 10;
-                        -fx-font-size: 13px;
-                """);
+        dynamicTooltip.setStyle(RunYBaseHelpTexts.TOOLTIP_STYLE);
         comboBox.setTooltip(dynamicTooltip);
 
         // Показывать tooltip если необходимо

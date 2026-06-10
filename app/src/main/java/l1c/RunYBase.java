@@ -410,22 +410,22 @@ public class RunYBase extends Application {
         // Панель с опциями (отладка, приоритет платформы)
         debugModeCheckbox = new CheckBox("Режим отладки");
         debugModeCheckbox.setSelected(true);
-        debugModeCheckbox.setTooltip(new Tooltip("Добавить параметр /Debug для запуска в режиме отладки"));
+        debugModeCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.DEBUG_MODE_TOOLTIP));
 
         debugProtocolCombo = new ComboBox<>(FXCollections.observableArrayList("по умолчанию", "-tcp", "-http"));
         debugProtocolCombo.setValue("по умолчанию");
-        debugProtocolCombo.setTooltip(new Tooltip(RunYBaseHelpTexts.DEBUG_PROTOCOL_INFO));
+        debugProtocolCombo.setTooltip(createTooltip(RunYBaseHelpTexts.DEBUG_PROTOCOL_INFO));
 
         Button debugHelpButton = createHelpButton();
-        debugHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.DEBUG_INFO));
+        debugHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.DEBUG_INFO));
         debugHelpButton.setOnAction(
                 e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", RunYBaseHelpTexts.DEBUG_INFO));
 
         priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
-        priorityPlatformCheckbox.setTooltip(new Tooltip("Добавить параметры /AppArch для разрядности платформы"));
+        priorityPlatformCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.APP_ARCH_TOOLTIP));
 
         Button helpButton = createHelpButton();
-        helpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_ARCH_INFO));
+        helpButton.setTooltip(createTooltip(RunYBaseHelpTexts.APP_ARCH_INFO));
         helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch",
                 RunYBaseHelpTexts.APP_ARCH_INFO));
 
@@ -566,6 +566,24 @@ public class RunYBase extends Application {
         return button;
     }
 
+    /**
+     * Создаёт Tooltip со стандартным стилем
+     */
+    private Tooltip createTooltip(String text) {
+        Tooltip tooltip = new Tooltip(text);
+        tooltip.setStyle(RunYBaseHelpTexts.TOOLTIP_STYLE);
+        return tooltip;
+    }
+
+    /**
+     * Создаёт Tooltip со стандартным стилем и форматированием
+     */
+    private Tooltip createTooltip(String formatText, Object... args) {
+        Tooltip tooltip = new Tooltip(String.format(formatText, args));
+        tooltip.setStyle(RunYBaseHelpTexts.TOOLTIP_STYLE);
+        return tooltip;
+    }
+
     private void updateUserButtonState() {
         if (userCredentialsButton == null)
             return;
@@ -575,12 +593,12 @@ public class RunYBase extends Application {
             userCredentialsButton.setUserData(COLOR_USER_HAS_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
                     .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_HAS_CRED));
-            userCredentialsButton.setTooltip(new Tooltip("Учётные данные сохранены: " + cred.getUsername()));
+            userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
         } else {
             userCredentialsButton.setUserData(COLOR_USER_NO_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
                     .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_NO_CRED));
-            userCredentialsButton.setTooltip(new Tooltip("Нажмите чтобы задать учётные данные"));
+            userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_NO_CRED_TOOLTIP));
         }
     }
 
