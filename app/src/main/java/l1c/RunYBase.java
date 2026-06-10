@@ -989,6 +989,24 @@ public class RunYBase extends Application {
                 String text = clipboard.getString();
                 if (isDatabaseAddress(text)) {
                     addressComboBox.setValue(text);
+                    
+                    // Поиск совпадения в списке зарегистрированных баз
+                    List<BaseEntry> baseEntries;
+                    try {
+                        baseEntries = loadAndSortDatabases();
+                        for (BaseEntry base : baseEntries) {
+                            if (base.connect != null && base.connect.equals(text)) {
+                                addressControl.setAdressIB(base.name);
+                                showAlert(Alert.AlertType.INFORMATION, "Автовставка из буфера",
+                                        "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + text +
+                                        "\n\nНайдена база: " + base.name);
+                                return;
+                            }
+                        }
+                    } catch (Exception e) {
+                        // Если не удалось загрузить список баз, просто вставляем адрес
+                    }
+                    
                     showAlert(Alert.AlertType.INFORMATION, "Автовставка из буфера",
                             "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + text);
                     return;
