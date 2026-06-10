@@ -348,6 +348,9 @@ public class RunYBase extends Application {
         Menu fileMenu = new Menu("_Файл");
         fileMenu.setStyle("-fx-padding: 5 10 5 10;");
 
+        MenuItem open1CStartItem = new MenuItem("О_ткрыть стандартный запуск 1С");
+        open1CStartItem.setOnAction(e -> launchStandard1CStart());
+
         MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
         exitItem.setOnAction(e -> {
@@ -356,7 +359,7 @@ public class RunYBase extends Application {
             Platform.exit();
         });
 
-        fileMenu.getItems().addAll(exitItem);
+        fileMenu.getItems().addAll(open1CStartItem, new javafx.scene.control.SeparatorMenuItem(), exitItem);
         menuBar.getMenus().add(fileMenu);
 
         // Меню Помощь
@@ -812,7 +815,7 @@ public class RunYBase extends Application {
                     }
                     runCommand(cmd, "с учётными данными");
                 } else {
-                    runCommand(baseCommand, "без учётных данных");
+                    runCommand(baseCommand, "");
                 }
             });
         } else {
@@ -820,6 +823,43 @@ public class RunYBase extends Application {
         }
     }
 
+    /**
+     * Запускает стандартную программу запуска 1С (1cestart.exe)
+     */
+    private void launchStandard1CStart() {
+        try {
+            List<String> paths = new ArrayList<>();
+            paths.add("C:\\Program Files\\1cv8\\common\\1cestart.exe");
+            paths.add("C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe");
+            
+            String foundPath = null;
+            for (String path : paths) {
+                if (Files.exists(Paths.get(path))) {
+                    foundPath = path;
+                    break;
+                }
+            }
+            
+            if (foundPath != null) {
+                ProcessBuilder pb = new ProcessBuilder(foundPath);
+                pb.start();
+                showAutoClosingAlert("Стандартный запуск 1С запущен!\nПуть: " + foundPath, 
+                        "Запуск 1cestart", 3);
+            } else {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение",
+                        "Не найден файл 1cestart.exe!\n\nОжидаемые пути:\n" +
+                        "C:\\Program Files\\1cv8\\common\\1cestart.exe\n" +
+                        "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe\n\n" +
+                        "Убедитесь, что 1С:Предприятие 8 установлена на компьютере.");
+            }
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Ошибка",
+                    "Ошибка запуска стандартного 1cestart.exe:\n" + e.getMessage());
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Работа с историей в XML (домашняя папка)
     // -----------------------------------------------------------------
     // Работа с историей в XML (домашняя папка)
     // -----------------------------------------------------------------
