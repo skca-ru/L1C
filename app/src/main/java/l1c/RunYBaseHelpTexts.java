@@ -70,6 +70,13 @@ public final class RunYBaseHelpTexts {
             для файловой 'File="C:\\1C\\Base";' для серверной 'Srvr="127.0.0.1";Ref="Base";'
             """;
 
+    public static final String WARNING_NO_ADDRESS = """
+            Введите адрес базы данных! Например:
+
+            Файловая БД: File="C:\\1C\\Base"
+            Клиент-сервер: Srvr="127.0.0.1";Ref="Base";
+            """;
+
     private RunYBaseHelpTexts() {
         // Конструктор для предотвращения создания экземпляров
     }

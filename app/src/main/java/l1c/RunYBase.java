@@ -77,7 +77,6 @@ public class RunYBase extends Application {
     private static final String VERSION              = "2026.06.08.003";
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
-    private static final String HISTORY_DIR          = ".1c_launcher";
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
@@ -590,19 +589,6 @@ public class RunYBase extends Application {
     // Учётные данные пользователей
     // -----------------------------------------------------------------
 
-    private static Path getCredentialsPath() {
-        String userHome = System.getProperty("user.home");
-        Path dir = Paths.get(userHome, HISTORY_DIR);
-        try {
-            Files.createDirectories(dir);
-        } catch (IOException e) {
-            System.err.println("Не удалось создать директорию для истории: " + dir);
-        }
-        return dir.resolve("credentials.xml");
-    }
- 
-    private static final String KEY = "1C_Launcher_2026_Secret_Key";
-
     /**
      * Увеличивает яркость цвета на заданный коэффициент
      * 
@@ -801,8 +787,7 @@ public class RunYBase extends Application {
     private void handleButtonClick() {
         String text = getCurrentAddress();
         if (text.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение",
-                    "Введите адрес базы данных! Например:\n\nФайловая БД: File=\"C:\\1C\\Base\"\nКлиент-сервер: Srvr=\"127.0.0.1\";Ref=\"Base\";");
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
             return;
         }
 
