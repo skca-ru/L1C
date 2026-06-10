@@ -21,8 +21,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 public class CredentialsManager {
-    private static final String HISTORY_DIR = ".1c_launcher";
-    private static final String KEY = "1C_Launcher_2026_Secret_Key";
+    private static final String KEY = AppConstants.ENCRYPTION_KEY;
     private final Map<String, UserCredentials> credentialsMap = new HashMap<>();
 
     public CredentialsManager() {
@@ -49,7 +48,7 @@ public class CredentialsManager {
 
     private Path getCredentialsPath() {
         String userHome = System.getProperty("user.home");
-        Path dir = Paths.get(userHome, HISTORY_DIR);
+        Path dir = Paths.get(userHome, AppConstants.APP_DATA_DIR);
         try {
             Files.createDirectories(dir);
         } catch (Exception e) {

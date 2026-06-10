@@ -26,9 +26,7 @@ import java.util.List;
  * Управление историей адресов баз 1С
  */
 public class HistoryManager {
-    private static final String HISTORY_DIR = ".1c_launcher";
-    private static final String HISTORY_FILE = "history.xml";
-    private static final int MAX_HISTORY_SIZE = 20;
+    private static final int MAX_HISTORY_SIZE = AppConstants.MAX_HISTORY_SIZE;
     
     private ObservableList<String> historyList;
     
@@ -61,13 +59,13 @@ public class HistoryManager {
      */
     private static Path getHistoryPath() {
         String userHome = System.getProperty("user.home");
-        Path dir = Paths.get(userHome, HISTORY_DIR);
+        Path dir = Paths.get(userHome, AppConstants.APP_DATA_DIR);
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
             System.err.println("Не удалось создать директорию для истории: " + dir);
         }
-        return dir.resolve(HISTORY_FILE);
+        return dir.resolve(AppConstants.HISTORY_FILE);
     }
     
     /**
