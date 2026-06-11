@@ -575,7 +575,7 @@ public class RunYBase extends Application {
      */
     private Tooltip createTooltip(String text) {
         Tooltip tooltip = new Tooltip(text);
-        tooltip.setStyle(RunYBaseHelpTexts.TOOLTIP_STYLE);
+        tooltip.setStyle(AppConstants.TOOLTIP_STYLE);
         return tooltip;
     }
 
@@ -584,7 +584,7 @@ public class RunYBase extends Application {
      */
     private Tooltip createTooltip(String formatText, Object... args) {
         Tooltip tooltip = new Tooltip(String.format(formatText, args));
-        tooltip.setStyle(RunYBaseHelpTexts.TOOLTIP_STYLE);
+        tooltip.setStyle(AppConstants.TOOLTIP_STYLE);
         return tooltip;
     }
 

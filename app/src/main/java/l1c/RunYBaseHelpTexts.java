@@ -5,18 +5,6 @@ package l1c;
  */
 public final class RunYBaseHelpTexts {
 
-    // Стили для всплывающих подсказок (Tooltip)
-    public static final String TOOLTIP_STYLE = """
-            -fx-background-color: #F3E4BC;
-            -fx-text-fill: #000000;
-            -fx-border-color: #C0A050;
-            -fx-border-radius: 3px;
-            -fx-background-radius: 3px;
-            -fx-padding: 5 10 5 10;
-            -fx-font-size: 13px;
-            -fx-font-weight: normal;
-            """;
-
     public static final String APP_MODE_INFO = """
             Режимы запуска 1С:
 
