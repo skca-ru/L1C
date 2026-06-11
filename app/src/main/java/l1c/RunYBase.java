@@ -829,10 +829,11 @@ public class RunYBase extends Application {
      * @param escaped      экранированный адрес базы
      * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
      * @param cred         учётные данные пользователя (могут быть null)
+     * @param isDesigner   запущен ли Конфигуратор
      * @return сформированная строка запуска
      */
     private String buildCommand(String platformPath, String appArch, String escaped,
-            String commandPart, UserCredentials cred) {
+            String commandPart, UserCredentials cred, boolean isDesigner) {
         StringBuilder cmd = new StringBuilder();
         cmd.append("\"").append(platformPath).append("\" ");
         cmd.append(commandPart).append(" ");
@@ -849,7 +850,8 @@ public class RunYBase extends Application {
             cmd.append(" /AppArch ").append(appArch);
         }
 
-        if (debugModeCheckbox.isSelected()) {
+        // Режим отладки игнорируется для Конфигуратора
+        if (debugModeCheckbox.isSelected() && !isDesigner) {
             String debugParam = " /Debug -attach";
             String protocol = debugProtocolCombo.getValue();
             if (protocol != null && !"по умолчанию".equals(protocol)) {
@@ -877,19 +879,23 @@ public class RunYBase extends Application {
         String escaped = text.replace("\"", "\"\"");
         UserCredentials cred = credentialsManager.get(text);
 
+        boolean isDesigner = designerRadio.isSelected();
+
         String cmd86 = buildCommand(
                 "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
                 "x86",
                 escaped,
                 commandPart,
-                cred);
+                cred,
+                isDesigner);
 
         String cmd64 = buildCommand(
                 "C:\\Program Files\\1cv8\\common\\1cestart.exe",
                 "x86_64",
                 escaped,
                 commandPart,
-                cred);
+                cred,
+                isDesigner);
 
         outputArea86.setText(cmd86);
         outputArea.setText(cmd64);
