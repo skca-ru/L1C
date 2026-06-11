@@ -11,6 +11,12 @@ public class AppConstants {
     public static final String CREDENTIALS_FILE    = "credentials.xml";
     public static final String ENCRYPTION_KEY      = "1C_Launcher_2026_Secret_Key";
     public static final int    MAX_HISTORY_SIZE    = 20;
+    public static final int CHOICE_BUTTON_WIDTH   = 25;
+
+    // Цвета для рамки при фокусе
+    public static final String FOCUS_BORDER_COLOR = "#0078D7";
+    public static final String NORMAL_BORDER_COLOR = "#a0a0a0";
+
     // @formatter:on
 
 

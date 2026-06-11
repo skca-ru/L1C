@@ -14,16 +14,12 @@ import javafx.scene.layout.Priority;
  * Используется для выбора адресов баз 1С:Предприятие
  */
 class ComboBoxWithButton<T> extends HBox {
-    private static final int CHOICE_BUTTON_WIDTH = 25;
     private final ComboBox<T> comboBox;
     private final Button choiceButton;
     private String adressInfoBase;
     private final Tooltip dynamicTooltip;
     private final String exampleTooltipText;
 
-    // Цвета для рамки при фокусе
-    private static final String FOCUS_BORDER_COLOR = "#0078D7";
-    private static final String NORMAL_BORDER_COLOR = "#a0a0a0";
 
     public ComboBoxWithButton(String exampleTooltipText) {
         this(exampleTooltipText, null);
@@ -60,9 +56,9 @@ class ComboBoxWithButton<T> extends HBox {
         });
 
         choiceButton = new Button("…");
-        choiceButton.setPrefWidth(CHOICE_BUTTON_WIDTH);
-        choiceButton.setMaxWidth(CHOICE_BUTTON_WIDTH);
-        choiceButton.setMinWidth(CHOICE_BUTTON_WIDTH);
+        choiceButton.setPrefWidth(AppConstants.CHOICE_BUTTON_WIDTH);
+        choiceButton.setMaxWidth(AppConstants.CHOICE_BUTTON_WIDTH);
+        choiceButton.setMinWidth(AppConstants.CHOICE_BUTTON_WIDTH);
 
         // Установка нормальных стилей
         updateBorderStyle(false);
@@ -113,7 +109,7 @@ class ComboBoxWithButton<T> extends HBox {
      * @param focused находится ли в фокусе поле ввода или кнопка
      */
     private void updateBorderStyle(boolean focused) {
-        String borderColor = focused ? FOCUS_BORDER_COLOR : NORMAL_BORDER_COLOR;
+        String borderColor = focused ? AppConstants.FOCUS_BORDER_COLOR : AppConstants.NORMAL_BORDER_COLOR;
 
         // Стиль для ComboBox: левая, верхняя, нижняя границы + скругление слева
         comboBox.setStyle(String.format("""
@@ -131,7 +127,7 @@ class ComboBoxWithButton<T> extends HBox {
                         -fx-background-color: white;
                         -fx-border-width: 0 1px 0 1px;
                         -fx-border-color: black %s black %s;
-                    """, NORMAL_BORDER_COLOR, NORMAL_BORDER_COLOR));
+                    """, AppConstants.NORMAL_BORDER_COLOR, AppConstants.NORMAL_BORDER_COLOR));
         }
 
         // Стиль для кнопки: правая, верхняя, нижняя границы + скругление справа

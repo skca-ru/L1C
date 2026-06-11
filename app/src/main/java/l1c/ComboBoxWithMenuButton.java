@@ -31,10 +31,10 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
         
         // Создаём новую кнопку с вертикальными точками
         menuButton = new Button("⋮");
-        // menuButton.setPrefWidth(CHOICE_BUTTON_WIDTH);
-        // menuButton.setMaxWidth(CHOICE_BUTTON_WIDTH);
-        // menuButton.setMinWidth(CHOICE_BUTTON_WIDTH);
-        //menuButton.setFocusTraversable(false);
+         menuButton.setPrefWidth(AppConstants.CHOICE_BUTTON_WIDTH);
+         menuButton.setMaxWidth(AppConstants.CHOICE_BUTTON_WIDTH);
+         menuButton.setMinWidth(AppConstants.CHOICE_BUTTON_WIDTH);
+        menuButton.setFocusTraversable(false);
         //menuButton.setCursor(javafx.scene.Cursor.HAND);
         
         // Настраиваем контекстное меню
@@ -46,7 +46,7 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
         getChildren().add(menuButton);
 
         // Обновляем стили для новой компоновки
-        updateCombinedStyle();
+        updateCombinedStyle(false);
     }
     
     /**
@@ -79,10 +79,24 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
      * Обновляет стили для трёхкомпонентного элемента
      * (переопределяет метод родителя)
      */
-    private void updateCombinedStyle() {
-        // Здесь можно переопределить стили, если нужно
-        // Базовая стилизация уже есть в родительском классе
-        // При необходимости можно добавить специфические стили для menuButton
+
+    // Здесь можно переопределить стили, если нужно
+    // Базовая стилизация уже есть в родительском классе
+    // При необходимости можно добавить специфические стили для menuButton
+    private void updateCombinedStyle(boolean focused) {
+        String borderColor = focused ? AppConstants.FOCUS_BORDER_COLOR : AppConstants.NORMAL_BORDER_COLOR;
+
+        // Стиль для кнопки: правая, верхняя, нижняя границы + скругление справа
+        menuButton.setStyle(String.format("""
+                        -fx-background-color: white;
+                        -fx-border-color: %s %s %s %s;
+                        -fx-border-width: 1px 1px 1px 0;
+                        -fx-border-radius: 0 3px 3px 0;
+                        -fx-background-radius: 0 3px 3px 0;
+                        -fx-cursor: hand;
+                """, borderColor, borderColor, borderColor, borderColor));
+
+
     }
     
     public Button getMenuButton() {
