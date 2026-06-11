@@ -97,6 +97,7 @@ public class RunYBase extends Application {
     private ToggleGroup modeGroup;
     private CheckBox priorityPlatformCheckbox;
     private CheckBox debugModeCheckbox;
+    private CheckBox clearCacheCheckbox;
     private ComboBox<String> debugProtocolCombo;
     private TextArea debugArea;
     private ObservableList<String> historyList;
@@ -420,9 +421,18 @@ public class RunYBase extends Application {
         helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch",
                 RunYBaseHelpTexts.APP_ARCH_INFO));
 
+        clearCacheCheckbox = new CheckBox("Очистка кэша (/ClearCache)");
+        clearCacheCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.CLEAR_CACHE_TOOLTIP));
+
+        Button clearCacheHelpButton = createHelpButton();
+        clearCacheHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.CLEAR_CACHE_INFO));
+        clearCacheHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /ClearCache",
+                RunYBaseHelpTexts.CLEAR_CACHE_INFO));
+
         HBox debugOption = createHelpOption(debugModeCheckbox, debugProtocolCombo, debugHelpButton);
         HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
-        HBox optionsRow = new HBox(15, debugOption, platformOption);
+        HBox clearCacheOption = createHelpOption(clearCacheCheckbox, clearCacheHelpButton);
+        HBox optionsRow = new HBox(15, debugOption, platformOption, clearCacheOption);
         optionsRow.setAlignment(Pos.CENTER_LEFT);
 
         panel.getChildren().addAll(modeRow, optionsRow);
@@ -847,6 +857,10 @@ public class RunYBase extends Application {
                 debugParam += " " + protocol;
             }
             cmd.append(debugParam);
+        }
+
+        if (clearCacheCheckbox.isSelected()) {
+            cmd.append(" /ClearCache");
         }
 
         return cmd.toString();

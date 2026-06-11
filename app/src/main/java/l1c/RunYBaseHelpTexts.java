@@ -61,6 +61,20 @@ public final class RunYBaseHelpTexts {
             Добавить параметры /AppArch для разрядности платформы
             """;
 
+    public static final String CLEAR_CACHE_INFO = """
+            /ClearCache
+            — очищает кэш клиент-серверных вызовов, в котором хранятся:
+              • метаданные форм
+              • модули
+              • сохранённый индекс поиска по текстам модулей
+            
+            Используйте при проблемах с актуальностью кэша или после обновлений конфигурации.
+            """;
+
+    public static final String CLEAR_CACHE_TOOLTIP = """
+            Добавить параметр /ClearCache для очистки кэша
+            """;
+
     public static final String HISTORY_COMMENT = """
             Файл истории адресов баз 1С.
             Содержит последние использованные адреса для быстрого выбора.
