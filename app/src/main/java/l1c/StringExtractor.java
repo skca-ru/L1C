@@ -40,12 +40,6 @@ public class StringExtractor {
             return serverMatcher.group();
         }
 
-        // Если точного совпадения нет, попробуем найти фрагменты и собрать адрес
-        Matcher partialMatcher = SERVER_PATTERN.matcher(text);
-        if (partialMatcher.find()) {
-            return partialMatcher.group();
-        }
-
         return null;
     }
 }
