@@ -101,7 +101,7 @@ public class RunYBase extends Application {
     // @formatter:on
 
     private ComboBox<String> addressComboBox;
-    private ComboBoxWithButton<String> addressControl;
+    private ComboBoxWithMenuButton<String> addressControl;
     private TextArea outputArea86;
     private TextArea outputArea;
     private RadioButton designerRadio;
@@ -493,7 +493,7 @@ public class RunYBase extends Application {
 
         historyList = FXCollections.observableArrayList(getHistoryList());
 
-        addressControl = new ComboBoxWithButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
+        addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
