@@ -1,32 +1,21 @@
 package l1c;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.*;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.*;
+import javafx.geometry.*;
+import javafx.beans.value.*;
+import javafx.event.*;
+import javafx.util.Duration;
+import javafx.scene.input.*;
+import javafx.scene.text.Text;
+import javax.xml.parsers.*;
+import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 import javafx.application.Application;
@@ -772,7 +761,7 @@ public class RunYBase extends Application {
                 String text = clipboard.getString();
 
                 // Ищем в тексте строку подключения к 1С
-                String extractedAddress = extractConnectionString(text);
+                String extractedAddress = StringExtractor.extractConnectionString(text);
 
                 if (extractedAddress != null) {
                     addressComboBox.setValue(extractedAddress);
@@ -804,55 +793,6 @@ public class RunYBase extends Application {
             addressComboBox.setValue(null);
             addressComboBox.getEditor().setText("");
         }
-    }
-
-    /**
-     * Извлекает строку подключения к 1С из произвольного текста
-     * 
-     * @param text исходный текст (может содержать лишние слова)
-     * @return строку подключения или null, если не найдено
-     */
-    private String extractConnectionString(String text) {
-        if (text == null || text.isEmpty())
-            return null;
-
-        // Ищем шаблоны: File="..." или Srvr="..." (с возможным Ref=...)
-        // Регулярное выражение ищет:
-        // 1. File="путь" (с возможными ; в конце)
-        // 2. Srvr="сервер";Ref="база" (с возможными параметрами)
-
-        // Шаблон для файловой базы
-        Pattern filePattern = Pattern.compile("File=\"[^\"]+\"");
-        Matcher fileMatcher = filePattern.matcher(text);
-        if (fileMatcher.find()) {
-            String filePart = fileMatcher.group();
-            // Ищем, есть ли после этого ещё параметры (например, ;)
-            int startIdx = fileMatcher.start();
-            int endIdx = fileMatcher.end();
-            // Если после найденного есть ";", захватываем до него (но не включая)
-            if (endIdx < text.length() && text.charAt(endIdx) == ';') {
-                return filePart + ";";
-            }
-            return filePart;
-        }
-
-        // Шаблон для серверной базы
-        Pattern serverPattern = Pattern.compile("Srvr=\"[^\"]+\"\\s*;\\s*Ref=\"[^\"]+\"");
-        Matcher serverMatcher = serverPattern.matcher(text);
-        if (serverMatcher.find()) {
-            return serverMatcher.group();
-        }
-
-        // Если точного совпадения нет, попробуем найти фрагменты и собрать адрес
-        // Например, "База клиента Srvr="localhost";Ref="pa_ka";" -> найдёт всё от Srvr
-        // до ;
-        Pattern partialPattern = Pattern.compile("(Srvr=\"[^\"]+\"\\s*;\\s*Ref=\"[^\"]+\")");
-        Matcher partialMatcher = partialPattern.matcher(text);
-        if (partialMatcher.find()) {
-            return partialMatcher.group();
-        }
-
-        return null;
     }
 
     private String getCurrentAddress() {
