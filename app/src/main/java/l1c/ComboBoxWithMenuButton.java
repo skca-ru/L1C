@@ -27,13 +27,14 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
         
         // Убираем исходную кнопку из родительского HBox и добавляем свои
         // В родительском классе кнопка называется choiceButton и доступна через геттер
-   //   Button originalChoiceButton = getChoiceButton();
+        Button originalChoiceButton = getChoiceButton();
         
         // Создаём новую кнопку с вертикальными точками
-        menuButton = new Button("⋮");
-         menuButton.setPrefWidth(AppConstants.CHOICE_BUTTON_WIDTH);
-         menuButton.setMaxWidth(AppConstants.CHOICE_BUTTON_WIDTH);
-         menuButton.setMinWidth(AppConstants.CHOICE_BUTTON_WIDTH);
+        //menuButton = new Button("\u2630");
+        menuButton = new Button("☰");
+        menuButton.setPrefWidth(AppConstants.CHOICE_BUTTON_WIDTH + 5);
+        menuButton.setMaxWidth(AppConstants.CHOICE_BUTTON_WIDTH + 5);
+        menuButton.setMinWidth(AppConstants.CHOICE_BUTTON_WIDTH+ + 5);
         menuButton.setFocusTraversable(false);
         //menuButton.setCursor(javafx.scene.Cursor.HAND);
         
@@ -41,9 +42,9 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
         setupContextMenu();
         
         // Перестраиваем HBox: удаляем старую кнопку и добавляем две
-     //   getChildren().remove(originalChoiceButton);
-      //  getChildren().addAll(originalChoiceButton, menuButton);
-        getChildren().add(menuButton);
+        getChildren().remove(originalChoiceButton);
+        getChildren().remove(menuButton);getChildren().addAll(originalChoiceButton, menuButton);
+        //getChildren().add(menuButton);
 
         // Обновляем стили для новой компоновки
         updateCombinedStyle(false);
