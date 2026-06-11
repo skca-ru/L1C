@@ -104,7 +104,6 @@ public final class RunYBaseHelpTexts {
             Файловая БД: File="C:\\1C\\Base"
             Клиент-сервер: Srvr="127.0.0.1";Ref="Base";
             """;
-            """;
 
     private RunYBaseHelpTexts() {
         // Конструктор для предотвращения создания экземпляров
