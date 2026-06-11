@@ -29,25 +29,21 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
         // В родительском классе кнопка называется choiceButton и доступна через геттер
         Button originalChoiceButton = getChoiceButton();
         
-        // Создаём новую кнопку с вертикальными точками
-        //menuButton = new Button("\u2630");
+        // Создаём новую кнопку - Меню
         menuButton = new Button("☰");
         menuButton.setPrefWidth(AppConstants.CHOICE_BUTTON_WIDTH + 5);
         menuButton.setMaxWidth(AppConstants.CHOICE_BUTTON_WIDTH + 5);
         menuButton.setMinWidth(AppConstants.CHOICE_BUTTON_WIDTH+ + 5);
         menuButton.setFocusTraversable(false);
-        //menuButton.setCursor(javafx.scene.Cursor.HAND);
+        menuButton.setCursor(javafx.scene.Cursor.HAND);
         
         // Настраиваем контекстное меню
         setupContextMenu();
         
-        // Перестраиваем HBox: удаляем старую кнопку и добавляем две
-        getChildren().remove(originalChoiceButton);
-        getChildren().remove(menuButton);getChildren().addAll(originalChoiceButton, menuButton);
-        //getChildren().add(menuButton);
+        getChildren().add(menuButton);
 
         // Обновляем стили для новой компоновки
-        updateCombinedStyle(false);
+        updateCombinedStyle();
     }
     
     /**
@@ -84,18 +80,14 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
     // Здесь можно переопределить стили, если нужно
     // Базовая стилизация уже есть в родительском классе
     // При необходимости можно добавить специфические стили для menuButton
-    private void updateCombinedStyle(boolean focused) {
-        String borderColor = focused ? AppConstants.FOCUS_BORDER_COLOR : AppConstants.NORMAL_BORDER_COLOR;
-
-        // Стиль для кнопки: правая, верхняя, нижняя границы + скругление справа
+    private void updateCombinedStyle() {
+        
+        // Стиль для кнопки: без рамок прозрачная
         menuButton.setStyle(String.format("""
-                        -fx-background-color: white;
-                        -fx-border-color: %s %s %s %s;
-                        -fx-border-width: 1px 1px 1px 0;
-                        -fx-border-radius: 0 3px 3px 0;
-                        -fx-background-radius: 0 3px 3px 0;
+                        -fx-background-color: transparent;
+                        -fx-border-width: 0;
                         -fx-cursor: hand;
-                """, borderColor, borderColor, borderColor, borderColor));
+                """));
 
 
     }
