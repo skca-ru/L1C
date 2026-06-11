@@ -323,6 +323,7 @@ public class RunYBase extends Application {
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
+        copyButton.setTooltip(createTooltip("Копировать команду в буфер обмена"));
         copyButton.setOnAction(e -> copyToClipboard(textArea.getText()));
 
         Button runButton = createButton("Run");
@@ -399,7 +400,7 @@ public class RunYBase extends Application {
         thickOrdinaryRadio.setToggleGroup(modeGroup);
 
         Button modeHelpButton = createHelpButton();
-        modeHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_MODE_INFO));
+        modeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.APP_MODE_INFO));
         modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска",
                 RunYBaseHelpTexts.APP_MODE_INFO));
 
