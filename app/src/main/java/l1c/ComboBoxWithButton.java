@@ -50,6 +50,8 @@ class ComboBoxWithButton<T> extends HBox {
         // Создаём один тултип на все случаи
         dynamicTooltip = new Tooltip(exampleTooltipText);
         dynamicTooltip.setStyle(AppConstants.TOOLTIP_STYLE);
+        // TO DO Непонятное не работает кажется 
+        dynamicTooltip.setWrapText(true);
         comboBox.setTooltip(dynamicTooltip);
 
         // Показывать tooltip если необходимо
