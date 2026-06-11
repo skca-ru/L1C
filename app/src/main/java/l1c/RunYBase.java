@@ -76,12 +76,8 @@ public class RunYBase extends Application {
 
     // @formatter:off
     // #region ========== НАСТРОЙКИ ==========
-    private static final String VERSION              = "2026.06.10.004";
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
-    private static final int MAX_HISTORY_SIZE        = 20;
-    private static final String HISTORY_DIR          = ".1c_launcher";
-    private static final String HISTORY_FILE         = "history.xml";
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
@@ -100,6 +96,7 @@ public class RunYBase extends Application {
     // #endregion ==================================
     // @formatter:on
 
+    private HistoryManager historyManager;
     private ComboBox<String> addressComboBox;
     private ComboBoxWithMenuButton<String> addressControl;
     private TextArea outputArea86;
@@ -114,10 +111,10 @@ public class RunYBase extends Application {
     private ComboBox<String> debugProtocolCombo;
     private TextArea debugArea;
     private ObservableList<String> historyList;
+    private CredentialsManager credentialsManager;
 
     private Button userCredentialsButton;
 
-    private static final java.util.Map<String, UserCredentials> credentialsMap = new java.util.HashMap<>();
     // Для проверки есть адрес в списке зарегистрированных баз
     private Map<String, String> registeredAddressMap = new HashMap<>();
 
@@ -130,7 +127,8 @@ public class RunYBase extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        loadCredentials();
+    
+        credentialsManager = new CredentialsManager();
 
         // Создаём меню
         MenuBar menuBar = createMenuBar();
@@ -176,8 +174,7 @@ public class RunYBase extends Application {
         Scene scene = new Scene(borderRoot, 1050, SHOW_DEBUG_PANEL ? 700 : 500);
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
-                saveCredentials();
-                saveHistoryToXml();
+                // saveHistoryToXml();
                 Platform.exit();
             }
 
@@ -187,8 +184,7 @@ public class RunYBase extends Application {
                 "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(e -> {
-            saveCredentials();
-            saveHistoryToXml();
+            // saveHistoryToXml();
         });
         primaryStage.show();
 
@@ -329,6 +325,7 @@ public class RunYBase extends Application {
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
+        copyButton.setTooltip(createTooltip("Копировать команду в буфер обмена"));
         copyButton.setOnAction(e -> copyToClipboard(textArea.getText()));
 
         Button runButton = createButton("Run");
@@ -356,8 +353,7 @@ public class RunYBase extends Application {
         MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
         exitItem.setOnAction(e -> {
-            saveCredentials();
-            saveHistoryToXml();
+            // saveHistoryToXml();
             Platform.exit();
         });
 
@@ -379,6 +375,7 @@ public class RunYBase extends Application {
 
     /**
      * Создаёт панель с режимами запуска и опциями
+     * 
      * @return VBox с панелью режимов и опций
      */
     private VBox createModePanel() {
@@ -405,7 +402,7 @@ public class RunYBase extends Application {
         thickOrdinaryRadio.setToggleGroup(modeGroup);
 
         Button modeHelpButton = createHelpButton();
-        modeHelpButton.setTooltip(new Tooltip(RunYBaseHelpTexts.APP_MODE_INFO));
+        modeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.APP_MODE_INFO));
         modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска",
                 RunYBaseHelpTexts.APP_MODE_INFO));
 
@@ -445,8 +442,9 @@ public class RunYBase extends Application {
 
     /**
      * Создаёт блок вывода команды для указанной платформы
+     * 
      * @param platformName название платформы (x86 или x64)
-     * @param bits разрядность (32 или 64)
+     * @param bits         разрядность (32 или 64)
      */
     private void createPlatformPanel(String platformName, int bits) {
         // Метка с названием платформы
@@ -482,6 +480,7 @@ public class RunYBase extends Application {
 
     /**
      * Создаёт панель с полем ввода адреса базы данных
+     * 
      * @return HBox с панелью адреса
      */
     private HBox createAddressPanel() {
@@ -491,7 +490,9 @@ public class RunYBase extends Application {
         Label addressLabel = new Label("Адрес БД:");
         addressLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
-        historyList = FXCollections.observableArrayList(getHistoryList());
+        // historyList = FXCollections.observableArrayList(getHistoryList());
+        historyManager = new HistoryManager();
+        ObservableList<String> historyList = historyManager.getHistoryList();
 
         addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
         addressComboBox = addressControl.getComboBox();
@@ -536,7 +537,7 @@ public class RunYBase extends Application {
                         "Разработано с использованием:\n" +
                         "• Koda-pro\n" +
                         "• Koda-base",
-                VERSION);
+                AppConstants.VERSION);
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("О программе");
@@ -576,7 +577,8 @@ public class RunYBase extends Application {
      */
     private Tooltip createTooltip(String text) {
         Tooltip tooltip = new Tooltip(text);
-        tooltip.setStyle(RunYBaseHelpTexts.TOOLTIP_STYLE);
+        tooltip.setStyle(AppConstants.TOOLTIP_STYLE);
+        tooltip.setWrapText(true);
         return tooltip;
     }
 
@@ -585,7 +587,8 @@ public class RunYBase extends Application {
      */
     private Tooltip createTooltip(String formatText, Object... args) {
         Tooltip tooltip = new Tooltip(String.format(formatText, args));
-        tooltip.setStyle(RunYBaseHelpTexts.TOOLTIP_STYLE);
+        tooltip.setStyle(AppConstants.TOOLTIP_STYLE);
+        tooltip.setWrapText(true);
         return tooltip;
     }
 
@@ -593,7 +596,7 @@ public class RunYBase extends Application {
         if (userCredentialsButton == null)
             return;
         String address = getCurrentAddress();
-        UserCredentials cred = credentialsMap.get(address);
+        UserCredentials cred = credentialsManager.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
             userCredentialsButton.setUserData(COLOR_USER_HAS_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
@@ -610,87 +613,6 @@ public class RunYBase extends Application {
     // -----------------------------------------------------------------
     // Учётные данные пользователей
     // -----------------------------------------------------------------
-
-    private static Path getCredentialsPath() {
-        String userHome = System.getProperty("user.home");
-        Path dir = Paths.get(userHome, HISTORY_DIR);
-        try {
-            Files.createDirectories(dir);
-        } catch (IOException e) {
-            System.err.println("Не удалось создать директорию для истории: " + dir);
-        }
-        return dir.resolve("credentials.xml");
-    }
-
-    private static void loadCredentials() {
-        Path path = getCredentialsPath();
-        if (!Files.exists(path)) {
-            return;
-        }
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(path.toFile());
-
-            NodeList credNodes = doc.getElementsByTagName("credential");
-            for (int i = 0; i < credNodes.getLength(); i++) {
-                Element elem = (Element) credNodes.item(i);
-                String address = getTagValue("address", elem);
-                String username = getTagValue("username", elem);
-                String encryptedPassword = getTagValue("password", elem);
-
-                if (address != null && username != null && !address.isEmpty()) {
-                    String password = encryptedPassword != null ? decrypt(encryptedPassword) : "";
-                    credentialsMap.put(address, new UserCredentials(username, password));
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Ошибка загрузки учётных данных: " + e.getMessage());
-        }
-    }
-
-    private static void saveCredentials() {
-        Path path = getCredentialsPath();
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-
-            Element root = doc.createElement("credentials");
-            doc.appendChild(root);
-
-            for (java.util.Map.Entry<String, UserCredentials> entry : credentialsMap.entrySet()) {
-                Element credElem = doc.createElement("credential");
-
-                Element addrElem = doc.createElement("address");
-                addrElem.setTextContent(entry.getKey());
-                credElem.appendChild(addrElem);
-
-                Element userElem = doc.createElement("username");
-                userElem.setTextContent(entry.getValue().getUsername());
-                credElem.appendChild(userElem);
-
-                Element passElem = doc.createElement("password");
-                passElem.setTextContent(encrypt(entry.getValue().getPassword()));
-                credElem.appendChild(passElem);
-
-                root.appendChild(credElem);
-            }
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(path.toFile());
-            transformer.transform(source, result);
-        } catch (Exception e) {
-            System.err.println("Ошибка сохранения учётных данных: " + e.getMessage());
-        }
-    }
-
-    private static final String KEY = "1C_Launcher_2026_Secret_Key";
 
     /**
      * Увеличивает яркость цвета на заданный коэффициент
@@ -717,30 +639,6 @@ public class RunYBase extends Application {
         }
     }
 
-    private static String encrypt(String input) {
-        if (input == null || input.isEmpty())
-            return "";
-        byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
-        byte[] keyBytes = KEY.getBytes(StandardCharsets.UTF_8);
-        byte[] result = new byte[inputBytes.length];
-        for (int i = 0; i < inputBytes.length; i++) {
-            result[i] = (byte) (inputBytes[i] ^ keyBytes[i % keyBytes.length]);
-        }
-        return Base64.getEncoder().encodeToString(result);
-    }
-
-    private static String decrypt(String input) {
-        if (input == null || input.isEmpty())
-            return "";
-        byte[] inputBytes = Base64.getDecoder().decode(input);
-        byte[] keyBytes = KEY.getBytes(StandardCharsets.UTF_8);
-        byte[] result = new byte[inputBytes.length];
-        for (int i = 0; i < inputBytes.length; i++) {
-            result[i] = (byte) (inputBytes[i] ^ keyBytes[i % keyBytes.length]);
-        }
-        return new String(result, StandardCharsets.UTF_8);
-    }
-
     private void showUserCredentialsDialog() {
         String address = getCurrentAddress();
         if (address.isEmpty()) {
@@ -748,7 +646,7 @@ public class RunYBase extends Application {
             return;
         }
 
-        UserCredentials existing = credentialsMap.get(address);
+        UserCredentials existing = credentialsManager.get(address);
         String currentUsername = existing != null ? existing.getUsername() : "";
         String currentPassword = existing != null ? existing.getPassword() : "";
 
@@ -785,13 +683,11 @@ public class RunYBase extends Application {
                 String password = passwordField.getText();
 
                 if (!username.isEmpty()) {
-                    credentialsMap.put(address, new UserCredentials(username, password));
-                    saveCredentials();
+                    credentialsManager.put(address, new UserCredentials(username, password));
                     showAlert(Alert.AlertType.INFORMATION, "Успешно",
                             "Учётные данные сохранены для адреса:\n" + address);
                 } else if (existing != null) {
-                    credentialsMap.remove(address);
-                    saveCredentials();
+                    credentialsManager.remove(address);
                     showAlert(Alert.AlertType.INFORMATION, "Удалено", "Учётные данные удалены для адреса:\n" + address);
                 }
                 updateUserButtonState();
@@ -800,7 +696,7 @@ public class RunYBase extends Application {
     }
 
     private void askAndRunWithCredentials(String address, String baseCommand) {
-        UserCredentials cred = credentialsMap.get(address);
+        UserCredentials cred = credentialsManager.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Запуск с учётными данными");
@@ -863,118 +759,9 @@ public class RunYBase extends Application {
     // -----------------------------------------------------------------
     // Работа с историей в XML (домашняя папка)
     // -----------------------------------------------------------------
-    // Работа с историей в XML (домашняя папка)
-    // -----------------------------------------------------------------
-    private static Path getHistoryPath() {
-        String userHome = System.getProperty("user.home");
-        Path dir = Paths.get(userHome, HISTORY_DIR);
-        try {
-            Files.createDirectories(dir);
-        } catch (IOException e) {
-            System.err.println("Не удалось создать директорию для истории: " + dir);
-        }
-        return dir.resolve(HISTORY_FILE);
-    }
-
-    private static List<String> getHistoryList() {
-        List<String> list = new ArrayList<>();
-        Path path = getHistoryPath();
-        if (!Files.exists(path)) {
-            createDefaultHistoryFile(path);
-            return list;
-        }
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(path.toFile());
-            NodeList addrNodes = doc.getElementsByTagName("address");
-            for (int i = 0; i < addrNodes.getLength(); i++) {
-                String addr = addrNodes.item(i).getTextContent();
-                if (addr != null && !addr.trim().isEmpty() && !list.contains(addr.trim())) {
-                    list.add(addr.trim());
-                }
-            }
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            System.err.println("Ошибка загрузки истории из XML. Будет создан новый файл.");
-            e.printStackTrace();
-            createDefaultHistoryFile(path);
-        }
-        return list;
-    }
-
-    private static void createDefaultHistoryFile(Path path) {
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-
-            Element root = doc.createElement("history");
-            doc.appendChild(root);
-
-            root.appendChild(doc.createComment(RunYBaseHelpTexts.HISTORY_COMMENT));
-
-            Element addresses = doc.createElement("addresses");
-            root.appendChild(addresses);
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(path.toFile());
-            transformer.transform(source, result);
-        } catch (Exception e) {
-            System.err.println("Не удалось создать файл истории по умолчанию: " + path);
-            e.printStackTrace();
-        }
-    }
-
     private void addToHistory(String address) {
-        if (address == null || address.isEmpty())
-            return;
-        historyList.remove(address);
-        historyList.add(0, address);
-        while (historyList.size() > MAX_HISTORY_SIZE) {
-            historyList.remove(historyList.size() - 1);
-        }
+        historyManager.addToHistory(address);
         addressComboBox.setValue(address);
-        saveHistoryToXml();
-    }
-
-    private void saveHistoryToXml() {
-        Path path = getHistoryPath();
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-
-            Element root = doc.createElement("history");
-            doc.appendChild(root);
-
-            root.appendChild(doc.createComment(RunYBaseHelpTexts.HISTORY_COMMENT));
-
-            Element addresses = doc.createElement("addresses");
-            root.appendChild(addresses);
-
-            for (String addr : historyList) {
-                Element addrElem = doc.createElement("address");
-                addrElem.setTextContent(addr);
-                addresses.appendChild(addrElem);
-            }
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(path.toFile());
-            transformer.transform(source, result);
-        } catch (Exception e) {
-            System.err.println("Ошибка сохранения истории в XML: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 
   
@@ -1091,10 +878,11 @@ public class RunYBase extends Application {
      * @param escaped      экранированный адрес базы
      * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
      * @param cred         учётные данные пользователя (могут быть null)
+     * @param isDesigner   запущен ли Конфигуратор
      * @return сформированная строка запуска
      */
     private String buildCommand(String platformPath, String appArch, String escaped,
-            String commandPart, UserCredentials cred) {
+            String commandPart, UserCredentials cred, boolean isDesigner) {
         StringBuilder cmd = new StringBuilder();
         cmd.append("\"").append(platformPath).append("\" ");
         cmd.append(commandPart).append(" ");
@@ -1111,7 +899,8 @@ public class RunYBase extends Application {
             cmd.append(" /AppArch ").append(appArch);
         }
 
-        if (debugModeCheckbox.isSelected()) {
+        // Режим отладки игнорируется для Конфигуратора
+        if (debugModeCheckbox.isSelected() && !isDesigner) {
             String debugParam = " /Debug -attach";
             String protocol = debugProtocolCombo.getValue();
             if (protocol != null && !"по умолчанию".equals(protocol)) {
@@ -1126,8 +915,7 @@ public class RunYBase extends Application {
     private void handleButtonClick() {
         String text = getCurrentAddress();
         if (text.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение",
-                    "Введите адрес базы данных! Например:\n\nФайловая БД: File=\"C:\\1C\\Base\"\nКлиент-сервер: Srvr=\"127.0.0.1\";Ref=\"Base\";");
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
             return;
         }
 
@@ -1138,21 +926,25 @@ public class RunYBase extends Application {
         outputArea.setText("");
 
         String escaped = text.replace("\"", "\"\"");
-        UserCredentials cred = credentialsMap.get(text);
+        UserCredentials cred = credentialsManager.get(text);
+
+        boolean isDesigner = designerRadio.isSelected();
 
         String cmd86 = buildCommand(
                 "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
                 "x86",
                 escaped,
                 commandPart,
-                cred);
+                cred,
+                isDesigner);
 
         String cmd64 = buildCommand(
                 "C:\\Program Files\\1cv8\\common\\1cestart.exe",
                 "x86_64",
                 escaped,
                 commandPart,
-                cred);
+                cred,
+                isDesigner);
 
         outputArea86.setText(cmd86);
         outputArea.setText(cmd64);

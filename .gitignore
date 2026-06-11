@@ -57,3 +57,7 @@ dependency-reduced-pom.xml
 # Скомпилированные исходники
 *.class
 *.lock
+
+# KODA configuration files
+KODA.md
+.koda/

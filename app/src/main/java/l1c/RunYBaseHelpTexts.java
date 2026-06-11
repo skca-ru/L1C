@@ -5,18 +5,6 @@ package l1c;
  */
 public final class RunYBaseHelpTexts {
 
-    // Стили для всплывающих подсказок (Tooltip)
-    public static final String TOOLTIP_STYLE = """
-            -fx-background-color: #F3E4BC;
-            -fx-text-fill: #000000;
-            -fx-border-color: #C0A050;
-            -fx-border-radius: 3px;
-            -fx-background-radius: 3px;
-            -fx-padding: 5 10 5 10;
-            -fx-font-size: 13px;
-            -fx-font-weight: normal;
-            """;
-
     public static final String APP_MODE_INFO = """
             Режимы запуска 1С:
 
@@ -96,6 +84,13 @@ public final class RunYBaseHelpTexts {
 
     public static final String USER_CRED_NO_CRED_TOOLTIP = """
             Нажмите чтобы задать учётные данные
+            """;
+
+    public static final String WARNING_NO_ADDRESS = """
+            Введите адрес базы данных! Например:
+
+            Файловая БД: File="C:\\1C\\Base"
+            Клиент-сервер: Srvr="127.0.0.1";Ref="Base";
             """;
 
     private RunYBaseHelpTexts() {
