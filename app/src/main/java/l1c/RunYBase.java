@@ -74,7 +74,6 @@ public class RunYBase extends Application {
 
     // @formatter:off
     // #region ========== НАСТРОЙКИ ==========
-    private static final String VERSION              = "2026.06.10.004";
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
     // #endregion =================================
@@ -535,7 +534,7 @@ public class RunYBase extends Application {
                         "Разработано с использованием:\n" +
                         "• Koda-pro\n" +
                         "• Koda-base",
-                VERSION);
+                AppConstants.VERSION);
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("О программе");
@@ -576,6 +575,7 @@ public class RunYBase extends Application {
     private Tooltip createTooltip(String text) {
         Tooltip tooltip = new Tooltip(text);
         tooltip.setStyle(AppConstants.TOOLTIP_STYLE);
+        tooltip.setWrapText(true);
         return tooltip;
     }
 
@@ -585,6 +585,7 @@ public class RunYBase extends Application {
     private Tooltip createTooltip(String formatText, Object... args) {
         Tooltip tooltip = new Tooltip(String.format(formatText, args));
         tooltip.setStyle(AppConstants.TOOLTIP_STYLE);
+        tooltip.setWrapText(true);
         return tooltip;
     }
 
