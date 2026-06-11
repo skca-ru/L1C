@@ -62,7 +62,17 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
         pasteItem.setOnAction(e -> {
             String clipboardText = javafx.scene.input.Clipboard.getSystemClipboard().getString();
             if (clipboardText != null && !clipboardText.isEmpty()) {
-                getComboBox().getEditor().setText(clipboardText);
+                String extractedAddress = StringExtractor.extractConnectionString(clipboardText);
+                if (extractedAddress != null) {
+                    getComboBox().getEditor().setText(extractedAddress);
+                } else {
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                            javafx.scene.control.Alert.AlertType.WARNING);
+                    alert.setTitle("Предупреждение");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Не найден адрес базы 1С в буфере обмена!");
+                    alert.showAndWait();
+                }
             }
         });
         
