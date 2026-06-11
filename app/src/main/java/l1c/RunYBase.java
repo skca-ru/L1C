@@ -12,6 +12,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -831,7 +833,7 @@ public class RunYBase extends Application {
             List<String> paths = new ArrayList<>();
             paths.add("C:\\Program Files\\1cv8\\common\\1cestart.exe");
             paths.add("C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe");
-            
+
             String foundPath = null;
             for (String path : paths) {
                 if (Files.exists(Paths.get(path))) {
@@ -839,18 +841,18 @@ public class RunYBase extends Application {
                     break;
                 }
             }
-            
+
             if (foundPath != null) {
                 ProcessBuilder pb = new ProcessBuilder(foundPath);
                 pb.start();
-                showAutoClosingAlert("Стандартный запуск 1С запущен!\nПуть: " + foundPath, 
+                showAutoClosingAlert("Стандартный запуск 1С запущен!\nПуть: " + foundPath,
                         "Запуск 1cestart", 3);
             } else {
                 showAlert(Alert.AlertType.WARNING, "Предупреждение",
                         "Не найден файл 1cestart.exe!\n\nОжидаемые пути:\n" +
-                        "C:\\Program Files\\1cv8\\common\\1cestart.exe\n" +
-                        "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe\n\n" +
-                        "Убедитесь, что 1С:Предприятие 8 установлена на компьютере.");
+                                "C:\\Program Files\\1cv8\\common\\1cestart.exe\n" +
+                                "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe\n\n" +
+                                "Убедитесь, что 1С:Предприятие 8 установлена на компьютере.");
             }
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Ошибка",
@@ -975,40 +977,37 @@ public class RunYBase extends Application {
         }
     }
 
-    private static boolean isDatabaseAddress(String text) {
-        if (text == null || text.isEmpty())
-            return false;
-        String trimmed = text.trim();
-        return trimmed.startsWith("File=") || trimmed.startsWith("Srvr=");
-    }
-
+  
     private void autoPasteFromClipboard() {
         try {
             Clipboard clipboard = Clipboard.getSystemClipboard();
             if (clipboard.hasString()) {
                 String text = clipboard.getString();
-                if (isDatabaseAddress(text)) {
-                    addressComboBox.setValue(text);
-                    
+
+                // Ищем в тексте строку подключения к 1С
+                String extractedAddress = extractConnectionString(text);
+
+                if (extractedAddress != null) {
+                    addressComboBox.setValue(extractedAddress);
+
                     // Поиск совпадения в списке зарегистрированных баз
-                    List<BaseEntry> baseEntries;
                     try {
-                        baseEntries = loadAndSortDatabases();
+                        List<BaseEntry> baseEntries = loadAndSortDatabases();
                         for (BaseEntry base : baseEntries) {
-                            if (base.connect != null && base.connect.equals(text)) {
+                            if (base.connect != null && base.connect.equals(extractedAddress)) {
                                 addressControl.setAdressIB(base.name);
                                 showAlert(Alert.AlertType.INFORMATION, "Автовставка из буфера",
-                                        "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + text +
-                                        "\n\nНайдена база: " + base.name);
+                                        "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + extractedAddress +
+                                                "\n\nНайдена база: " + base.name);
                                 return;
                             }
                         }
                     } catch (Exception e) {
                         // Если не удалось загрузить список баз, просто вставляем адрес
                     }
-                    
+
                     showAlert(Alert.AlertType.INFORMATION, "Автовставка из буфера",
-                            "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + text);
+                            "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + extractedAddress);
                     return;
                 }
             }
@@ -1018,6 +1017,55 @@ public class RunYBase extends Application {
             addressComboBox.setValue(null);
             addressComboBox.getEditor().setText("");
         }
+    }
+
+    /**
+     * Извлекает строку подключения к 1С из произвольного текста
+     * 
+     * @param text исходный текст (может содержать лишние слова)
+     * @return строку подключения или null, если не найдено
+     */
+    private String extractConnectionString(String text) {
+        if (text == null || text.isEmpty())
+            return null;
+
+        // Ищем шаблоны: File="..." или Srvr="..." (с возможным Ref=...)
+        // Регулярное выражение ищет:
+        // 1. File="путь" (с возможными ; в конце)
+        // 2. Srvr="сервер";Ref="база" (с возможными параметрами)
+
+        // Шаблон для файловой базы
+        Pattern filePattern = Pattern.compile("File=\"[^\"]+\"");
+        Matcher fileMatcher = filePattern.matcher(text);
+        if (fileMatcher.find()) {
+            String filePart = fileMatcher.group();
+            // Ищем, есть ли после этого ещё параметры (например, ;)
+            int startIdx = fileMatcher.start();
+            int endIdx = fileMatcher.end();
+            // Если после найденного есть ";", захватываем до него (но не включая)
+            if (endIdx < text.length() && text.charAt(endIdx) == ';') {
+                return filePart + ";";
+            }
+            return filePart;
+        }
+
+        // Шаблон для серверной базы
+        Pattern serverPattern = Pattern.compile("Srvr=\"[^\"]+\"\\s*;\\s*Ref=\"[^\"]+\"");
+        Matcher serverMatcher = serverPattern.matcher(text);
+        if (serverMatcher.find()) {
+            return serverMatcher.group();
+        }
+
+        // Если точного совпадения нет, попробуем найти фрагменты и собрать адрес
+        // Например, "База клиента Srvr="localhost";Ref="pa_ka";" -> найдёт всё от Srvr
+        // до ;
+        Pattern partialPattern = Pattern.compile("(Srvr=\"[^\"]+\"\\s*;\\s*Ref=\"[^\"]+\")");
+        Matcher partialMatcher = partialPattern.matcher(text);
+        if (partialMatcher.find()) {
+            return partialMatcher.group();
+        }
+
+        return null;
     }
 
     private String getCurrentAddress() {
