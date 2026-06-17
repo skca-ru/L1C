@@ -25,26 +25,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputControl;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -202,10 +182,102 @@ public class RunYBase extends Application {
         }
     }
 
-    private Button createButton(String text) {
-        return createButton(text, COLOR_BUTTON_BG);
+    /**
+ * Добавляет текущий адрес из поля ввода в список зарегистрированных баз (ibases.v8i)
+ */
+private void addCurrentAddressToDatabaseList() {
+    String address = getCurrentAddress();
+    if (address.isEmpty()) {
+        showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет адреса для добавления!");
+        return;
     }
 
+    try {
+        // Проверяем, есть ли уже такой адрес
+        List<BaseEntry> existing = loadAndSortDatabases();
+        for (BaseEntry entry : existing) {
+            if (entry.connect != null && entry.connect.equals(address)) {
+                showAlert(Alert.AlertType.INFORMATION, "Информация",
+                        "Этот адрес уже есть в списке баз под именем:\n" + entry.name);
+                return;
+            }
+        }
+
+        // Запрашиваем имя для новой базы
+        TextInputDialog nameDialog = new TextInputDialog();
+        nameDialog.setTitle("Добавление базы");
+        nameDialog.setHeaderText("Введите имя для новой базы");
+        nameDialog.setContentText("Имя базы:");
+        Optional<String> result = nameDialog.showAndWait();
+
+        if (result.isPresent() && !result.get().trim().isEmpty()) {
+            String name = result.get().trim();
+            addDatabaseEntryToFile(address, name);
+            // Обновляем карту для подсказок
+            registeredAddressMap.put(address, name);
+            showAlert(Alert.AlertType.INFORMATION, "Успешно",
+                    "База '" + name + "' добавлена в список!\n" +
+                    "Адрес: " + address);
+        } else {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение",
+                    "Имя не введено, добавление отменено.");
+        }
+    } catch (Exception e) {
+        showAlert(Alert.AlertType.ERROR, "Ошибка",
+                "Ошибка при добавлении в список баз:\n" + e.getMessage());
+        e.printStackTrace();
+    }
+}private Button createButton(String text) {
+        return createButton(text, COLOR_BUTTON_BG);
+    }
+/**
+ * Добавляет запись о новой базе в файл ibases.v8i
+ */
+private void addDatabaseEntryToFile(String connect, String name) throws IOException {
+    Path ibasesPath = Paths.get(System.getProperty("user.home"),
+            "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
+
+    // Создаём директорию и файл, если их нет
+    if (!Files.exists(ibasesPath)) {
+        Files.createDirectories(ibasesPath.getParent());
+        Files.createFile(ibasesPath);
+    }
+
+    // Читаем существующие строки
+    List<String> lines = Files.readAllLines(ibasesPath, StandardCharsets.UTF_8);
+
+    // Находим максимальный OrderInList для корректного порядка
+    double maxOrder = 0;
+    for (String line : lines) {
+        if (line.startsWith("OrderInList=")) {
+            try {
+                double val = Double.parseDouble(line.substring(12));
+                if (val > maxOrder) maxOrder = val;
+            } catch (NumberFormatException ignored) {}
+        }
+    }
+
+    // Генерируем уникальный ID
+    String guid = UUID.randomUUID().toString();
+
+    // Формируем новую секцию
+    List<String> newEntry = new ArrayList<>();
+    newEntry.add("[" + name + "]");
+    newEntry.add("Connect=" + connect);
+    newEntry.add("ID=" + guid);
+    newEntry.add("OrderInList=" + (maxOrder + 16384));
+    newEntry.add("Folder=/");
+    newEntry.add("OrderInTree=" + (maxOrder + 16384));
+    newEntry.add("External=0");
+    newEntry.add("App=Auto");
+    newEntry.add("WA=1");
+    newEntry.add("DisableLocalSpeechToText=0");
+    newEntry.add(""); // пустая строка для разделения
+
+    // Добавляем в конец файла
+    lines.addAll(newEntry);
+    Files.write(ibasesPath, lines, StandardCharsets.UTF_8);
+}
     private Button createButton(String text, String bgColor) {
 
         Button button = new Button(text);
@@ -496,6 +568,10 @@ public class RunYBase extends Application {
         addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
+        // Добавляем пункт меню
+        MenuItem addToDatabaseItem = new MenuItem("Добавить в список баз");
+        addToDatabaseItem.setOnAction(e -> addCurrentAddressToDatabaseList());
+        addressControl.getContextMenu().getItems().add(addToDatabaseItem);
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());

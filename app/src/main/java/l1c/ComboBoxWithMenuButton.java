@@ -10,14 +10,17 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 
 /**
- * Компонент ComboBox с двумя дополнительными кнопками справа:
- * - Кнопка с тремя горизонтальными точками (…) для выбора из списка (унаследована)
- * - Кнопка с тремя вертикальными точками (⋮) для контекстного меню
+ * Компонент для работы с адресами баз 1С:Предприятие, расширяющий стандартный ComboBox.
+ * Содержит:
+ * - Поле ввода адреса с историей
+ * - Кнопку выбора базы из списка зарегистрированных (…​)
+ * - Кнопку контекстного меню для быстрых действий (☰)
  */
 class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
     
     private final Button menuButton;        // кнопка с вертикальными точками (⋮)
-    
+    private ContextMenu contextMenu;   
+
     public ComboBoxWithMenuButton(String exampleTooltipText) {
         this(exampleTooltipText, null);
     }
@@ -47,10 +50,11 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
     }
     
     /**
-     * Настройка контекстного меню для кнопки с вертикальными точками
+     * Настройка меню 
      */
     private void setupContextMenu() {
-        ContextMenu contextMenu = new ContextMenu();
+        contextMenu = new ContextMenu();
+        //contextMenu.setStyle("-fx-background-insets: 0, 0 4 0 4;");
         
         MenuItem clearItem = new MenuItem("Очистить");
         clearItem.setOnAction(e -> {
@@ -76,7 +80,7 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
             }
         });
         
-        contextMenu.getItems().addAll(clearItem, new SeparatorMenuItem(), pasteItem);
+        contextMenu.getItems().addAll(clearItem, pasteItem, new SeparatorMenuItem());
         menuButton.setOnAction(e -> contextMenu.show(menuButton, 
                 menuButton.localToScreen(0, menuButton.getHeight()).getX(),
                 menuButton.localToScreen(0, menuButton.getHeight()).getY()));
@@ -104,5 +108,9 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
     
     public Button getMenuButton() {
         return menuButton;
+    }
+
+    public ContextMenu getContextMenu() {
+        return contextMenu;
     }
 }
