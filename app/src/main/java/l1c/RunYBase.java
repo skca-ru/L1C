@@ -227,7 +227,33 @@ private void addCurrentAddressToDatabaseList() {
                 "Ошибка при добавлении в список баз:\n" + e.getMessage());
         e.printStackTrace();
     }
-}private Button createButton(String text) {
+}
+
+    /**
+     * Перечитывает файл ibases.v8i и обновляет registeredAddressMap
+     */
+    private void refreshDatabaseList() {
+        try {
+            List<BaseEntry> baseEntries = loadAndSortDatabases();
+            if (!baseEntries.isEmpty()) {
+                registeredAddressMap.clear();
+                for (BaseEntry entry : baseEntries) {
+                    registeredAddressMap.put(entry.connect, entry.name);
+                }
+            }
+            showAutoClosingAlert(
+                    """    
+                    Список баз обновлён.
+                    Загружено записей:""" + " " + baseEntries.size(),
+                    "Обновление", 3);
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Ошибка",
+                    "Ошибка при обновлении списка баз:\n" + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private Button createButton(String text) {
         return createButton(text, COLOR_BUTTON_BG);
     }
 /**
@@ -572,6 +598,10 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         MenuItem addToDatabaseItem = new MenuItem("Добавить в список баз");
         addToDatabaseItem.setOnAction(e -> addCurrentAddressToDatabaseList());
         addressControl.getContextMenu().getItems().add(addToDatabaseItem);
+
+        MenuItem refreshDatabaseItem = new MenuItem("Обновить список баз");
+        refreshDatabaseItem.setOnAction(e -> refreshDatabaseList());
+        addressControl.getContextMenu().getItems().add(refreshDatabaseItem);
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
