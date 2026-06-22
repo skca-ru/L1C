@@ -686,7 +686,7 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
     }
 
     // -----------------------------------------------------------------
-    // Учётные данные пользователей
+    // Работа с цветами
     // -----------------------------------------------------------------
 
     /**
@@ -713,6 +713,10 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
             return hexColor;
         }
     }
+
+    // -----------------------------------------------------------------
+    // Учётные данные пользователей
+    // -----------------------------------------------------------------
 
     private void showUserCredentialsDialog() {
         String address = getCurrentAddress();
