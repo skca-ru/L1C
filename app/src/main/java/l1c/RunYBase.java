@@ -74,6 +74,7 @@ public class RunYBase extends Application {
     private RadioButton thinRadio;
     private RadioButton thickOrdinaryRadio;
     private RadioButton thickManagedRadio;
+    private RadioButton updateConfigRadio;
     private ToggleGroup modeGroup;
     private CheckBox priorityPlatformCheckbox;
     private CheckBox debugModeCheckbox;
@@ -493,13 +494,15 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         thickOrdinaryRadio = new RadioButton("Толстый клиент (Обычное приложение)");
         thickOrdinaryRadio.setToggleGroup(modeGroup);
 
+        updateConfigRadio = new RadioButton("Обновление конфигурации (версия 2, сервер)");
+        updateConfigRadio.setToggleGroup(modeGroup);
+
         Button modeHelpButton = createHelpButton();
         modeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.APP_MODE_INFO));
         modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска",
                 RunYBaseHelpTexts.APP_MODE_INFO));
 
-        modeRow.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio,
-                modeHelpButton);
+        modeRow.getChildren().addAll(modeLabel, designerRadio, thinRadio, thickManagedRadio, thickOrdinaryRadio, updateConfigRadio, modeHelpButton);
 
         // Панель с опциями (отладка, приоритет платформы)
         debugModeCheckbox = new CheckBox("Режим отладки");
@@ -1176,10 +1179,16 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
                 output.append(line).append("\n");
 
             boolean finished = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
-            String mode = designerRadio.isSelected() ? "Конфигуратор"
-                    : thinRadio.isSelected() ? "Тонкий клиент"
-                            : thickOrdinaryRadio.isSelected() ? "Толстый клиент (Обычное)"
-                                    : "Толстый клиент (Управляемое)";
+        String mode;
+        if (designerRadio.isSelected()) {
+            mode = "Конфигуратор";
+        } else if (thinRadio.isSelected()) {
+            mode = "Тонкий клиент";
+        } else if (thickOrdinaryRadio.isSelected()) {
+            mode = "Толстый клиент (Обычное)";
+        } else {
+            mode = "Толстый клиент (Управляемое)";
+        }
 
             if (finished) {
                 int code = process.exitValue();
