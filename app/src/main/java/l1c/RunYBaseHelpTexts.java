@@ -107,6 +107,13 @@ public final class RunYBaseHelpTexts {
             Клиент-сервер: Srvr="127.0.0.1";Ref="Base";
             """;
 
+    public static final String NOTE_BUTTON_TOOLTIP = """
+            Заметка к базе
+            Нажмите для просмотра или редактирования текстовой заметки
+            """;
+
+    public static final String NOTE_DIALOG_TITLE = "Заметка к базе";
+
     private RunYBaseHelpTexts() {
         // Конструктор для предотвращения создания экземпляров
     }

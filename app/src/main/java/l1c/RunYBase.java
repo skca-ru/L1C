@@ -85,6 +85,10 @@ public class RunYBase extends Application {
 
     private Button userCredentialsButton;
 
+    // Label для отображения имени БД и заметки под полем адреса
+    private Label baseNameLabel;
+    private Label baseNoteLabel;
+
     // Для проверки есть адрес в списке зарегистрированных баз
     private Map<String, String> registeredAddressMap = new HashMap<>();
 
@@ -552,9 +556,14 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
     /**
      * Создаёт панель с полем ввода адреса базы данных
      * 
-     * @return HBox с панелью адреса
+     * @return VBox с панелью адреса
      */
-    private HBox createAddressPanel() {
+    private VBox createAddressPanel() {
+        VBox addressPanel = new VBox(5);
+        addressPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
+        addressPanel.setPadding(new Insets(5));
+
+        // Верхняя строка с полем ввода и кнопками
         HBox inputPanel = new HBox(5);
         inputPanel.setAlignment(Pos.CENTER_LEFT);
 
@@ -568,7 +577,13 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
-        // Добавляем пункт меню
+
+        // Добавляем пункт меню "Заметка..."
+        MenuItem noteItem = new MenuItem("_Заметка...");
+        noteItem.setOnAction(e -> showNoteDialog());
+        addressControl.getContextMenu().getItems().add(noteItem);
+
+        // Добавляем пункт меню "Добавить в список баз"
         MenuItem addToDatabaseItem = new MenuItem("Добавить в список баз");
         addToDatabaseItem.setOnAction(e -> addCurrentAddressToDatabaseList());
         addressControl.getContextMenu().getItems().add(addToDatabaseItem);
@@ -582,25 +597,77 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         inputPanel.getChildren().addAll(
                 addressLabel, addressControl, userCredentialsButton, generateButton);
         HBox.setHgrow(addressControl, Priority.ALWAYS);
+        addressPanel.getChildren().add(inputPanel);
 
-        // Настройка слушателя для отображения имени базы при изменении адреса
+        // Панель с именем БД и заметкой
+        baseNameLabel = new Label();
+        baseNameLabel.setWrapText(true);
+        //baseNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: " + COLOR_ACCENT + ";");
+
+        baseNoteLabel = new Label();
+        baseNoteLabel.setWrapText(true);
+        baseNoteLabel.setStyle("-fx-font-style: italic; -fx-font-size: 10px; -fx-text-fill: #666666;");
+        baseNoteLabel.setPadding(new Insets(2, 0, 0, 0));
+
+        VBox infoPanel = new VBox(2, baseNameLabel, baseNoteLabel);
+        infoPanel.setPadding(new Insets(5, 0, 0, 0));
+        HBox.setHgrow(infoPanel, Priority.ALWAYS);
+        addressPanel.getChildren().add(infoPanel);
+
+        // Настройка слушателя для отображения имени базы и заметки при изменении адреса
         addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
             updateUserButtonState();
-
-            if (newVal != null && !newVal.trim().isEmpty()) {
-                String baseName = registeredAddressMap.get(newVal);
-                if (baseName != null) {
-                    addressControl.setAdressIB(baseName);
-                } else {
-                    addressControl.setAdressIB(null);
-                }
-            } else {
-                addressControl.setAdressIB(null);
-            }
+            updateBaseInfoDisplay(newVal);
         });
         updateUserButtonState();
+        updateBaseInfoDisplay(null);
 
-        return inputPanel;
+        return addressPanel;
+    }
+
+    /**
+     * Обновляет отображение имени БД и заметки
+     */
+    private void updateBaseInfoDisplay(String address) {
+        if (address == null) {
+            address = "";
+        }
+
+        address = address.trim();
+
+        // Отображаем имя базы
+        if (!address.isEmpty()) {
+            String baseName = registeredAddressMap.get(address);
+            if (baseName != null) {
+                baseNameLabel.setText("📋 База: " + baseName);
+                baseNameLabel.setVisible(true);
+                
+                // Также отображаем имя в ComboBox
+                addressControl.setAdressIB(baseName);
+            } else {
+                baseNameLabel.setVisible(false);
+                addressControl.setAdressIB(null);
+            }
+
+            // Отображаем заметку
+            try {
+                String note = historyManager.getNote(address);
+                if (note != null && !note.trim().isEmpty()) {
+                    // Обрезаем длинную заметку для отображения
+                    String displayNote = note.length() > 120 ? note.substring(0, 120) + "..." : note;
+                    baseNoteLabel.setText("📝 " + displayNote);
+                    baseNoteLabel.setVisible(true);
+                } else {
+                    baseNoteLabel.setVisible(false);
+                }
+            } catch (Exception e) {
+                baseNoteLabel.setVisible(false);
+            }
+        } else {
+            baseNameLabel.setVisible(false);
+            baseNoteLabel.setVisible(false);
+            addressControl.setAdressIB(null);
+        }
     }
 
     private void showAboutDialog() {
@@ -770,6 +837,77 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
                     showAlert(Alert.AlertType.INFORMATION, "Удалено", "Учётные данные удалены для адреса:\n" + address);
                 }
                 updateUserButtonState();
+            }
+        });
+    }
+
+    // -----------------------------------------------------------------
+    // Заметки к базам
+    // -----------------------------------------------------------------
+
+    private void showNoteDialog() {
+        String address = getCurrentAddress();
+        if (address.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Сначала введите адрес базы данных!");
+            return;
+        }
+
+        String currentNote = historyManager.getNote(address);
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle(RunYBaseHelpTexts.NOTE_DIALOG_TITLE);
+        dialog.setHeaderText(address);
+
+        ButtonType okButtonType = new ButtonType("OK", javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
+        ButtonType clearButtonType = new ButtonType("Очистить", javafx.scene.control.ButtonBar.ButtonData.YES);
+        ButtonType cancelButtonType = new ButtonType("Отмена", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, clearButtonType, cancelButtonType);
+
+        TextArea noteArea = new TextArea(currentNote != null ? currentNote : "");
+        noteArea.setPrefRowCount(6);
+        noteArea.setPrefColumnCount(50);
+        noteArea.setWrapText(true);
+        noteArea.setPromptText("Введите текстовую заметку к этой базе...\n" +
+                "Например: \"Проверить печатную форму заказа клиента\"");
+        noteArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-background-color: " +
+                COLOR_INPUT_BG + "; -fx-border-color: " + COLOR_BUTTON_BORDER + "; -fx-border-width: 1px;");
+
+        Label charCountLabel = new Label("0 / " + AppConstants.MAX_NOTE_LENGTH + " символов");
+        charCountLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: gray;");
+
+        noteArea.textProperty().addListener((obs, old, newVal) -> {
+            int len = newVal == null ? 0 : newVal.length();
+            charCountLabel.setText(len + " / " + AppConstants.MAX_NOTE_LENGTH + " символов");
+            charCountLabel.setStyle(len > AppConstants.MAX_NOTE_LENGTH ?
+                    "-fx-font-size: 10px; -fx-text-fill: red;" :
+                    "-fx-font-size: 10px; -fx-text-fill: gray;");
+        });
+
+        VBox content = new VBox(8, noteArea, charCountLabel);
+        content.setPadding(new Insets(10));
+        dialog.getDialogPane().setContent(content);
+
+        Platform.runLater(noteArea::requestFocus);
+
+        dialog.showAndWait().ifPresent(result -> {
+            String note = noteArea.getText();
+            historyManager.saveNote(address, note);
+            
+            if (result == okButtonType) {
+                // Обновляем отображение заметки на основной форме
+                updateBaseInfoDisplay(address);
+                if (note.trim().isEmpty()) {
+                    showAlert(Alert.AlertType.INFORMATION, "Удалено",
+                            "Заметка удалена для адреса:\n" + address);
+                } else {
+                    showAlert(Alert.AlertType.INFORMATION, "Успешно",
+                            "Заметка сохранена для адреса:\n" + address);
+                }
+            } else if (result == clearButtonType) {
+                // Обновляем отображение заметки на основной форме
+                updateBaseInfoDisplay(address);
+                showAlert(Alert.AlertType.INFORMATION, "Удалено",
+                        "Заметка удалена для адреса:\n" + address);
             }
         });
     }
@@ -1133,6 +1271,14 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         try {
             List<BaseEntry> baseEntries = loadAndSortDatabases();
 
+            // Загружаем заметки для каждой базы
+            for (BaseEntry entry : baseEntries) {
+                String note = historyManager.getNote(entry.connect);
+                if (note != null && !note.isEmpty()) {
+                    entry.setNote(note);
+                }
+            }
+
             if (baseEntries.isEmpty()) {
                 showAlert(Alert.AlertType.INFORMATION, "Список баз", "Нет зарегистрированных баз 1С");
                 return;
@@ -1288,24 +1434,34 @@ class BaseEntry {
     String name;
     String connect;
     double order;
+    String note;
 
     BaseEntry(String name, String connect, double order) {
         this.name = name;
         this.connect = connect;
         this.order = order;
     }
+    
+    void setNote(String note) {
+        this.note = note;
+    }
 }
 
 class BaseEntryListCell extends ListCell<BaseEntry> {
     private final Label nameLabel = new Label();
     private final Label connectLabel = new Label();
-    private final VBox container = new VBox(2, nameLabel, connectLabel);
+    private final Label noteLabel = new Label();
+    private final VBox container = new VBox(2, nameLabel, connectLabel, noteLabel);
 
     public BaseEntryListCell() {
         container.setPadding(new Insets(5, 10, 5, 10));
         nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
         connectLabel.setStyle("-fx-font-style: italic; -fx-font-size: 10px;");
         connectLabel.setPadding(new Insets(0, 0, 0, 20));
+        noteLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #C8A046; -fx-font-style: italic;");
+        noteLabel.setPadding(new Insets(0, 0, 0, 20));
+        noteLabel.setWrapText(true);
+        noteLabel.setMaxWidth(500);
     }
 
     @Override
@@ -1316,14 +1472,24 @@ class BaseEntryListCell extends ListCell<BaseEntry> {
         } else {
             nameLabel.setText(item.name);
             connectLabel.setText(item.connect);
+            if (item.note != null && !item.note.isEmpty()) {
+                // Обрезаем длинную заметку для отображения
+                String displayNote = item.note.length() > 80 ? item.note.substring(0, 80) + "..." : item.note;
+                noteLabel.setText("📝 " + displayNote);
+                noteLabel.setVisible(true);
+            } else {
+                noteLabel.setVisible(false);
+            }
             if (isSelected()) {
                 container.setStyle("-fx-background-color: -fx-selection-bar;");
                 nameLabel.setTextFill(Color.WHITE);
                 connectLabel.setTextFill(Color.WHITE);
+                noteLabel.setTextFill(Color.WHITE);
             } else {
                 container.setStyle("-fx-background-color: transparent;");
                 nameLabel.setTextFill(Color.BLACK);
                 connectLabel.setTextFill(Color.BLACK);
+                noteLabel.setTextFill(Color.GRAY);
             }
             setGraphic(container);
         }
