@@ -64,9 +64,9 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
         
         MenuItem pasteItem = new MenuItem("Вставить");
         pasteItem.setOnAction(e -> {
-            String clipboardText = javafx.scene.input.Clipboard.getSystemClipboard().getString();
-            if (clipboardText != null && !clipboardText.isEmpty()) {
-                String extractedAddress = StringExtractor.extractConnectionString(clipboardText);
+            String clipText = javafx.scene.input.Clipboard.getSystemClipboard().getString();
+            if (clipText != null && !clipText.isEmpty()) {
+                String extractedAddress = StringExtractor.extractConnectionString(clipText);
                 if (extractedAddress != null) {
                     getComboBox().getEditor().setText(extractedAddress);
                 } else {
@@ -80,7 +80,23 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
             }
         });
         
-        contextMenu.getItems().addAll(clearItem, pasteItem, new SeparatorMenuItem());
+        MenuItem pasteDirectoryItem = new MenuItem("Вставить каталог");
+        pasteDirectoryItem.setOnAction(e -> {
+            String clipTextDir = javafx.scene.input.Clipboard.getSystemClipboard().getString();
+            if (clipTextDir != null && !clipTextDir.isEmpty()) {
+                String directoryPath = StringExtractor.extractDirectoryPath(clipTextDir);
+                if (directoryPath != null) {
+                    // Экранируем кавычки внутри пути (заменяем " на "")
+                    String escapedPath = directoryPath.replace("\"", "\"\"");
+                    String connectionString = "File=\"" + escapedPath + "\"";
+                    getComboBox().getEditor().setText(connectionString);
+                } else {
+                    showWarning("В буфере обмена не найден путь к каталогу!");
+                }
+            }
+        });
+        
+        contextMenu.getItems().addAll(clearItem, pasteItem, pasteDirectoryItem, new SeparatorMenuItem());
         menuButton.setOnAction(e -> contextMenu.show(menuButton, 
                 menuButton.localToScreen(0, menuButton.getHeight()).getX(),
                 menuButton.localToScreen(0, menuButton.getHeight()).getY()));
@@ -112,5 +128,17 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
 
     public ContextMenu getContextMenu() {
         return contextMenu;
+    }
+    
+    /**
+     * Показывает предупреждение
+     */
+    private void showWarning(String message) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                javafx.scene.control.Alert.AlertType.WARNING);
+        alert.setTitle("Предупреждение");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
