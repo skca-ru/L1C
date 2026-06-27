@@ -14,6 +14,8 @@ import javafx.event.*;
 import javafx.util.Duration;
 import javafx.scene.input.*;
 import javafx.scene.text.Text;
+
+import javax.swing.JOptionPane;
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
@@ -85,6 +87,8 @@ public class RunYBase extends Application {
 
     private Button userCredentialsButton;
 
+    private static UserCredentials copiedCredentials = null;
+
     // Label для отображения имени БД и заметки под полем адреса
     private Label baseNameLabel;
     private Label baseNoteLabel;
@@ -101,7 +105,7 @@ public class RunYBase extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-    
+
         credentialsManager = new CredentialsManager();
 
         // Создаём меню
@@ -187,51 +191,52 @@ public class RunYBase extends Application {
     }
 
     /**
- * Добавляет текущий адрес из поля ввода в список зарегистрированных баз (ibases.v8i)
- */
-private void addCurrentAddressToDatabaseList() {
-    String address = getCurrentAddress();
-    if (address.isEmpty()) {
-        showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет адреса для добавления!");
-        return;
-    }
+     * Добавляет текущий адрес из поля ввода в список зарегистрированных баз
+     * (ibases.v8i)
+     */
+    private void addCurrentAddressToDatabaseList() {
+        String address = getCurrentAddress();
+        if (address.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет адреса для добавления!");
+            return;
+        }
 
-    try {
-        // Проверяем, есть ли уже такой адрес
-        List<BaseEntry> existing = loadAndSortDatabases();
-        for (BaseEntry entry : existing) {
-            if (entry.connect != null && entry.connect.equals(address)) {
-                showAlert(Alert.AlertType.INFORMATION, "Информация",
-                        "Этот адрес уже есть в списке баз под именем:\n" + entry.name);
-                return;
+        try {
+            // Проверяем, есть ли уже такой адрес
+            List<BaseEntry> existing = loadAndSortDatabases();
+            for (BaseEntry entry : existing) {
+                if (entry.connect != null && entry.connect.equals(address)) {
+                    showAlert(Alert.AlertType.INFORMATION, "Информация",
+                            "Этот адрес уже есть в списке баз под именем:\n" + entry.name);
+                    return;
+                }
             }
-        }
 
-        // Запрашиваем имя для новой базы
-        TextInputDialog nameDialog = new TextInputDialog();
-        nameDialog.setTitle("Добавление базы");
-        nameDialog.setHeaderText("Введите имя для новой базы");
-        nameDialog.setContentText("Имя базы:");
-        Optional<String> result = nameDialog.showAndWait();
+            // Запрашиваем имя для новой базы
+            TextInputDialog nameDialog = new TextInputDialog();
+            nameDialog.setTitle("Добавление базы");
+            nameDialog.setHeaderText("Введите имя для новой базы");
+            nameDialog.setContentText("Имя базы:");
+            Optional<String> result = nameDialog.showAndWait();
 
-        if (result.isPresent() && !result.get().trim().isEmpty()) {
-            String name = result.get().trim();
-            addDatabaseEntryToFile(address, name);
-            // Обновляем карту для подсказок
-            registeredAddressMap.put(address, name);
-            showAlert(Alert.AlertType.INFORMATION, "Успешно",
-                    "База '" + name + "' добавлена в список!\n" +
-                    "Адрес: " + address);
-        } else {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение",
-                    "Имя не введено, добавление отменено.");
+            if (result.isPresent() && !result.get().trim().isEmpty()) {
+                String name = result.get().trim();
+                addDatabaseEntryToFile(address, name);
+                // Обновляем карту для подсказок
+                registeredAddressMap.put(address, name);
+                showAlert(Alert.AlertType.INFORMATION, "Успешно",
+                        "База '" + name + "' добавлена в список!\n" +
+                                "Адрес: " + address);
+            } else {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение",
+                        "Имя не введено, добавление отменено.");
+            }
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Ошибка",
+                    "Ошибка при добавлении в список баз:\n" + e.getMessage());
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        showAlert(Alert.AlertType.ERROR, "Ошибка",
-                "Ошибка при добавлении в список баз:\n" + e.getMessage());
-        e.printStackTrace();
     }
-}
 
     /**
      * Перечитывает файл ibases.v8i и обновляет registeredAddressMap
@@ -246,9 +251,9 @@ private void addCurrentAddressToDatabaseList() {
                 }
             }
             showAutoClosingAlert(
-                    """    
-                    Список баз обновлён.
-                    Загружено записей:""" + " " + baseEntries.size(),
+                    """
+                            Список баз обновлён.
+                            Загружено записей:""" + " " + baseEntries.size(),
                     "Обновление", 3);
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Ошибка",
@@ -257,57 +262,107 @@ private void addCurrentAddressToDatabaseList() {
         }
     }
 
+    /**
+     * Копирует учётные данные (имя пользователя и пароль) для текущего адреса
+     * во внутренний буфер.
+     */
+    private void copyCredentials() {
+        String address = getCurrentAddress();
+        if (address.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет адреса для копирования учётных данных!");
+            return;
+        }
+        UserCredentials cred = credentialsManager.get(address);
+        if (cred == null || cred.getUsername().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Для этого адреса нет сохранённых учётных данных!");
+            return;
+        }
+        copiedCredentials = new UserCredentials(cred.getUsername(), cred.getPassword());
+        showAutoClosingAlert("Учётные данные скопированы для адреса:\n" + address, "Копирование", 3);
+    }
+
+    /**
+     * Вставляет скопированные учётные данные для текущего адреса.
+     */
+    private void pasteCredentials() {
+        String address = getCurrentAddress();
+        if (address.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет адреса для вставки учётных данных!");
+            return;
+        }
+        if (copiedCredentials == null || copiedCredentials.getUsername().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет скопированных учётных данных!");
+            return;
+        }
+        // Проверяем, не совпадает ли адрес с исходным (можно и не проверять)
+        UserCredentials existing = credentialsManager.get(address);
+        if (existing != null && existing.getUsername().equals(copiedCredentials.getUsername())) {
+            // Если уже такие же данные, можно предупредить
+            // int answer = showConfirmation("Учётные данные уже совпадают. Всё равно
+            // заменить?");
+            // if (answer != JOptionPane.YES_OPTION) return;
+        }
+        credentialsManager.put(address,
+                new UserCredentials(copiedCredentials.getUsername(), copiedCredentials.getPassword()));
+        updateUserButtonState();
+        showAutoClosingAlert("Учётные данные вставлены для адреса:\n" + address, "Вставка", 3);
+    }
+
     private Button createButton(String text) {
         return createButton(text, COLOR_BUTTON_BG);
     }
-/**
- * Добавляет запись о новой базе в файл ibases.v8i
- */
-private void addDatabaseEntryToFile(String connect, String name) throws IOException {
-    Path ibasesPath = Paths.get(System.getProperty("user.home"),
-            "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
 
-    // Создаём директорию и файл, если их нет
-    if (!Files.exists(ibasesPath)) {
-        Files.createDirectories(ibasesPath.getParent());
-        Files.createFile(ibasesPath);
-    }
+    /**
+     * Добавляет запись о новой базе в файл ibases.v8i
+     */
+    private void addDatabaseEntryToFile(String connect, String name) throws IOException {
+        Path ibasesPath = Paths.get(System.getProperty("user.home"),
+                "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
 
-    // Читаем существующие строки
-    List<String> lines = Files.readAllLines(ibasesPath, StandardCharsets.UTF_8);
-
-    // Находим максимальный OrderInList для корректного порядка
-    double maxOrder = 0;
-    for (String line : lines) {
-        if (line.startsWith("OrderInList=")) {
-            try {
-                double val = Double.parseDouble(line.substring(12));
-                if (val > maxOrder) maxOrder = val;
-            } catch (NumberFormatException ignored) {}
+        // Создаём директорию и файл, если их нет
+        if (!Files.exists(ibasesPath)) {
+            Files.createDirectories(ibasesPath.getParent());
+            Files.createFile(ibasesPath);
         }
+
+        // Читаем существующие строки
+        List<String> lines = Files.readAllLines(ibasesPath, StandardCharsets.UTF_8);
+
+        // Находим максимальный OrderInList для корректного порядка
+        double maxOrder = 0;
+        for (String line : lines) {
+            if (line.startsWith("OrderInList=")) {
+                try {
+                    double val = Double.parseDouble(line.substring(12));
+                    if (val > maxOrder)
+                        maxOrder = val;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        // Генерируем уникальный ID
+        String guid = UUID.randomUUID().toString();
+
+        // Формируем новую секцию
+        List<String> newEntry = new ArrayList<>();
+        newEntry.add("[" + name + "]");
+        newEntry.add("Connect=" + connect);
+        newEntry.add("ID=" + guid);
+        newEntry.add("OrderInList=" + (maxOrder + 16384));
+        newEntry.add("Folder=/");
+        newEntry.add("OrderInTree=" + (maxOrder + 16384));
+        newEntry.add("External=0");
+        newEntry.add("App=Auto");
+        newEntry.add("WA=1");
+        newEntry.add("DisableLocalSpeechToText=0");
+        newEntry.add(""); // пустая строка для разделения
+
+        // Добавляем в конец файла
+        lines.addAll(newEntry);
+        Files.write(ibasesPath, lines, StandardCharsets.UTF_8);
     }
 
-    // Генерируем уникальный ID
-    String guid = UUID.randomUUID().toString();
-
-    // Формируем новую секцию
-    List<String> newEntry = new ArrayList<>();
-    newEntry.add("[" + name + "]");
-    newEntry.add("Connect=" + connect);
-    newEntry.add("ID=" + guid);
-    newEntry.add("OrderInList=" + (maxOrder + 16384));
-    newEntry.add("Folder=/");
-    newEntry.add("OrderInTree=" + (maxOrder + 16384));
-    newEntry.add("External=0");
-    newEntry.add("App=Auto");
-    newEntry.add("WA=1");
-    newEntry.add("DisableLocalSpeechToText=0");
-    newEntry.add(""); // пустая строка для разделения
-
-    // Добавляем в конец файла
-    lines.addAll(newEntry);
-    Files.write(ibasesPath, lines, StandardCharsets.UTF_8);
-}
     private Button createButton(String text, String bgColor) {
 
         Button button = new Button(text);
@@ -617,6 +672,17 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         MenuItem refreshDatabaseItem = new MenuItem("Обновить список баз");
         refreshDatabaseItem.setOnAction(e -> refreshDatabaseList());
         addressControl.getContextMenu().getItems().add(refreshDatabaseItem);
+        // Внутри createAddressPanel() после добавления refreshDatabaseItem
+
+        addressControl.getContextMenu().getItems().add(new SeparatorMenuItem());
+
+        MenuItem copyCredsItem = new MenuItem("Копировать учётные данные");
+        copyCredsItem.setOnAction(e -> copyCredentials());
+        addressControl.getContextMenu().getItems().add(copyCredsItem);
+
+        MenuItem pasteCredsItem = new MenuItem("Вставить учётные данные");
+        pasteCredsItem.setOnAction(e -> pasteCredentials());
+        addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem);
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
@@ -632,7 +698,8 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         // Панель с именем БД и заметкой
         baseNameLabel = new Label();
         baseNameLabel.setWrapText(true);
-        //baseNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: " + COLOR_ACCENT + ";");
+        // baseNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px;
+        // -fx-text-fill: " + COLOR_ACCENT + ";");
 
         baseNoteLabel = new Label();
         baseNoteLabel.setWrapText(true);
@@ -671,7 +738,7 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
             if (baseName != null) {
                 baseNameLabel.setText("📋 База: " + baseName);
                 baseNameLabel.setVisible(true);
-                
+
                 // Также отображаем имя в ComboBox
                 addressControl.setAdressIB(baseName);
             } else {
@@ -773,7 +840,8 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
             userCredentialsButton.setUserData(COLOR_USER_HAS_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
                     .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_HAS_CRED));
-            userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
+            userCredentialsButton
+                    .setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
         } else {
             userCredentialsButton.setUserData(COLOR_USER_NO_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
@@ -908,9 +976,8 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         noteArea.textProperty().addListener((obs, old, newVal) -> {
             int len = newVal == null ? 0 : newVal.length();
             charCountLabel.setText(len + " / " + AppConstants.MAX_NOTE_LENGTH + " символов");
-            charCountLabel.setStyle(len > AppConstants.MAX_NOTE_LENGTH ?
-                    "-fx-font-size: 10px; -fx-text-fill: red;" :
-                    "-fx-font-size: 10px; -fx-text-fill: gray;");
+            charCountLabel.setStyle(len > AppConstants.MAX_NOTE_LENGTH ? "-fx-font-size: 10px; -fx-text-fill: red;"
+                    : "-fx-font-size: 10px; -fx-text-fill: gray;");
         });
 
         VBox content = new VBox(8, noteArea, charCountLabel);
@@ -922,7 +989,7 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         dialog.showAndWait().ifPresent(result -> {
             String note = noteArea.getText();
             historyManager.saveNote(address, note);
-            
+
             if (result == okButtonType) {
                 // Обновляем отображение заметки на основной форме
                 updateBaseInfoDisplay(address);
@@ -1011,7 +1078,6 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         addressComboBox.setValue(address);
     }
 
-  
     private void autoPasteFromClipboard() {
         try {
             Clipboard clipboard = Clipboard.getSystemClipboard();
@@ -1031,7 +1097,8 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
                             if (base.connect != null && base.connect.equals(extractedAddress)) {
                                 addressControl.setAdressIB(base.name);
                                 showAlert(Alert.AlertType.INFORMATION, "Автовставка из буфера",
-                                        "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + extractedAddress +
+                                        "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n"
+                                                + extractedAddress +
                                                 "\n\nНайдена база: " + base.name);
                                 return;
                             }
@@ -1041,7 +1108,8 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
                     }
 
                     showAlert(Alert.AlertType.INFORMATION, "Автовставка из буфера",
-                            "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n" + extractedAddress);
+                            "Обнаружен адрес базы 1С в буфере обмена!\n\nАвтоматически вставлено:\n"
+                                    + extractedAddress);
                     return;
                 }
             }
@@ -1471,7 +1539,7 @@ class BaseEntry {
         this.connect = connect;
         this.order = order;
     }
-    
+
     void setNote(String note) {
         this.note = note;
     }
