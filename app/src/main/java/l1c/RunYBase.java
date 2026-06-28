@@ -988,7 +988,7 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
             return;
         }
 
-        if (executeProcessingCheckbox.isSelected()) {
+        if (!designerRadio.isSelected() && executeProcessingCheckbox.isSelected()) {
             String processingPath = executeProcessingField.getText();
             if (processingPath == null || processingPath.trim().isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Предупреждение", "Укажите путь к внешней обработке (.bfsl)!");
