@@ -75,6 +75,31 @@ public final class RunYBaseHelpTexts {
             Добавить параметр /ClearCache для очистки кэша
             """;
 
+    public static final String EXECUTE_PROCESSING_INFO = """
+            /Execute <имя файла внешней обработки>
+            
+            Предназначен для запуска внешней обработки в режиме "1С:Предприятие" 
+            непосредственно после старта системы.
+            
+            Файл внешней обработки должен быть указан как путь к файлу .bfsl
+            (сформированной внешней обработке).
+            
+            Пример:
+            /Execute "C:\\1C\\ExtProcs\\MyProcessing.bfsl"
+            
+            Примечание: параметр работает только в режиме "Предприятие", 
+            для Конфигуратора игнорируется.
+            """;
+
+    public static final String EXECUTE_PROCESSING_TOOLTIP = """
+            Добавить параметр /Execute для запуска внешней обработки
+            """;
+
+    public static final String EXECUTE_PROCESSING_FIELD_TOOLTIP = """
+            Укажите полный путь к файлу внешней обработки (.bfsl)
+            Пример: C:\\1C\\ExtProcs\\MyProcessing.bfsl
+            """;
+
     public static final String HISTORY_COMMENT = """
             Файл истории адресов баз 1С.
             Содержит последние использованные адреса для быстрого выбора.

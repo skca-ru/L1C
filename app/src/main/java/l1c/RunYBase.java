@@ -78,6 +78,8 @@ public class RunYBase extends Application {
     private CheckBox priorityPlatformCheckbox;
     private CheckBox debugModeCheckbox;
     private CheckBox clearCacheCheckbox;
+    private CheckBox executeProcessingCheckbox;
+    private TextField executeProcessingField;
     private ComboBox<String> debugProtocolCombo;
     private TextArea debugArea;
     private ObservableList<String> historyList;
@@ -371,6 +373,12 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         return box;
     }
 
+    private HBox createHelpOption(CheckBox option, TextField field, Button helpButton) {
+        HBox box = new HBox(5, option, field, helpButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
     /**
      * Создаёт VBox с кнопками Copy и Run для TextArea с командой
      * 
@@ -501,10 +509,30 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         clearCacheHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /ClearCache",
                 RunYBaseHelpTexts.CLEAR_CACHE_INFO));
 
+        executeProcessingCheckbox = new CheckBox("Внешняя обработка (/Execute)");
+        executeProcessingCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_TOOLTIP));
+
+        executeProcessingField = new TextField();
+        executeProcessingField.setPromptText("Путь к .bfsl файлу");
+        executeProcessingField.setPrefWidth(250);
+        executeProcessingField.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_FIELD_TOOLTIP));
+        executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
+        executeProcessingField.setVisible(false);
+
+        executeProcessingCheckbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            executeProcessingField.setVisible(newVal);
+        });
+
+        Button executeHelpButton = createHelpButton();
+        executeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_INFO));
+        executeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Execute",
+                RunYBaseHelpTexts.EXECUTE_PROCESSING_INFO));
+
         HBox debugOption = createHelpOption(debugModeCheckbox, debugProtocolCombo, debugHelpButton);
         HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
         HBox clearCacheOption = createHelpOption(clearCacheCheckbox, clearCacheHelpButton);
-        HBox optionsRow = new HBox(15, debugOption, platformOption, clearCacheOption);
+        HBox executeOption = createHelpOption(executeProcessingCheckbox, executeProcessingField, executeHelpButton);
+        HBox optionsRow = new HBox(15, debugOption, platformOption, clearCacheOption, executeOption);
         optionsRow.setAlignment(Pos.CENTER_LEFT);
 
         panel.getChildren().addAll(modeRow, optionsRow);
@@ -943,6 +971,13 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
             cmd.append(" /ClearCache");
         }
 
+        if (executeProcessingCheckbox.isSelected()) {
+            String processingPath = executeProcessingField.getText();
+            if (processingPath != null && !processingPath.trim().isEmpty()) {
+                cmd.append(" /Execute \"").append(processingPath.trim()).append("\"");
+            }
+        }
+
         return cmd.toString();
     }
 
@@ -951,6 +986,14 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         if (text.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
             return;
+        }
+
+        if (executeProcessingCheckbox.isSelected()) {
+            String processingPath = executeProcessingField.getText();
+            if (processingPath == null || processingPath.trim().isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение", "Укажите путь к внешней обработке (.bfsl)!");
+                return;
+            }
         }
 
         addToHistory(text);
