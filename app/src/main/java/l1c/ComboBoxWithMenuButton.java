@@ -22,11 +22,11 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
     private ContextMenu contextMenu;   
 
     public ComboBoxWithMenuButton(String exampleTooltipText) {
-        this(exampleTooltipText, null);
+        this(exampleTooltipText, null, "");
     }
     
-    public ComboBoxWithMenuButton(String exampleTooltipText, ObservableList<T> items) {
-        super(exampleTooltipText, items);
+    public ComboBoxWithMenuButton(String exampleTooltipText, ObservableList<T> items, String promptText) {
+        super(exampleTooltipText, items, promptText);
         
         // Убираем исходную кнопку из родительского HBox и добавляем свои
         // В родительском классе кнопка называется choiceButton и доступна через геттер
@@ -112,5 +112,8 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
 
     public ContextMenu getContextMenu() {
         return contextMenu;
+    }
+    public String getText(){
+        return getComboBox().getEditor().getText();
     }
 }

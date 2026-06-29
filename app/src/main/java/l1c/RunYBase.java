@@ -79,7 +79,7 @@ public class RunYBase extends Application {
     private CheckBox debugModeCheckbox;
     private CheckBox clearCacheCheckbox;
     private CheckBox executeProcessingCheckbox;
-    private TextField executeProcessingField;
+    private ComboBoxWithMenuButton<String> executeProcessingField;
     private ComboBox<String> debugProtocolCombo;
     private TextArea debugArea;
     private ObservableList<String> historyList;
@@ -361,6 +361,12 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         return button;
     }
 
+     private HBox createHelpOption(ComboBoxWithMenuButton option, TextField field, Button helpButton) {
+        HBox box = new HBox(5, option, field, helpButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
     private HBox createHelpOption(CheckBox option, Button helpButton) {
         HBox box = new HBox(3, option, helpButton);
         box.setAlignment(Pos.CENTER_LEFT);
@@ -374,6 +380,12 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
     }
 
     private HBox createHelpOption(CheckBox option, TextField field, Button helpButton) {
+        HBox box = new HBox(5, option, field, helpButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
+    private HBox createHelpOption(CheckBox option, ComboBoxWithMenuButton field, Button helpButton) {
         HBox box = new HBox(5, option, field, helpButton);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
@@ -512,10 +524,8 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         executeProcessingCheckbox = new CheckBox("Внешняя обработка (/Execute)");
         executeProcessingCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_TOOLTIP));
 
-        executeProcessingField = new TextField();
-        executeProcessingField.setPromptText("Путь к .bfsl файлу");
+        executeProcessingField = new ComboBoxWithMenuButton<String>("Введите имя файла внешней обработки", null, "Путь к файлу внешнего отчета или обработки"); 
         executeProcessingField.setPrefWidth(250);
-        executeProcessingField.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_FIELD_TOOLTIP));
         executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
         executeProcessingField.setVisible(false);
 
@@ -532,6 +542,9 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
         HBox clearCacheOption = createHelpOption(clearCacheCheckbox, clearCacheHelpButton);
         HBox executeOption = createHelpOption(executeProcessingCheckbox, executeProcessingField, executeHelpButton);
+        //HBox executeOption = new HBox(3, executeProcessingCheckbox );
+        //box.setAlignment(Pos.CENTER_LEFT);
+             
         HBox optionsRow = new HBox(15, debugOption, platformOption, clearCacheOption, executeOption);
         optionsRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -593,7 +606,7 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         historyManager = new HistoryManager();
         ObservableList<String> historyList = historyManager.getHistoryList();
 
-        addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
+        addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList, RunYBaseHelpTexts.BASE_CONNECTION_PROMPT);
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
         // Добавляем пункт меню
