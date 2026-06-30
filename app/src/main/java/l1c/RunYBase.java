@@ -6,6 +6,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 import javafx.geometry.*;
@@ -602,6 +603,24 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         MenuItem refreshDatabaseItem = new MenuItem("Обновить список баз");
         refreshDatabaseItem.setOnAction(e -> refreshDatabaseList());
         addressControl.getContextMenu().getItems().add(refreshDatabaseItem);
+        
+        MenuItem pasteDirectoryItem = new MenuItem("Вставить каталог");
+        pasteDirectoryItem.setOnAction(e -> {
+            String clipTextDir = javafx.scene.input.Clipboard.getSystemClipboard().getString();
+            if (clipTextDir != null && !clipTextDir.isEmpty()) {
+                String directoryPath = StringExtractor.extractDirectoryPath(clipTextDir);
+                if (directoryPath != null) {
+                    // Экранируем кавычки внутри пути (заменяем " на "")
+                    String escapedPath = directoryPath.replace("\"", "\"\"");
+                    String connectionString = "File=\"" + escapedPath + "\"";
+                    addressComboBox.getEditor().setText(connectionString);
+                } else {
+                    showAlert(AlertType.INFORMATION, "Внимание", "В буфере обмена не найден путь к каталогу!");
+                }
+            }
+        });
+        addressControl.getContextMenu().getItems().add(pasteDirectoryItem);
+
 
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
