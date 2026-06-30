@@ -75,6 +75,32 @@ public final class RunYBaseHelpTexts {
             Добавить параметр /ClearCache для очистки кэша
             """;
 
+    public static final String EXECUTE_PROCESSING_INFO = """
+        /Execute <имя файла внешней обработки>
+
+        Предназначен для запуска внешней обработки (или отчета) в режиме "1С:Предприятие"
+        непосредственно после старта системы.
+
+        Файл внешней обработки должен быть указан как полный путь к файлу с расширением:
+        • .epf – внешняя обработка
+        • .erf – внешний отчет
+
+        Пример:
+        /Execute "C:\\1C\\ExtProcs\\MyProcessing.epf"
+
+        Примечание: параметр работает только в режиме "Предприятие".
+        В режиме "Конфигуратор" ключ игнорируется.
+        """;
+
+    public static final String EXECUTE_PROCESSING_TOOLTIP = """
+            Добавить параметр /Execute для запуска внешней обработки
+            """;
+
+    public static final String EXECUTE_PROCESSING_FIELD_TOOLTIP = """
+            Укажите полный путь к файлу внешней обработки (.bfsl)
+            Пример: C:\\1C\\ExtProcs\\MyProcessing.bfsl
+            """;
+
     public static final String HISTORY_COMMENT = """
             Файл истории адресов баз 1С.
             Содержит последние использованные адреса для быстрого выбора.

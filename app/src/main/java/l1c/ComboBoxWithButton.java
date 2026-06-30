@@ -22,10 +22,10 @@ class ComboBoxWithButton<T> extends HBox {
 
 
     public ComboBoxWithButton(String exampleTooltipText) {
-        this(exampleTooltipText, null);
+        this(exampleTooltipText, null, "");
     }
     public ComboBoxWithButton(String exampleTooltipText, 
-        ObservableList<T> items) {
+        ObservableList<T> items, String promptText) {
         super(0); // без промежутка
         // без рамок
         setStyle("""
@@ -38,7 +38,7 @@ class ComboBoxWithButton<T> extends HBox {
         comboBox = new ComboBox<>();
         comboBox.setMaxWidth(Double.MAX_VALUE);
         comboBox.setEditable(true);
-        comboBox.setPromptText(RunYBaseHelpTexts.BASE_CONNECTION_PROMPT);
+        comboBox.setPromptText(promptText);
         if (items != null) {
             comboBox.setItems(items);
             

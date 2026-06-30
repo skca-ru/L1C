@@ -36,8 +36,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.animation.PauseTransition;
 
@@ -78,6 +76,8 @@ public class RunYBase extends Application {
     private CheckBox priorityPlatformCheckbox;
     private CheckBox debugModeCheckbox;
     private CheckBox clearCacheCheckbox;
+    private CheckBox executeProcessingCheckbox;
+    private ComboBoxWithMenuButton<String> executeProcessingField;
     private ComboBox<String> debugProtocolCombo;
     private TextArea debugArea;
     private ObservableList<String> historyList;
@@ -389,6 +389,12 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         return button;
     }
 
+     private HBox createHelpOption(ComboBoxWithMenuButton option, TextField field, Button helpButton) {
+        HBox box = new HBox(5, option, field, helpButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
     private HBox createHelpOption(CheckBox option, Button helpButton) {
         HBox box = new HBox(3, option, helpButton);
         box.setAlignment(Pos.CENTER_LEFT);
@@ -397,6 +403,18 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
 
     private HBox createHelpOption(CheckBox option, ComboBox<String> combo, Button helpButton) {
         HBox box = new HBox(5, option, combo, helpButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
+    private HBox createHelpOption(CheckBox option, TextField field, Button helpButton) {
+        HBox box = new HBox(5, option, field, helpButton);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
+
+    private HBox createHelpOption(CheckBox option, ComboBoxWithMenuButton field, Button helpButton) {
+        HBox box = new HBox(5, option, field, helpButton);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -531,10 +549,45 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         clearCacheHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /ClearCache",
                 RunYBaseHelpTexts.CLEAR_CACHE_INFO));
 
+        executeProcessingCheckbox = new CheckBox("Внешняя обработка (/Execute)");
+        executeProcessingCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_TOOLTIP));
+
+        executeProcessingField = new ComboBoxWithMenuButton<String>("Введите имя файла внешней обработки", null, "Путь к файлу внешнего отчета или обработки"); 
+        executeProcessingField.setPrefWidth(250);
+        executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
+        executeProcessingField.setVisible(false);
+        // Обработчик нажатия на кнопку выбора 
+        executeProcessingField.getChoiceButton().setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Выберите файл обработки");
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Внешние обработки 1С (.epf)", "*.epf"),
+                new FileChooser.ExtensionFilter("Внешние отчеты 1С (.erf)", "*.erf"),
+                new FileChooser.ExtensionFilter("Все файлы", "*.*")
+            );
+            
+            File selectedPath = fileChooser.showOpenDialog(null);
+            if (selectedPath != null) {
+                executeProcessingField.getComboBox().getEditor().setText(selectedPath.getAbsolutePath());
+            }
+        }); 
+        executeProcessingCheckbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            executeProcessingField.setVisible(newVal);
+        });
+
+        Button executeHelpButton = createHelpButton();
+        executeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_INFO));
+        executeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Execute",
+                RunYBaseHelpTexts.EXECUTE_PROCESSING_INFO));
+
         HBox debugOption = createHelpOption(debugModeCheckbox, debugProtocolCombo, debugHelpButton);
         HBox platformOption = createHelpOption(priorityPlatformCheckbox, helpButton);
         HBox clearCacheOption = createHelpOption(clearCacheCheckbox, clearCacheHelpButton);
-        HBox optionsRow = new HBox(15, debugOption, platformOption, clearCacheOption);
+        HBox executeOption = createHelpOption(executeProcessingCheckbox, executeProcessingField, executeHelpButton);
+        //HBox executeOption = new HBox(3, executeProcessingCheckbox );
+        //box.setAlignment(Pos.CENTER_LEFT);
+             
+        HBox optionsRow = new HBox(15, debugOption, platformOption, clearCacheOption, executeOption);
         optionsRow.setAlignment(Pos.CENTER_LEFT);
 
         panel.getChildren().addAll(modeRow, optionsRow);
@@ -600,7 +653,7 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         historyManager = new HistoryManager();
         ObservableList<String> historyList = historyManager.getHistoryList();
 
-        addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList);
+        addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList, RunYBaseHelpTexts.BASE_CONNECTION_PROMPT);
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
@@ -1111,6 +1164,13 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
             cmd.append(" /ClearCache");
         }
 
+        if (executeProcessingCheckbox.isSelected()) {
+            String processingPath = executeProcessingField.getText();
+            if (processingPath != null && !processingPath.trim().isEmpty()) {
+                cmd.append(" /Execute \"").append(processingPath.trim()).append("\"");
+            }
+        }
+
         return cmd.toString();
     }
 
@@ -1119,6 +1179,14 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         if (text.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
             return;
+        }
+
+        if (!designerRadio.isSelected() && executeProcessingCheckbox.isSelected()) {
+            String processingPath = executeProcessingField.getText();
+            if (processingPath == null || processingPath.trim().isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение", "Укажите путь к внешней обработке (.bfsl)!");
+                return;
+            }
         }
 
         addToHistory(text);
