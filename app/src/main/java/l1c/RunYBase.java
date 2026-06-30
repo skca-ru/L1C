@@ -36,8 +36,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.animation.PauseTransition;
 
@@ -528,7 +526,21 @@ private void addDatabaseEntryToFile(String connect, String name) throws IOExcept
         executeProcessingField.setPrefWidth(250);
         executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
         executeProcessingField.setVisible(false);
-
+        // Обработчик нажатия на кнопку выбора 
+        executeProcessingField.getChoiceButton().setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Выберите файл обработки");
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Внешние обработки 1С (.epf)", "*.epf"),
+                new FileChooser.ExtensionFilter("Внешние отчеты 1С (.erf)", "*.erf"),
+                new FileChooser.ExtensionFilter("Все файлы", "*.*")
+            );
+            
+            File selectedPath = fileChooser.showOpenDialog(null);
+            if (selectedPath != null) {
+                executeProcessingField.getComboBox().getEditor().setText(selectedPath.getAbsolutePath());
+            }
+        }); 
         executeProcessingCheckbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             executeProcessingField.setVisible(newVal);
         });
