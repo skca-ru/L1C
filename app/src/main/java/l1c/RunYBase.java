@@ -1050,8 +1050,8 @@ public class RunYBase extends Application {
                     showAlert(Alert.AlertType.INFORMATION, "Удалено",
                             "Заметка удалена для адреса:\n" + address);
                 } else {
-                    showAlert(Alert.AlertType.INFORMATION, "Успешно",
-                            "Заметка сохранена для адреса:\n" + address);
+                    showAutoClosingAlert("Успешно",
+                            "Заметка сохранена для адреса:\n" + address, 3);
                 }
             } else if (result == clearButtonType) {
                 // Обновляем отображение заметки на основной форме

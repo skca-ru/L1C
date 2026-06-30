@@ -3,7 +3,7 @@ package l1c;
 public class AppConstants {
     
     // Версия приложения
-    public static final String VERSION = "2026.06.27.007";
+    public static final String VERSION = "2026.06.30.008";
     
     // @formatter:off
     public static final String APP_DATA_DIR        = ".1c_launcher";
