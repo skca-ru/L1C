@@ -6,6 +6,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 import javafx.geometry.*;
@@ -712,6 +713,23 @@ public class RunYBase extends Application {
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
+        MenuItem pasteDirectoryItem = new MenuItem("Вставить каталог");
+        pasteDirectoryItem.setOnAction(e -> {
+            String clipTextDir = javafx.scene.input.Clipboard.getSystemClipboard().getString();
+            if (clipTextDir != null && !clipTextDir.isEmpty()) {
+                String directoryPath = StringExtractor.extractDirectoryPath(clipTextDir);
+                if (directoryPath != null) {
+                    // Экранируем кавычки внутри пути (заменяем " на "")
+                    String escapedPath = directoryPath.replace("\"", "\"\"");
+                    String connectionString = "File=\"" + escapedPath + "\"";
+                    addressComboBox.getEditor().setText(connectionString);
+                } else {
+                    showAlert(AlertType.INFORMATION, "Внимание", "В буфере обмена не найден путь к каталогу!");
+                }
+            }
+        });
+        addressControl.getContextMenu().getItems().add(pasteDirectoryItem);
+
         // Добавляем пункт меню "Заметка..."
         MenuItem noteItem = new MenuItem("_Заметка...");
         noteItem.setOnAction(e -> showNoteDialog());
@@ -725,7 +743,6 @@ public class RunYBase extends Application {
         MenuItem refreshDatabaseItem = new MenuItem("Обновить список баз");
         refreshDatabaseItem.setOnAction(e -> refreshDatabaseList());
         addressControl.getContextMenu().getItems().add(refreshDatabaseItem);
-        // Внутри createAddressPanel() после добавления refreshDatabaseItem
 
         addressControl.getContextMenu().getItems().add(new SeparatorMenuItem());
 
@@ -736,7 +753,7 @@ public class RunYBase extends Application {
         MenuItem pasteCredsItem = new MenuItem("Вставить учётные данные");
         pasteCredsItem.setOnAction(e -> pasteCredentials());
         addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem);
-
+        
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
 
