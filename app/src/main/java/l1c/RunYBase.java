@@ -610,7 +610,7 @@ public class RunYBase extends Application {
 
         executeProcessingField = new ComboBoxWithMenuButton<String>("Введите имя файла внешней обработки", null, "Путь к файлу внешнего отчета или обработки"); 
         executeProcessingField.setPrefWidth(250);
-        executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
+        //executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
         executeProcessingField.setVisible(false);
         // Обработчик нажатия на кнопку выбора 
         executeProcessingField.getChoiceButton().setOnAction(e -> {
