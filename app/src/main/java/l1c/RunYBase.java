@@ -713,6 +713,21 @@ public class RunYBase extends Application {
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
+        // Пункт «Вставить» — извлекает строку подключения 1С из буфера обмена
+        MenuItem pasteItem = new MenuItem("Вставить");
+        pasteItem.setOnAction(e -> {
+            String clipText = javafx.scene.input.Clipboard.getSystemClipboard().getString();
+            if (clipText != null && !clipText.isEmpty()) {
+                String extractedAddress = StringExtractor.extractConnectionString(clipText);
+                if (extractedAddress != null) {
+                    addressComboBox.getEditor().setText(extractedAddress);
+                } else {
+                    showAlert(Alert.AlertType.WARNING, "Предупреждение", "Не найден адрес базы 1С в буфере обмена!");
+                }
+            }
+        });
+        addressControl.getContextMenu().getItems().add(pasteItem);
+
         MenuItem pasteDirectoryItem = new MenuItem("Вставить каталог");
         pasteDirectoryItem.setOnAction(e -> {
             String clipTextDir = javafx.scene.input.Clipboard.getSystemClipboard().getString();
