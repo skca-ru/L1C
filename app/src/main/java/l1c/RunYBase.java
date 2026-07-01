@@ -713,6 +713,47 @@ public class RunYBase extends Application {
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
+        setupAddressContextMenu();
+        
+        userCredentialsButton = createButton("П_ользователь");
+        userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
+
+        Button generateButton = createButton("С_формировать");
+        generateButton.setOnAction(e -> handleButtonClick());
+
+        inputPanel.getChildren().addAll(
+                addressLabel, addressControl, userCredentialsButton, generateButton);
+        HBox.setHgrow(addressControl, Priority.ALWAYS);
+        addressPanel.getChildren().add(inputPanel);
+
+        // Панель с именем БД и заметкой
+        baseNameLabel = new Label();
+        baseNameLabel.setWrapText(true);
+        // baseNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px;
+        // -fx-text-fill: " + COLOR_ACCENT + ";");
+
+        baseNoteLabel = new Label();
+        baseNoteLabel.setWrapText(true);
+        baseNoteLabel.setStyle("-fx-font-style: italic; -fx-font-size: 10px; -fx-text-fill: #666666;");
+        baseNoteLabel.setPadding(new Insets(2, 0, 0, 0));
+
+        VBox infoPanel = new VBox(2, baseNameLabel, baseNoteLabel);
+        infoPanel.setPadding(new Insets(5, 0, 0, 0));
+        HBox.setHgrow(infoPanel, Priority.ALWAYS);
+        addressPanel.getChildren().add(infoPanel);
+
+        // Настройка слушателя для отображения имени базы и заметки при изменении адреса
+        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            updateUserButtonState();
+            updateBaseInfoDisplay(newVal);
+        });
+        updateUserButtonState();
+        updateBaseInfoDisplay(null);
+
+        return addressPanel;
+    }
+
+    private void setupAddressContextMenu() {
         // Пункт «Вставить» — извлекает строку подключения 1С из буфера обмена
         MenuItem pasteItem = new MenuItem("Вставить");
         pasteItem.setOnAction(e -> {
@@ -763,48 +804,10 @@ public class RunYBase extends Application {
 
         MenuItem copyCredsItem = new MenuItem("Копировать учётные данные");
         copyCredsItem.setOnAction(e -> copyCredentials());
-        addressControl.getContextMenu().getItems().add(copyCredsItem);
 
         MenuItem pasteCredsItem = new MenuItem("Вставить учётные данные");
         pasteCredsItem.setOnAction(e -> pasteCredentials());
         addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem);
-        
-        userCredentialsButton = createButton("П_ользователь");
-        userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
-
-        Button generateButton = createButton("С_формировать");
-        generateButton.setOnAction(e -> handleButtonClick());
-
-        inputPanel.getChildren().addAll(
-                addressLabel, addressControl, userCredentialsButton, generateButton);
-        HBox.setHgrow(addressControl, Priority.ALWAYS);
-        addressPanel.getChildren().add(inputPanel);
-
-        // Панель с именем БД и заметкой
-        baseNameLabel = new Label();
-        baseNameLabel.setWrapText(true);
-        // baseNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px;
-        // -fx-text-fill: " + COLOR_ACCENT + ";");
-
-        baseNoteLabel = new Label();
-        baseNoteLabel.setWrapText(true);
-        baseNoteLabel.setStyle("-fx-font-style: italic; -fx-font-size: 10px; -fx-text-fill: #666666;");
-        baseNoteLabel.setPadding(new Insets(2, 0, 0, 0));
-
-        VBox infoPanel = new VBox(2, baseNameLabel, baseNoteLabel);
-        infoPanel.setPadding(new Insets(5, 0, 0, 0));
-        HBox.setHgrow(infoPanel, Priority.ALWAYS);
-        addressPanel.getChildren().add(infoPanel);
-
-        // Настройка слушателя для отображения имени базы и заметки при изменении адреса
-        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
-            updateUserButtonState();
-            updateBaseInfoDisplay(newVal);
-        });
-        updateUserButtonState();
-        updateBaseInfoDisplay(null);
-
-        return addressPanel;
     }
 
     /**
