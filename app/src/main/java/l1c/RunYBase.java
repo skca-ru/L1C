@@ -1218,7 +1218,7 @@ public class RunYBase extends Application {
     }
 
     private String getCommandPart() {
-        if (designerRadio.isSelected())
+        if (designerRadio.isSelected() || updateConfigRadio.isSelected())
             return "DESIGNER";
         if (thinRadio.isSelected())
             return "ENTERPRISE";
@@ -1236,10 +1236,11 @@ public class RunYBase extends Application {
      * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
      * @param cred         учётные данные пользователя (могут быть null)
      * @param isDesigner   запущен ли Конфигуратор
+     * @param isUpdate     нужна реструктуризация
      * @return сформированная строка запуска
      */
-    private String buildCommand(String platformPath, String appArch, String escaped,
-            String commandPart, UserCredentials cred, boolean isDesigner) {
+     private String buildCommand(String platformPath, String appArch, String escaped,
+        String commandPart, UserCredentials cred, boolean isDesigner, boolean isUpdate) {
         StringBuilder cmd = new StringBuilder();
         cmd.append("\"").append(platformPath).append("\" ");
         cmd.append(commandPart).append(" ");
@@ -1256,8 +1257,8 @@ public class RunYBase extends Application {
             cmd.append(" /AppArch ").append(appArch);
         }
 
-        // Режим отладки игнорируется для Конфигуратора
-        if (debugModeCheckbox.isSelected() && !isDesigner) {
+        // Режим отладки игнорируется для Конфигуратора и Реструктуризации
+        if (debugModeCheckbox.isSelected() && !isDesigner && !isUpdate) {
             String debugParam = " /Debug -attach";
             String protocol = debugProtocolCombo.getValue();
             if (protocol != null && !"по умолчанию".equals(protocol)) {
@@ -1269,6 +1270,8 @@ public class RunYBase extends Application {
         if (clearCacheCheckbox.isSelected()) {
             cmd.append(" /ClearCache");
         }
+        if (isUpdate) {
+                cmd.append(" /UpdateDBCfg -v2 -Server");}
 
         if (executeProcessingCheckbox.isSelected()) {
             String processingPath = executeProcessingField.getText();
@@ -1305,6 +1308,7 @@ public class RunYBase extends Application {
         UserCredentials cred = credentialsManager.get(text);
 
         boolean isDesigner = designerRadio.isSelected();
+        boolean isUpdate = updateConfigRadio.isSelected();
 
         String cmd86 = buildCommand(
                 "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
@@ -1312,7 +1316,8 @@ public class RunYBase extends Application {
                 escaped,
                 commandPart,
                 cred,
-                isDesigner);
+                isDesigner,
+                isUpdate);
 
         String cmd64 = buildCommand(
                 "C:\\Program Files\\1cv8\\common\\1cestart.exe",
@@ -1320,7 +1325,8 @@ public class RunYBase extends Application {
                 escaped,
                 commandPart,
                 cred,
-                isDesigner);
+                isDesigner,
+                isUpdate);
 
         outputArea86.setText(cmd86);
         outputArea.setText(cmd64);
@@ -1357,6 +1363,10 @@ public class RunYBase extends Application {
             mode = "Тонкий клиент";
         } else if (thickOrdinaryRadio.isSelected()) {
             mode = "Толстый клиент (Обычное)";
+        } else if (thickManagedRadio.isSelected()) {
+            mode = "Толстый клиент (Управляемое)";
+        } else if (updateConfigRadio.isSelected()) {
+            mode = "Обновление конфигурации";
         } else {
             mode = "Толстый клиент (Управляемое)";
         }
