@@ -730,11 +730,25 @@ public class RunYBase extends Application {
         HBox.setHgrow(addressControl, Priority.ALWAYS);
         addressPanel.getChildren().add(inputPanel);
 
-        // Панель с именем БД и заметкой
+        addressPanel.getChildren().add(createBaseInfoPanel());
+
+        // Настройка слушателя для отображения имени базы и заметки при изменении адреса
+        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            updateUserButtonState();
+            updateBaseInfoDisplay(newVal);
+        });
+        updateUserButtonState();
+        updateBaseInfoDisplay(null);
+
+        return addressPanel;
+    }
+
+    /**
+     * Создаёт панель с именем БД и заметкой под полем адреса.
+     */
+    private VBox createBaseInfoPanel() {
         baseNameLabel = new Label();
         baseNameLabel.setWrapText(true);
-        // baseNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px;
-        // -fx-text-fill: " + COLOR_ACCENT + ";");
 
         baseNoteLabel = new TextArea();
         baseNoteLabel.setWrapText(true);
@@ -767,20 +781,11 @@ public class RunYBase extends Application {
                 });
             }
         });
+
         VBox infoPanel = new VBox(2, baseNameLabel, baseNoteLabel);
         infoPanel.setPadding(new Insets(5, 0, 0, 0));
         HBox.setHgrow(infoPanel, Priority.ALWAYS);
-        addressPanel.getChildren().add(infoPanel);
-
-        // Настройка слушателя для отображения имени базы и заметки при изменении адреса
-        addressComboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
-            updateUserButtonState();
-            updateBaseInfoDisplay(newVal);
-        });
-        updateUserButtonState();
-        updateBaseInfoDisplay(null);
-
-        return addressPanel;
+        return infoPanel;
     }
 
     private void setupAddressContextMenu() {
