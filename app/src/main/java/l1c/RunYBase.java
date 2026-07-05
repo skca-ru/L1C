@@ -740,19 +740,6 @@ public class RunYBase extends Application {
         baseNoteLabel.setEditable(false);
         baseNoteLabel.setPrefRowCount(1);
         baseNoteLabel.setMinHeight(Region.USE_PREF_SIZE);
-        // baseNoteLabel.setStyle(
-        //     "-fx-font-style: italic; " +
-        //     "-fx-font-size: 14px; " +
-        //     "-fx-text-fill: #666666; " +
-        //     "-fx-background-color: transparent; " +
-        //     "-fx-background: transparent; " +
-        //     "-fx-background-insets: 0; " +
-        //     "-fx-padding: 0; " 
-        //     // // Этот код убирает внутренние рамки текстового поля:
-        //     // + "-fx-control-inner-background: transparent; "
-        //     // + "-fx-faint-focus-color: transparent; "
-        //     // //+ "-fx-focus-color: transparent;"
-        // );
 baseNoteLabel.setStyle("""
     -fx-font-style: italic; 
     -fx-font-size: 14px; 
@@ -779,32 +766,6 @@ baseNoteLabel.skinProperty().addListener((obs, oldSkin, newSkin) -> {
     }
 );}
 });
-        // // 2. Сброс скрытых отступов И серого фона внутренней панели
-// baseNoteLabel.skinProperty().addListener((obs, oldSkin, newSkin) -> {
-//     if (newSkin != null) {
-//         javafx.scene.Node content = baseNoteLabel.lookup(".content");
-//         if (content != null) {
-//             content.setStyle(
-//                 "-fx-padding: 0; " +
-//                 // Принудительно делаем фон прозрачным, игнорируя то, что редактирование отключено
-//                 "-fx-background-color: transparent; " + 
-//                 "-fx-background-insets: 0;"
-//             );
-//         }
-//     }
-//});// // 2. Сброс скрытых отступов внутренней панели (убирает смещение вправо)
-// baseNoteLabel.skinProperty().addListener((obs, oldSkin, newSkin) -> {
-//     if (newSkin != null) {
-//         javafx.scene.Node content = baseNoteLabel.lookup(".content");
-//         if (content != null) {
-//             content.setStyle(
-//                 "-fx-padding: 0; " +
-//                 "-fx-background-color: transparent; " +
-//                 "-fx-background-insets: 0;"
-//             );
-//         }
-//     }
-// });
         VBox infoPanel = new VBox(2, baseNameLabel, baseNoteLabel);
         infoPanel.setPadding(new Insets(5, 0, 0, 0));
         HBox.setHgrow(infoPanel, Priority.ALWAYS);
