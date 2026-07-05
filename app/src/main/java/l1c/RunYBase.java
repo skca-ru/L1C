@@ -1452,7 +1452,7 @@ public class RunYBase extends Application {
             // Ищем все базы с указанным именем
             List<BaseEntry> matches = new ArrayList<>();
             for (BaseEntry entry : allBases) {
-                if (entry.name != null && entry.name.equals(baseName)) {
+                if (entry.connect != null && entry.connect.equals(baseName)) {
                     matches.add(entry);
                 }
             }
