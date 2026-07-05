@@ -725,8 +725,20 @@ public class RunYBase extends Application {
         Button generateButton = createButton("С_формировать");
         generateButton.setOnAction(e -> handleButtonClick());
 
+        // Меню «Сформировать по ИБ»
+        Menu generateMenu = new Menu("С_формировать по ИБ");
+        generateMenu.setStyle("-fx-padding: 5 10 5 10;");
+        MenuItem generateByIBItem = new MenuItem("_Сформировать по ИБ");
+        generateByIBItem.setOnAction(e -> handleGenerateByIB());
+        generateMenu.getItems().add(generateByIBItem);
+
+        MenuButton generateMenuButton = new MenuButton("", generateButton, generateMenu);
+        generateMenuButton.setStyle(generateButton.getStyle() +
+                "-fx-background-color: " + COLOR_BUTTON_BG + "; -fx-border-color: " + COLOR_BUTTON_BORDER + ";");
+        generateMenuButton.setMinHeight(30);
+
         inputPanel.getChildren().addAll(
-                addressLabel, addressControl, userCredentialsButton, generateButton);
+                addressLabel, addressControl, userCredentialsButton, generateMenuButton);
         HBox.setHgrow(addressControl, Priority.ALWAYS);
         addressPanel.getChildren().add(inputPanel);
 
@@ -1315,6 +1327,63 @@ public class RunYBase extends Application {
         return cmd.toString();
     }
 
+    /**
+     * Формирует строку запуска с использованием /IBName (по имени информационной базы)
+     * 
+     * @param platformPath путь к exe файлу
+     * @param appArch      значение /AppArch
+     * @param ibName       экранированное имя базы в кавычках
+     * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
+     * @param cred         учётные данные пользователя
+     * @param isDesigner   запущен ли Конфигуратор
+     * @param isUpdate     нужна реструктуризация
+     * @return сформированная строка запуска
+     */
+    private String buildCommandWithIBName(String platformPath, String appArch, String ibName,
+            String commandPart, UserCredentials cred, boolean isDesigner, boolean isUpdate) {
+        StringBuilder cmd = new StringBuilder();
+        cmd.append("\"").append(platformPath).append("\" ");
+        cmd.append(commandPart).append(" ");
+        cmd.append("/IBName ").append(ibName);
+
+        if (cred != null && !cred.getUsername().isEmpty()) {
+            cmd.append(" /N \"").append(cred.getUsername()).append("\"");
+            if (!cred.getPassword().isEmpty()) {
+                cmd.append(" /P \"").append(cred.getPassword()).append("\"");
+            }
+        }
+
+        if (priorityPlatformCheckbox.isSelected()) {
+            cmd.append(" /AppArch ").append(appArch);
+        }
+
+        // Режим отладки игнорируется для Конфигуратора и Реструктуризации
+        if (debugModeCheckbox.isSelected() && !isDesigner && !isUpdate) {
+            String debugParam = " /Debug -attach";
+            String protocol = debugProtocolCombo.getValue();
+            if (protocol != null && !"по умолчанию".equals(protocol)) {
+                debugParam += " " + protocol;
+            }
+            cmd.append(debugParam);
+        }
+
+        if (clearCacheCheckbox.isSelected()) {
+            cmd.append(" /ClearCache");
+        }
+        if (isUpdate) {
+            cmd.append(" /UpdateDBCfg -v2 -Server");
+        }
+
+        if (executeProcessingCheckbox.isSelected()) {
+            String processingPath = executeProcessingField.getText();
+            if (processingPath != null && !processingPath.trim().isEmpty()) {
+                cmd.append(" /Execute \"").append(processingPath.trim()).append("\"");
+            }
+        }
+
+        return cmd.toString();
+    }
+
     private void handleButtonClick() {
         String text = getCurrentAddress();
         if (text.isEmpty()) {
@@ -1365,6 +1434,88 @@ public class RunYBase extends Application {
 
         if (debugArea != null && SHOW_DEBUG_PANEL)
             debugArea.setText("");
+    }
+
+    /**
+     * Формирует команду запуска по имени информационной базы (/IBName)
+     */
+    private void handleGenerateByIB() {
+        String baseName = getCurrentAddress();
+        if (baseName.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Введите имя информационной базы!");
+            return;
+        }
+
+        try {
+            List<BaseEntry> allBases = loadAndSortDatabases();
+
+            // Ищем все базы с указанным именем
+            List<BaseEntry> matches = new ArrayList<>();
+            for (BaseEntry entry : allBases) {
+                if (entry.name != null && entry.name.equals(baseName)) {
+                    matches.add(entry);
+                }
+            }
+
+            if (matches.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение",
+                        "Информационная база с именем «" + baseName + "» не найдена в списке!");
+                return;
+            }
+
+            if (matches.size() > 1) {
+                StringBuilder msg = new StringBuilder();
+                msg.append("Найдено ").append(matches.size()).append(" баз с именем «").append(baseName).append("»:\n\n");
+                for (int i = 0; i < matches.size(); i++) {
+                    msg.append(i + 1).append(". ").append(matches.get(i).name).append("\n");
+                    msg.append("   Адрес: ").append(matches.get(i).connect).append("\n\n");
+                }
+                msg.append("Уточните имя базы или используйте адрес напрямую.");
+                showAlert(Alert.AlertType.ERROR, "Ошибка", msg.toString());
+                return;
+            }
+
+            // Одна база найдена — формируем команду с /IBName
+            BaseEntry found = matches.get(0);
+            String escapedName = found.name.replace("\"", "\"\"");
+            String ibNameParam = "\"" + escapedName + "\"";
+
+            String commandPart = getCommandPart();
+            outputArea86.setText("");
+            outputArea.setText("");
+
+            UserCredentials cred = credentialsManager.get(found.connect);
+
+            boolean isDesigner = designerRadio.isSelected();
+            boolean isUpdate = updateConfigRadio.isSelected();
+
+            String cmd86 = buildCommandWithIBName(
+                    "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
+                    "x86",
+                    ibNameParam,
+                    commandPart,
+                    cred,
+                    isDesigner,
+                    isUpdate);
+
+            String cmd64 = buildCommandWithIBName(
+                    "C:\\Program Files\\1cv8\\common\\1cestart.exe",
+                    "x86_64",
+                    ibNameParam,
+                    commandPart,
+                    cred,
+                    isDesigner,
+                    isUpdate);
+
+            outputArea86.setText(cmd86);
+            outputArea.setText(cmd64);
+
+            showAutoClosingAlert("Команда сформирована по имени базы «" + baseName + "»", "Готово", 3);
+
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Ошибка",
+                    "Ошибка при поиске базы:\n" + e.getMessage());
+        }
     }
 
     private void runCommand(String command, String platform) {
