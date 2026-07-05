@@ -859,7 +859,7 @@ public class RunYBase extends Application {
         if (!address.isEmpty()) {
             String baseName = registeredAddressMap.get(address);
             if (baseName != null) {
-                baseNameLabel.setText("📋 База: " + baseName);
+                baseNameLabel.setText("📋 Информационная база: " + baseName);
                 baseNameLabel.setVisible(true);
 
                 // Также отображаем имя в ComboBox
@@ -1408,7 +1408,7 @@ public class RunYBase extends Application {
                 if (code == 0) {
                     if (SHOW_RUN_MESSAGE) {
                         showAutoClosingAlert(
-                                mode + " успешно запущен!\nБаза: " + getCurrentAddress() + "\nПлатформа: " + platform,
+                                mode + " успешно запущен!\nИнформационная база: " + getCurrentAddress() + "\nПлатформа: " + platform,
                                 "Запуск 1С", 5);
                     }
                 } else {
@@ -1416,7 +1416,7 @@ public class RunYBase extends Application {
                 }
             } else {
                 if (SHOW_RUN_MESSAGE) {
-                    showAutoClosingAlert(mode + " запущен (фоновый процесс).\nБаза: " + getCurrentAddress(),
+                    showAutoClosingAlert(mode + " запущен (фоновый процесс).\nИнформационная база: " + getCurrentAddress(),
                             "Запуск 1С", 5);
                 }
             }
