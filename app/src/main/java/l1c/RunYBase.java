@@ -712,12 +712,13 @@ public class RunYBase extends Application {
         historyManager = new HistoryManager();
         ObservableList<String> historyList = historyManager.getHistoryList();
 
-        addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList, RunYBaseHelpTexts.BASE_CONNECTION_PROMPT);
+        addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList,
+                RunYBaseHelpTexts.BASE_CONNECTION_PROMPT);
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
         setupAddressContextMenu();
-        
+
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
 
@@ -740,32 +741,32 @@ public class RunYBase extends Application {
         baseNoteLabel.setEditable(false);
         baseNoteLabel.setPrefRowCount(1);
         baseNoteLabel.setMinHeight(Region.USE_PREF_SIZE);
-baseNoteLabel.setStyle("""
-    -fx-font-style: italic; 
-    -fx-font-size: 14px; 
-    -fx-text-fill: #666666; 
-    -fx-background: transparent;
-    -fx-background-color: transparent; 
-    -fx-padding: 0; """
-);     
-// 2. Полное удаление фона и отступов внутренней панели через Java API
-baseNoteLabel.skinProperty().addListener((obs, oldSkin, newSkin) -> {
-    if (newSkin != null) {Platform.runLater(() -> {
-        // Убираем серую подложку у самого контейнера скина
-        if (newSkin.getNode() instanceof Region) {
-            ((Region) newSkin.getNode()).setBackground(javafx.scene.layout.Background.EMPTY);
-        }
-        
-        // Находим внутренний .content, убираем сдвиг влево и очищаем его фон
-        javafx.scene.Node content = baseNoteLabel.lookup(".content");
-        if (content instanceof Region) {
-            Region contentRegion = (Region) content;
-            contentRegion.setStyle("-fx-padding: 0;");
-            contentRegion.setBackground(javafx.scene.layout.Background.EMPTY);
-        }
-    }
-);}
-});
+        baseNoteLabel.setStyle("""
+                -fx-font-style: italic;
+                -fx-font-size: 14px;
+                -fx-text-fill: #666666;
+                -fx-background: transparent;
+                -fx-background-color: transparent;
+                -fx-padding: 0; """);
+        // 2. Полное удаление фона и отступов внутренней панели через Java API
+        baseNoteLabel.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (newSkin != null) {
+                Platform.runLater(() -> {
+                    // Убираем серую подложку у самого контейнера скина
+                    if (newSkin.getNode() instanceof Region) {
+                        ((Region) newSkin.getNode()).setBackground(javafx.scene.layout.Background.EMPTY);
+                    }
+
+                    // Находим внутренний .content, убираем сдвиг влево и очищаем его фон
+                    javafx.scene.Node content = baseNoteLabel.lookup(".content");
+                    if (content instanceof Region) {
+                        Region contentRegion = (Region) content;
+                        contentRegion.setStyle("-fx-padding: 0;");
+                        contentRegion.setBackground(javafx.scene.layout.Background.EMPTY);
+                    }
+                });
+            }
+        });
         VBox infoPanel = new VBox(2, baseNameLabel, baseNoteLabel);
         infoPanel.setPadding(new Insets(5, 0, 0, 0));
         HBox.setHgrow(infoPanel, Priority.ALWAYS);
