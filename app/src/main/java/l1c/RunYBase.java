@@ -93,7 +93,7 @@ public class RunYBase extends Application {
 
     // Label для отображения имени БД и заметки под полем адреса
     private Label baseNameLabel;
-    private Label baseNoteLabel;
+    private TextArea baseNoteLabel;
 
     // Для проверки есть адрес в списке зарегистрированных баз
     private Map<String, String> registeredAddressMap = new HashMap<>();
@@ -735,11 +735,16 @@ public class RunYBase extends Application {
         // baseNameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px;
         // -fx-text-fill: " + COLOR_ACCENT + ";");
 
-        baseNoteLabel = new Label();
+        baseNoteLabel = new TextArea();
         baseNoteLabel.setWrapText(true);
-        baseNoteLabel.setStyle("-fx-font-style: italic; -fx-font-size: 10px; -fx-text-fill: #666666;");
-        baseNoteLabel.setPadding(new Insets(2, 0, 0, 0));
-
+        baseNoteLabel.setEditable(false);
+        baseNoteLabel.setPrefRowCount(1);
+        baseNoteLabel.setMinHeight(Region.USE_PREF_SIZE);
+        baseNoteLabel.setStyle(
+            "-fx-font-style: italic; -fx-font-size: 14px; -fx-text-fill: #666666; " +
+            "-fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 0 0 0 0; -fx-border-width: 0;" +
+            "-fx-background-insets: 0; "
+        );
         VBox infoPanel = new VBox(2, baseNameLabel, baseNoteLabel);
         infoPanel.setPadding(new Insets(5, 0, 0, 0));
         HBox.setHgrow(infoPanel, Priority.ALWAYS);
