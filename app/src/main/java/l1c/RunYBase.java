@@ -726,15 +726,11 @@ public class RunYBase extends Application {
         generateButton.setOnAction(e -> handleButtonClick());
 
         // Меню «Сформировать по ИБ»
-        Menu generateMenu = new Menu("С_формировать по ИБ");
-        generateMenu.setStyle("-fx-padding: 5 10 5 10;");
         MenuItem generateByIBItem = new MenuItem("_Сформировать по ИБ");
         generateByIBItem.setOnAction(e -> handleGenerateByIB());
-        generateMenu.getItems().add(generateByIBItem);
-
-        MenuButton generateMenuButton = new MenuButton("", generateButton, generateMenu);
+        MenuButton generateMenuButton = new MenuButton("", generateButton, generateByIBItem);
         generateMenuButton.setStyle(generateButton.getStyle() +
-                "-fx-background-color: " + COLOR_BUTTON_BG + "; -fx-border-color: " + COLOR_BUTTON_BORDER + ";");
+                "-fx-padding: 0 0 0 0;-fx-background-color: transparent; -fx-border-color: transparent;");
         generateMenuButton.setMinHeight(30);
 
         inputPanel.getChildren().addAll(
