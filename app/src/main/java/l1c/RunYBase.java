@@ -700,6 +700,7 @@ public class RunYBase extends Application {
         VBox addressPanel = new VBox(5);
         addressPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
         addressPanel.setPadding(new Insets(5));
+        //addressPanel.setAlignment(Pos.CENTER);
 
         // Верхняя строка с полем ввода и кнопками
         HBox inputPanel = new HBox(5);
@@ -714,6 +715,8 @@ public class RunYBase extends Application {
 
         addressControl = new ComboBoxWithMenuButton<>(RunYBaseHelpTexts.ADDRESS_EXAMPLE_INFO, historyList,
                 RunYBaseHelpTexts.BASE_CONNECTION_PROMPT);
+        addressControl.setPrefHeight(30);
+        addressControl.setMaxHeight(30);
         addressComboBox = addressControl.getComboBox();
         addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
 
@@ -732,6 +735,7 @@ public class RunYBase extends Application {
         generateMenuButton.setStyle(generateButton.getStyle() +
                 "-fx-padding: 0 0 0 0;-fx-background-color: transparent; -fx-border-color: transparent;");
         generateMenuButton.setMinHeight(30);
+        generateMenuButton.setPrefHeight(30);
 
         inputPanel.getChildren().addAll(
                 addressLabel, addressControl, userCredentialsButton, generateMenuButton);
