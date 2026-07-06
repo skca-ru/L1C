@@ -1436,8 +1436,8 @@ public class RunYBase extends Application {
      * Формирует команду запуска по имени информационной базы (/IBName)
      */
     private void handleGenerateByIB() {
-        String baseName = getCurrentAddress();
-        if (baseName.isEmpty()) {
+        String baseAddress = getCurrentAddress();
+        if (baseAddress.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", "Введите имя информационной базы!");
             return;
         }
@@ -1445,23 +1445,23 @@ public class RunYBase extends Application {
         try {
             List<BaseEntry> allBases = loadAndSortDatabases();
 
-            // Ищем все базы с указанным именем
+            // Ищем все базы с указанным адресом
             List<BaseEntry> matches = new ArrayList<>();
             for (BaseEntry entry : allBases) {
-                if (entry.connect != null && entry.connect.equals(baseName)) {
+                if (entry.connect != null && entry.connect.equals(baseAddress)) {
                     matches.add(entry);
                 }
             }
 
             if (matches.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Предупреждение",
-                        "Информационная база с именем «" + baseName + "» не найдена в списке!");
+                        "Информационная база с адресом «" + baseAddress + "» не найдена в списке!");
                 return;
             }
 
             if (matches.size() > 1) {
                 StringBuilder msg = new StringBuilder();
-                msg.append("Найдено ").append(matches.size()).append(" баз с именем «").append(baseName).append("»:\n\n");
+                msg.append("Найдено ").append(matches.size()).append(" баз с адресом «").append(baseAddress).append("»:\n\n");
                 for (int i = 0; i < matches.size(); i++) {
                     msg.append(i + 1).append(". ").append(matches.get(i).name).append("\n");
                     msg.append("   Адрес: ").append(matches.get(i).connect).append("\n\n");
@@ -1471,16 +1471,38 @@ public class RunYBase extends Application {
                 return;
             }
 
-            // Одна база найдена — формируем команду с /IBName
-            BaseEntry found = matches.get(0);
-            String escapedName = found.name.replace("\"", "\"\"");
+        // Одна база найдена — проверяем, уникально ли её имя
+        String foundName = matches.get(0).name;
+        List<BaseEntry> sameNameBases = new ArrayList<>();
+        for (BaseEntry entry : allBases) {
+            if (entry.name != null && entry.name.equals(foundName)) {
+                sameNameBases.add(entry);
+            }
+        }
+
+        if (sameNameBases.size() > 1) {
+            // Хотя 1С скорее всего выдаст ошибку не будем ограничивать пользователя, пусть стрка все таки сформируется 
+            StringBuilder msg = new StringBuilder();
+            msg.append("Имя базы «").append(foundName).append("» не уникально.\n")
+               .append("Найдено ").append(sameNameBases.size()).append(" баз с таким именем:\n\n");
+            for (int i = 0; i < sameNameBases.size(); i++) {
+                msg.append(i + 1).append(". ").append(sameNameBases.get(i).name).append("\n");
+                msg.append("   Адрес: ").append(sameNameBases.get(i).connect).append("\n\n");
+            }
+            msg.append("Запуск по /IBName невозможен: 1С выдаст ошибку при неоднозначном имени.");
+            showAlert(Alert.AlertType.INFORMATION, "Ошибка", msg.toString());
+            //return;
+        }
+            // Имя базы найдено — формируем команду с /IBName
+            BaseEntry base = matches.get(0);
+            String escapedName = base.name.replace("\"", "\"\"");
             String ibNameParam = "\"" + escapedName + "\"";
 
             String commandPart = getCommandPart();
             outputArea86.setText("");
             outputArea.setText("");
 
-            UserCredentials cred = credentialsManager.get(found.connect);
+            UserCredentials cred = credentialsManager.get(base.connect);
 
             boolean isDesigner = designerRadio.isSelected();
             boolean isUpdate = updateConfigRadio.isSelected();
@@ -1506,7 +1528,7 @@ public class RunYBase extends Application {
             outputArea86.setText(cmd86);
             outputArea.setText(cmd64);
 
-            showAutoClosingAlert("Команда сформирована по имени базы «" + baseName + "»", "Готово", 3);
+            showAutoClosingAlert("Команда сформирована по имени базы «" + base.name + "»", "Готово", 3);
 
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Ошибка",
