@@ -725,17 +725,45 @@ public class RunYBase extends Application {
         userCredentialsButton = createButton("П_ользователь");
         userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
 
-        Button generateButton = createButton("С_формировать");
-        generateButton.setOnAction(e -> handleButtonClick());
+        // Создаём сплит-кнопку Сформировать (у кнопки будет меню)
+        SplitMenuButton generateMenuButton = new SplitMenuButton();
+        generateMenuButton.setText("С_формировать");
+        generateMenuButton.setMnemonicParsing(true); // для ускорителя Alt+С
+        generateMenuButton.setOnAction(e -> handleGenerateCommand()); // основное действие
 
-        // Меню «Сформировать по ИБ»
+        // Пункт меню
         MenuItem generateByIBItem = new MenuItem("По имени базы (/IBName)");
         generateByIBItem.setOnAction(e -> handleGenerateByIB());
-        MenuButton generateMenuButton = new MenuButton("", generateButton, generateByIBItem);
-        generateMenuButton.setStyle(generateButton.getStyle() +
-                "-fx-padding: 0 0 0 0;-fx-background-color: transparent; -fx-border-color: transparent;");
+        generateMenuButton.getItems().add(generateByIBItem);
+
+        String bgColor = COLOR_BUTTON_BG;
+        generateMenuButton.setStyle(String.format("""
+            /* 1. Основной фон и рамка всей кнопки */
+            -fx-background-color: %1$s;
+            -fx-border-color: %3$s;
+            -fx-border-width: 1px;
+            -fx-border-radius: 3px;
+            -fx-background-radius: 3px;
+            
+            /* 2. Настройки шрифта и геометрии */
+            -fx-text-fill: %2$s;
+            -fx-font-weight: bold;
+            -fx-font-size: 11px;
+            -fx-padding: 0 10 0 15;
+            -fx-min-height: 30;
+            
+            /* 3. Делаем внутренние части прозрачными */
+            -fx-color: transparent;
+            -fx-body-color: transparent;
+            -fx-inner-border: transparent;
+            -fx-shadow-highlight-color: transparent;
+            
+            /* 4. Принудительно возвращаем нужный цвет для текста и стрелочки */
+            -fx-text-base-color: %2$s; /* Цвет основного текста кнопки */
+            -fx-mark-color: %2$s;      /* Цвет иконки-стрелочки */
+            """, bgColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+
         generateMenuButton.setMinHeight(30);
-        generateMenuButton.setPrefHeight(30);
 
         inputPanel.getChildren().addAll(
                 addressLabel, addressControl, userCredentialsButton, generateMenuButton);
@@ -1384,7 +1412,7 @@ public class RunYBase extends Application {
         return cmd.toString();
     }
 
-    private void handleButtonClick() {
+    private void handleGenerateCommand() {
         String text = getCurrentAddress();
         if (text.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
