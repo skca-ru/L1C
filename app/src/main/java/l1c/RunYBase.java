@@ -729,7 +729,7 @@ public class RunYBase extends Application {
         generateButton.setOnAction(e -> handleButtonClick());
 
         // Меню «Сформировать по ИБ»
-        MenuItem generateByIBItem = new MenuItem("_Сформировать по ИБ");
+        MenuItem generateByIBItem = new MenuItem("По имени базы (/IBName)");
         generateByIBItem.setOnAction(e -> handleGenerateByIB());
         MenuButton generateMenuButton = new MenuButton("", generateButton, generateByIBItem);
         generateMenuButton.setStyle(generateButton.getStyle() +
