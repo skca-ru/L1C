@@ -861,6 +861,20 @@ public class RunYBase extends Application {
         });
         addressControl.getContextMenu().getItems().add(pasteDirectoryItem);
 
+        MenuItem selectDirectoryItem = new MenuItem("Выбрать каталог");
+        selectDirectoryItem.setOnAction(e -> {
+            DirectoryChooser directoryChooser = new DirectoryChooser();
+            directoryChooser.setTitle("Выберите каталог информационной базы");
+
+            File selectedDirectory = directoryChooser.showDialog(addressComboBox.getScene().getWindow());
+            if (selectedDirectory != null) {
+                String escapedPath = selectedDirectory.getAbsolutePath().replace("\"", "\"\"");
+                String connectionString = "File=\"" + escapedPath + "\"";
+                addressComboBox.getEditor().setText(connectionString);
+            }
+        });
+        addressControl.getContextMenu().getItems().add(selectDirectoryItem);
+
         // Добавляем пункт меню "Заметка..."
         MenuItem noteItem = new MenuItem("_Заметка...");
         noteItem.setOnAction(e -> showNoteDialog());
