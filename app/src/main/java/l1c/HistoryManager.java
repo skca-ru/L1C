@@ -30,10 +30,12 @@ public class HistoryManager {
     private static final int MAX_HISTORY_SIZE = AppConstants.MAX_HISTORY_SIZE;
     
     private ObservableList<String> historyList;
+    private ObservableList<String> processingHistoryList;
     private Map<String, String> notesMap;  // адрес -> заметка
     
     public HistoryManager() {
         historyList = FXCollections.observableArrayList(loadHistoryList());
+        processingHistoryList = FXCollections.observableArrayList(loadProcessingHistoryList());
         notesMap = loadNotes();
     }
     
@@ -42,6 +44,13 @@ public class HistoryManager {
      */
     public ObservableList<String> getHistoryList() {
         return historyList;
+    }
+
+    /**
+     * Получить список истории внешних обработок/отчетов для ComboBox.
+     */
+    public ObservableList<String> getProcessingHistoryList() {
+        return processingHistoryList;
     }
     
     /**
@@ -74,6 +83,20 @@ public class HistoryManager {
         historyList.add(0, address);
         while (historyList.size() > MAX_HISTORY_SIZE) {
             historyList.remove(historyList.size() - 1);
+        }
+        saveHistoryToXml();
+    }
+
+    /**
+     * Добавить путь внешней обработки/отчета в историю.
+     */
+    public void addProcessingToHistory(String processingPath) {
+        if (processingPath == null || processingPath.trim().isEmpty()) return;
+        String value = processingPath.trim();
+        processingHistoryList.remove(value);
+        processingHistoryList.add(0, value);
+        while (processingHistoryList.size() > MAX_HISTORY_SIZE) {
+            processingHistoryList.remove(processingHistoryList.size() - 1);
         }
         saveHistoryToXml();
     }
@@ -141,6 +164,35 @@ public class HistoryManager {
             System.err.println("Ошибка загрузки истории из XML. Будет создан новый файл.");
             e.printStackTrace();
             createDefaultHistoryFile(path);
+        }
+        return list;
+    }
+
+    /**
+     * Загрузить историю внешних обработок/отчетов из XML файла.
+     */
+    private static List<String> loadProcessingHistoryList() {
+        List<String> list = new ArrayList<>();
+        Path path = getHistoryPath();
+        if (!Files.exists(path)) {
+            createDefaultHistoryFile(path);
+            return list;
+        }
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(path.toFile());
+            NodeList fileNodes = doc.getElementsByTagName("processingFile");
+            for (int i = 0; i < fileNodes.getLength(); i++) {
+                Element fileElem = (Element) fileNodes.item(i);
+                String filePath = getDirectTextContent(fileElem);
+                if (filePath != null && !filePath.trim().isEmpty() && !list.contains(filePath.trim())) {
+                    list.add(filePath.trim());
+                }
+            }
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            System.err.println("Ошибка загрузки истории внешних обработок из XML.");
+            e.printStackTrace();
         }
         return list;
     }
@@ -224,6 +276,15 @@ public class HistoryManager {
                 addresses.appendChild(addrElem);
             }
 
+            Element processingFiles = doc.createElement("processingFiles");
+            root.appendChild(processingFiles);
+
+            for (String processingPath : processingHistoryList) {
+                Element fileElem = doc.createElement("processingFile");
+                fileElem.setTextContent(processingPath);
+                processingFiles.appendChild(fileElem);
+            }
+
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
@@ -254,6 +315,9 @@ public class HistoryManager {
 
             Element addresses = doc.createElement("addresses");
             root.appendChild(addresses);
+
+            Element processingFiles = doc.createElement("processingFiles");
+            root.appendChild(processingFiles);
 
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();

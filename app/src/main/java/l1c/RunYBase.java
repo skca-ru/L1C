@@ -611,7 +611,7 @@ public class RunYBase extends Application {
         executeProcessingCheckbox = new CheckBox("Внешняя обработка (/Execute)");
         executeProcessingCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_TOOLTIP));
 
-        executeProcessingField = new ComboBoxWithMenuButton<String>("Введите имя файла внешней обработки", null, "Путь к файлу внешнего отчета или обработки"); 
+        executeProcessingField = new ComboBoxWithMenuButton<String>("Введите имя файла внешней обработки", historyManager.getProcessingHistoryList(), "Путь к файлу внешнего отчета или обработки"); 
         executeProcessingField.setPrefWidth(250);
         //executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
         executeProcessingField.setVisible(false);
@@ -627,7 +627,9 @@ public class RunYBase extends Application {
             
             File selectedPath = fileChooser.showOpenDialog(null);
             if (selectedPath != null) {
-                executeProcessingField.getComboBox().getEditor().setText(selectedPath.getAbsolutePath());
+                String processingPath = selectedPath.getAbsolutePath();
+                executeProcessingField.getComboBox().getEditor().setText(processingPath);
+                addProcessingToHistory(processingPath);
             }
         }); 
         executeProcessingCheckbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -1255,6 +1257,11 @@ public class RunYBase extends Application {
         addressComboBox.setValue(address);
     }
 
+    private void addProcessingToHistory(String processingPath) {
+        historyManager.addProcessingToHistory(processingPath);
+        executeProcessingField.getComboBox().setValue(processingPath);
+    }
+
     private void autoPasteFromClipboard() {
         try {
             Clipboard clipboard = Clipboard.getSystemClipboard();
@@ -1439,6 +1446,7 @@ public class RunYBase extends Application {
                 showAlert(Alert.AlertType.WARNING, "Предупреждение", "Укажите путь к внешней обработке (.bfsl)!");
                 return;
             }
+            addProcessingToHistory(processingPath);
         }
 
         addToHistory(text);
