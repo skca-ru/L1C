@@ -88,8 +88,7 @@ public class RunYBase extends Application {
     private CredentialsManager credentialsManager;
 
     private Button userCredentialsButton;
-
-    private static UserCredentials copiedCredentials = null;
+    private static final String CREDENTIALS_CLIPBOARD_PREFIX = "L1C_CREDENTIALS_V1:";
 
     // Label для отображения имени БД и заметки под полем адреса
     private Label baseNameLabel;
@@ -266,7 +265,7 @@ public class RunYBase extends Application {
 
     /**
      * Копирует учётные данные (имя пользователя и пароль) для текущего адреса
-     * во внутренний буфер.
+     * в системный буфер обмена.
      */
     private void copyCredentials() {
         String address = getCurrentAddress();
@@ -279,12 +278,15 @@ public class RunYBase extends Application {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", "Для этого адреса нет сохранённых учётных данных!");
             return;
         }
-        copiedCredentials = new UserCredentials(cred.getUsername(), cred.getPassword());
-        showAutoClosingAlert("Учётные данные скопированы для адреса:\n" + address, "Копирование", 3);
+        ClipboardContent clipboardContent = new ClipboardContent();
+        clipboardContent.putString(serializeCredentials(cred));
+        Clipboard.getSystemClipboard().setContent(clipboardContent);
+        showAutoClosingAlert("Учётные данные скопированы в буфер обмена для адреса:\n" + address,
+                "Копирование", 3);
     }
 
     /**
-     * Вставляет скопированные учётные данные для текущего адреса.
+     * Вставляет учётные данные из системного буфера обмена для текущего адреса.
      */
     private void pasteCredentials() {
         String address = getCurrentAddress();
@@ -292,8 +294,10 @@ public class RunYBase extends Application {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет адреса для вставки учётных данных!");
             return;
         }
-        if (copiedCredentials == null || copiedCredentials.getUsername().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет скопированных учётных данных!");
+        UserCredentials copiedCredentials = deserializeCredentials(Clipboard.getSystemClipboard().getString());
+        if (copiedCredentials == null) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение",
+                    "В буфере обмена нет учётных данных, скопированных из программы!");
             return;
         }
         // Проверяем, не совпадает ли адрес с исходным (можно и не проверять)
@@ -308,6 +312,34 @@ public class RunYBase extends Application {
                 new UserCredentials(copiedCredentials.getUsername(), copiedCredentials.getPassword()));
         updateUserButtonState();
         showAutoClosingAlert("Учётные данные вставлены для адреса:\n" + address, "Вставка", 3);
+    }
+
+    private String serializeCredentials(UserCredentials credentials) {
+        Base64.Encoder encoder = Base64.getEncoder();
+        return CREDENTIALS_CLIPBOARD_PREFIX
+                + encoder.encodeToString(credentials.getUsername().getBytes(StandardCharsets.UTF_8))
+                + ":"
+                + encoder.encodeToString(credentials.getPassword().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private UserCredentials deserializeCredentials(String clipboardText) {
+        if (clipboardText == null || !clipboardText.startsWith(CREDENTIALS_CLIPBOARD_PREFIX)) {
+            return null;
+        }
+
+        String[] parts = clipboardText.substring(CREDENTIALS_CLIPBOARD_PREFIX.length()).split(":", -1);
+        if (parts.length != 2) {
+            return null;
+        }
+
+        try {
+            Base64.Decoder decoder = Base64.getDecoder();
+            String username = new String(decoder.decode(parts[0]), StandardCharsets.UTF_8);
+            String password = new String(decoder.decode(parts[1]), StandardCharsets.UTF_8);
+            return username.isEmpty() ? null : new UserCredentials(username, password);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private Button createButton(String text) {
