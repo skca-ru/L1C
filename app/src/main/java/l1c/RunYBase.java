@@ -151,13 +151,6 @@ public class RunYBase extends Application {
         borderRoot.setCenter(contentBox);
 
         Scene scene = new Scene(borderRoot, 1050, SHOW_DEBUG_PANEL ? 700 : 500);
-        scene.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ESCAPE) {
-                // saveHistoryToXml();
-                Platform.exit();
-            }
-
-        });
 
         primaryStage.setTitle(
                 "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
