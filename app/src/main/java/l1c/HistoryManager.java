@@ -31,11 +31,16 @@ public class HistoryManager {
     
     private ObservableList<String> historyList;
     private ObservableList<String> processingHistoryList;
+    private Map<String, ObservableList<String>> commandHistoryLists;
     private Map<String, String> notesMap;  // адрес -> заметка
     
     public HistoryManager() {
         historyList = FXCollections.observableArrayList(loadHistoryList());
         processingHistoryList = FXCollections.observableArrayList(loadProcessingHistoryList());
+        commandHistoryLists = new HashMap<>();
+        commandHistoryLists.put("x86", FXCollections.observableArrayList(loadCommandHistoryList("x86")));
+        commandHistoryLists.put("x64", FXCollections.observableArrayList(loadCommandHistoryList("x64")));
+        commandHistoryLists.put("x86_64", commandHistoryLists.get("x64"));
         notesMap = loadNotes();
     }
     
@@ -51,6 +56,28 @@ public class HistoryManager {
      */
     public ObservableList<String> getProcessingHistoryList() {
         return processingHistoryList;
+    }
+
+    /**
+     * Получить историю команд для платформы.
+     */
+    public ObservableList<String> getCommandHistoryList(String platform) {
+        return commandHistoryLists.get(normalizePlatform(platform));
+    }
+
+    /**
+     * Добавить команду в историю запусков для платформы.
+     */
+    public void addCommandToHistory(String platform, String command) {
+        if (command == null || command.trim().isEmpty()) return;
+        ObservableList<String> commands = getCommandHistoryList(platform);
+        String value = command.trim();
+        commands.remove(value);
+        commands.add(0, value);
+        while (commands.size() > MAX_HISTORY_SIZE) {
+            commands.remove(commands.size() - 1);
+        }
+        saveHistoryToXml();
     }
     
     /**
@@ -196,6 +223,32 @@ public class HistoryManager {
         }
         return list;
     }
+
+    private static List<String> loadCommandHistoryList(String platform) {
+        List<String> list = new ArrayList<>();
+        Path path = getHistoryPath();
+        if (!Files.exists(path)) return list;
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(path.toFile());
+            NodeList commandNodes = doc.getElementsByTagName("command");
+            for (int i = 0; i < commandNodes.getLength(); i++) {
+                Element commandElem = (Element) commandNodes.item(i);
+                if (!platform.equals(commandElem.getAttribute("platform"))) continue;
+                String command = commandElem.getTextContent().trim();
+                if (!command.isEmpty() && !list.contains(command)) list.add(command);
+            }
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            System.err.println("Ошибка загрузки истории команд.");
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    private static String normalizePlatform(String platform) {
+        return "x86_64".equals(platform) ? "x64" : platform;
+    }
     
     /**
      * Загрузить заметки из XML файла
@@ -285,6 +338,17 @@ public class HistoryManager {
                 processingFiles.appendChild(fileElem);
             }
 
+            Element commands = doc.createElement("commands");
+            root.appendChild(commands);
+            for (String platform : List.of("x86", "x64")) {
+                for (String command : commandHistoryLists.get(platform)) {
+                    Element commandElem = doc.createElement("command");
+                    commandElem.setAttribute("platform", platform);
+                    commandElem.setTextContent(command);
+                    commands.appendChild(commandElem);
+                }
+            }
+
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
@@ -318,6 +382,9 @@ public class HistoryManager {
 
             Element processingFiles = doc.createElement("processingFiles");
             root.appendChild(processingFiles);
+
+            Element commands = doc.createElement("commands");
+            root.appendChild(commands);
 
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();

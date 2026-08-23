@@ -457,6 +457,42 @@ public class RunYBase extends Application {
         return button;
     }
 
+    private Button createSystemButton(String text) {
+        Button button = new Button(text);
+        button.setMnemonicParsing(true);
+        button.setMinHeight(28);
+        button.setMinWidth(80);
+        button.setStyle(String.format("""
+                -fx-background-color: #F3F3F3;
+                -fx-text-fill: #000000;
+                -fx-font-size: 11px;
+                -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
+                -fx-border-width: 1 1 1 1;
+                -fx-border-radius: 3;
+                -fx-background-radius: 3;"""));
+        button.setOnMouseEntered(e -> {
+            button.setStyle(String.format("""
+                    -fx-background-color: #EDEDED;
+                    -fx-text-fill: #000000;
+                    -fx-font-size: 11px;
+                    -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
+                    -fx-border-width: 1 1 1 1;
+                    -fx-border-radius: 3;
+                    -fx-background-radius: 3;"""));
+        });
+        button.setOnMouseExited(e -> {
+            button.setStyle(String.format("""
+                    -fx-background-color: #F3F3F3;
+                    -fx-text-fill: #000000;
+                    -fx-font-size: 11px;
+                    -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
+                    -fx-border-width: 1 1 1 1;
+                    -fx-border-radius: 3;
+                    -fx-background-radius: 3;"""));
+        });
+        return button;
+    }
+
     private Button createFlatButton(String text) {
         Button button = new Button(text);
 
@@ -525,10 +561,217 @@ public class RunYBase extends Application {
         runButton.setMinWidth(80);
         runButton.setPrefWidth(80);
         runButton.setMaxWidth(80);
-        runButton.setOnAction(e -> runCommand(textArea.getText(), platform));
+        runButton.setOnAction(e -> {
+            String command = textArea.getText();
+            historyManager.addCommandToHistory(platform, command);
+            runCommand(command, platform);
+        });
 
         buttonPanel.getChildren().addAll(copyButton, runButton);
         return buttonPanel;
+    }
+
+    /**
+     * Показывает popup со списком исторических команд
+     */
+    private void showCommandHistoryPopup(Button anchorButton, String platform, TextArea textArea) {
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+
+        VBox popupContent = new VBox(3);
+        popupContent.setStyle("-fx-padding: 5; -fx-background-color: white; -fx-border-color: gray; -fx-border-width: 1px;");
+        popupContent.setMaxWidth(800);
+        popupContent.setPrefHeight(300);
+
+        ObservableList<String> history = historyManager.getCommandHistoryList(platform);
+
+        if (history == null || history.isEmpty()) {
+            Label emptyLabel = new Label("История пуста");
+            emptyLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: gray;");
+            popupContent.getChildren().add(emptyLabel);
+        } else {
+            for (String command : history) {
+                Label commandLabel = new Label(command.length() > 120 ? command.substring(0, 117) + "..." : command);
+                commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 3 5 3 5; -fx-background-color: transparent;");
+                commandLabel.setTooltip(new Tooltip(command));
+
+                final String fullCommand = command;
+                commandLabel.setOnMouseEntered(e -> commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 3 5 3 5; -fx-background-color: #E8E0D0;"));
+                commandLabel.setOnMouseExited(e -> commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 3 5 3 5; -fx-background-color: transparent;"));
+                commandLabel.setOnMouseClicked(e -> {
+                    textArea.setText(fullCommand);
+                    popup.hide();
+                });
+
+                popupContent.getChildren().add(commandLabel);
+            }
+        }
+
+        popup.getContent().add(popupContent);
+
+        // Позиционирование popup — показываем рядом с кнопкой
+        javafx.stage.Stage stage = (javafx.stage.Stage) anchorButton.getScene().getWindow();
+        popup.show(stage);
+        popup.setAutoFix(true);
+    }
+
+    /**
+     * Открывает полноценное окно истории команд для выбранной платформы.
+     * В окне отображаются все команды полностью, каждую можно скопировать.
+     * Двойной клик по команде вставляет её в TextArea и закрывает окно.
+     */
+    private void showCommandHistoryWindow(String platform, TextArea textArea) {
+        Stage historyStage = new Stage();
+        historyStage.initModality(Modality.APPLICATION_MODAL);
+        historyStage.setTitle("История команд — " + platform);
+        historyStage.setResizable(true);
+
+        // ListView для отображения команд
+        ListView<String> historyListView = new ListView<>(historyManager.getCommandHistoryList(platform));
+        historyListView.setCellFactory(lv -> new HistoryListCell());
+        historyListView.setPrefHeight(250);
+
+        // Кнопка копирования — спокойная, системная
+        Button copyButton = createSystemButton("Копировать");
+        copyButton.setTooltip(createTooltip("Скопировать выбранную команду в буфер обмена"));
+        copyButton.setOnAction(e -> {
+            String selected = historyListView.getSelectionModel().getSelectedItem();
+            if (selected != null && !selected.isEmpty()) {
+                copyToClipboard(selected);
+            } else {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите команду для копирования!");
+            }
+        });
+
+        // Кнопка выбора (вставка в поле вывода) — акцентная, жёлтая, первая
+        Button selectButton = createButton("В_ыбрать");
+        selectButton.setStyle(selectButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        selectButton.setTooltip(createTooltip("Вставить выбранную команду в поле вывода и закрыть окно (Ctrl+Enter)"));
+        selectButton.setOnAction(e -> {
+            String selected = historyListView.getSelectionModel().getSelectedItem();
+            if (selected != null && !selected.isEmpty()) {
+                textArea.setText(selected);
+                historyStage.close();
+            } else {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите команду!");
+            }
+        });
+
+        // Кнопка закрытия — спокойная, системная
+        Button closeButton = createSystemButton("Закрыть");
+        closeButton.setOnAction(e -> historyStage.close());
+
+        // Панель кнопок
+        HBox buttonPanel = new HBox(10, selectButton, copyButton, closeButton);
+        buttonPanel.setAlignment(Pos.CENTER);
+        buttonPanel.setPadding(new Insets(10, 0, 0, 0));
+
+        // Основной контейнер
+        BorderPane pane = new BorderPane();
+        pane.setCenter(historyListView);
+        pane.setBottom(buttonPanel);
+        pane.setPadding(new Insets(10));
+
+        Scene scene = new Scene(pane, 900, 400);
+        scene.setFill(Color.TRANSPARENT);
+        historyStage.setScene(scene);
+
+        // Двойной клик вставляет команду и закрывает окно
+        historyListView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                String selected = historyListView.getSelectionModel().getSelectedItem();
+                if (selected != null && !selected.isEmpty()) {
+                    textArea.setText(selected);
+                    historyStage.close();
+                }
+            }
+        });
+
+        // Escape закрывает окно
+        scene.addEventHandler(javafx.scene.input.KeyEvent.ANY, e -> {
+            if (e.getCode() == KeyCode.ESCAPE) {
+                e.consume();
+                historyStage.close();
+            }
+        });
+        
+        // CTRL+Enter — нажать кнопку "Выбрать"
+        scene.addEventHandler(javafx.scene.input.KeyEvent.ANY, e -> {
+            if (e.getCode() == KeyCode.ENTER && e.isControlDown()) {
+                e.consume();
+                selectButton.fire();
+            }
+        });
+        historyListView.addEventHandler(javafx.scene.input.KeyEvent.ANY, e -> {
+            if (e.getCode() == KeyCode.ESCAPE) {
+                e.consume();
+                historyStage.close();
+            }
+        });
+        pane.addEventHandler(javafx.scene.input.KeyEvent.ANY, e -> {
+            if (e.getCode() == KeyCode.ESCAPE) {
+                e.consume();
+                historyStage.close();
+            }
+        });
+
+        historyStage.show();
+        
+        // Запрашиваем фокус на ListView после показа окна
+        historyListView.setFocusTraversable(true);
+        javafx.application.Platform.runLater(() -> historyListView.requestFocus());
+    }
+
+    /**
+     * Клетка ListView для отображения команды истории с полным текстом
+     */
+    private class HistoryListCell extends ListCell<String> {
+        private final HBox container = new HBox(5);
+        private final Label commandLabel = new Label();
+        private final Button copyCellButton = new Button("Копировать");
+
+        public HistoryListCell() {
+            copyCellButton.setMinWidth(70);
+            copyCellButton.setStyle(String.format("""
+                    -fx-background-color: %s;
+                    -fx-text-fill: %s;
+                    -fx-font-size: 10px;
+                    -fx-border-color: %s;
+                    -fx-border-width: 1px;
+                    -fx-border-radius: 2px;
+                    -fx-background-radius: 2px""",
+                    COLOR_BUTTON_SMALL_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+            copyCellButton.setOnAction(e -> {
+                String cmd = getText();
+                if (cmd != null && !cmd.isEmpty()) {
+                    copyToClipboard(cmd);
+                }
+            });
+            container.getChildren().addAll(commandLabel, copyCellButton);
+            container.setPadding(new Insets(2, 5, 2, 5));
+        }
+
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setGraphic(null);
+            } else {
+                commandLabel.setText(item);
+                commandLabel.setWrapText(true);
+                commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0;");
+                commandLabel.setMaxWidth(650);
+
+                if (isSelected()) {
+                    container.setStyle("-fx-background-color: -fx-selection-bar;");
+                    commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0; -fx-text-fill: white;");
+                } else {
+                    container.setStyle("-fx-background-color: transparent;");
+                    commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0;");
+                }
+                setGraphic(container);
+            }
+        }
     }
 
     private MenuBar createMenuBar() {
@@ -693,7 +936,7 @@ public class RunYBase extends Application {
         platformLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
         contentBox.getChildren().add(platformLabel);
 
-        // HBox с TextArea и кнопками
+        // HBox с TextArea, кнопкой истории и кнопками Run/Copy
         HBox platformRow = new HBox(5);
         platformRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -705,6 +948,12 @@ public class RunYBase extends Application {
                 + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
         HBox.setHgrow(textArea, Priority.ALWAYS);
 
+        // Кнопка истории команд (компактная)
+        Button historyButton = createButton("И...");
+        historyButton.setStyle(historyButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + "; -fx-min-width: 26; -fx-min-height: 22; -fx-padding: 1 4 1 4;");
+        historyButton.setTooltip(createTooltip("История команд для этой платформы (открыть окно)"));
+        historyButton.setOnAction(e -> showCommandHistoryWindow(platformName, textArea));
+
         // Сохраняем ссылку на TextArea в зависимости от разрядности
         if (bits == 32) {
             outputArea86 = textArea;
@@ -714,7 +963,7 @@ public class RunYBase extends Application {
 
         // Создаём панель с кнопками
         VBox buttonPanel = createRunCopyButtons(textArea, platformName);
-        platformRow.getChildren().addAll(textArea, buttonPanel);
+        platformRow.getChildren().addAll(textArea, historyButton, buttonPanel);
         contentBox.getChildren().add(platformRow);
     }
 
