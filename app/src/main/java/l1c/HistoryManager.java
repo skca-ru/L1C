@@ -24,15 +24,41 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Управление историей адресов и заметок к базам 1С
+ * Управление историей адресов, заметок и команд 1С
  */
 public class HistoryManager {
     private static final int MAX_HISTORY_SIZE = AppConstants.MAX_HISTORY_SIZE;
     
     private ObservableList<String> historyList;
     private ObservableList<String> processingHistoryList;
-    private Map<String, ObservableList<String>> commandHistoryLists;
+    private Map<String, ObservableList<CommandEntry>> commandHistoryLists;
     private Map<String, String> notesMap;  // адрес -> заметка
+    
+    /**
+     * Запись истории команды с временем последнего использования
+     */
+    public static class CommandEntry {
+        public final String command;
+        public final long lastUsed;
+        
+        public CommandEntry(String command, long lastUsed) {
+            this.command = command;
+            this.lastUsed = lastUsed;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CommandEntry that = (CommandEntry) o;
+            return command.equals(that.command);
+        }
+        
+        @Override
+        public int hashCode() {
+            return command.hashCode();
+        }
+    }
     
     public HistoryManager() {
         historyList = FXCollections.observableArrayList(loadHistoryList());
@@ -61,7 +87,7 @@ public class HistoryManager {
     /**
      * Получить историю команд для платформы.
      */
-    public ObservableList<String> getCommandHistoryList(String platform) {
+    public ObservableList<CommandEntry> getCommandHistoryList(String platform) {
         return commandHistoryLists.get(normalizePlatform(platform));
     }
 
@@ -70,10 +96,24 @@ public class HistoryManager {
      */
     public void addCommandToHistory(String platform, String command) {
         if (command == null || command.trim().isEmpty()) return;
-        ObservableList<String> commands = getCommandHistoryList(platform);
+        ObservableList<CommandEntry> commands = getCommandHistoryList(platform);
         String value = command.trim();
-        commands.remove(value);
-        commands.add(0, value);
+        long now = System.currentTimeMillis();
+        
+        // Проверяем, есть ли уже такая команда
+        for (int i = 0; i < commands.size(); i++) {
+            if (commands.get(i).command.equals(value)) {
+                // Обновляем timestamp и перемещаем наверх
+                commands.remove(i);
+                commands.add(0, new CommandEntry(value, now));
+                saveHistoryToXml();
+                return;
+            }
+        }
+        
+        // Если команды не было — добавляем новую
+        commands.add(0, new CommandEntry(value, now));
+        
         while (commands.size() > MAX_HISTORY_SIZE) {
             commands.remove(commands.size() - 1);
         }
@@ -224,8 +264,8 @@ public class HistoryManager {
         return list;
     }
 
-    private static List<String> loadCommandHistoryList(String platform) {
-        List<String> list = new ArrayList<>();
+    private static List<CommandEntry> loadCommandHistoryList(String platform) {
+        List<CommandEntry> list = new ArrayList<>();
         Path path = getHistoryPath();
         if (!Files.exists(path)) return list;
         try {
@@ -237,7 +277,34 @@ public class HistoryManager {
                 Element commandElem = (Element) commandNodes.item(i);
                 if (!platform.equals(commandElem.getAttribute("platform"))) continue;
                 String command = commandElem.getTextContent().trim();
-                if (!command.isEmpty() && !list.contains(command)) list.add(command);
+                if (command.isEmpty()) continue;
+                
+                // Загружаем timestamp из атрибута lastUsed
+                String lastUsedAttr = commandElem.getAttribute("lastUsed");
+                long lastUsed = 0;
+                if (!lastUsedAttr.isEmpty()) {
+                    try {
+                        lastUsed = Long.parseLong(lastUsedAttr);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                
+                // Проверяем дубликаты (по команде, берём первый с наибольшим timestamp)
+                boolean alreadyAdded = false;
+                for (CommandEntry entry : list) {
+                    if (entry.command.equals(command)) {
+                        if (lastUsed > entry.lastUsed) {
+                            // Заменяем на более свежий
+                            list.remove(entry);
+                            list.add(new CommandEntry(command, lastUsed));
+                        }
+                        alreadyAdded = true;
+                        break;
+                    }
+                }
+                if (!alreadyAdded) {
+                    list.add(new CommandEntry(command, lastUsed));
+                }
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {
             System.err.println("Ошибка загрузки истории команд.");
@@ -341,10 +408,11 @@ public class HistoryManager {
             Element commands = doc.createElement("commands");
             root.appendChild(commands);
             for (String platform : List.of("x86", "x64")) {
-                for (String command : commandHistoryLists.get(platform)) {
+                for (CommandEntry entry : commandHistoryLists.get(platform)) {
                     Element commandElem = doc.createElement("command");
                     commandElem.setAttribute("platform", platform);
-                    commandElem.setTextContent(command);
+                    commandElem.setAttribute("lastUsed", String.valueOf(entry.lastUsed));
+                    commandElem.setTextContent(entry.command);
                     commands.appendChild(commandElem);
                 }
             }

@@ -583,19 +583,20 @@ public class RunYBase extends Application {
         popupContent.setMaxWidth(800);
         popupContent.setPrefHeight(300);
 
-        ObservableList<String> history = historyManager.getCommandHistoryList(platform);
+        ObservableList<HistoryManager.CommandEntry> history = historyManager.getCommandHistoryList(platform);
 
         if (history == null || history.isEmpty()) {
             Label emptyLabel = new Label("История пуста");
             emptyLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: gray;");
             popupContent.getChildren().add(emptyLabel);
         } else {
-            for (String command : history) {
-                Label commandLabel = new Label(command.length() > 120 ? command.substring(0, 117) + "..." : command);
+            for (HistoryManager.CommandEntry entry : history) {
+                String cmd = entry.command;
+                Label commandLabel = new Label(cmd.length() > 120 ? cmd.substring(0, 117) + "..." : cmd);
                 commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 3 5 3 5; -fx-background-color: transparent;");
-                commandLabel.setTooltip(new Tooltip(command));
+                commandLabel.setTooltip(new Tooltip(cmd));
 
-                final String fullCommand = command;
+                final String fullCommand = cmd;
                 commandLabel.setOnMouseEntered(e -> commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 3 5 3 5; -fx-background-color: #E8E0D0;"));
                 commandLabel.setOnMouseExited(e -> commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 3 5 3 5; -fx-background-color: transparent;"));
                 commandLabel.setOnMouseClicked(e -> {
@@ -627,7 +628,7 @@ public class RunYBase extends Application {
         historyStage.setResizable(true);
 
         // ListView для отображения команд
-        ListView<String> historyListView = new ListView<>(historyManager.getCommandHistoryList(platform));
+        ListView<HistoryManager.CommandEntry> historyListView = new ListView<>(historyManager.getCommandHistoryList(platform));
         historyListView.setCellFactory(lv -> new HistoryListCell());
         historyListView.setPrefHeight(250);
 
@@ -635,9 +636,9 @@ public class RunYBase extends Application {
         Button copyButton = createSystemButton("Копировать");
         copyButton.setTooltip(createTooltip("Скопировать выбранную команду в буфер обмена"));
         copyButton.setOnAction(e -> {
-            String selected = historyListView.getSelectionModel().getSelectedItem();
-            if (selected != null && !selected.isEmpty()) {
-                copyToClipboard(selected);
+            HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
+            if (selected != null && selected.command != null && !selected.command.isEmpty()) {
+                copyToClipboard(selected.command);
             } else {
                 showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите команду для копирования!");
             }
@@ -648,9 +649,9 @@ public class RunYBase extends Application {
         selectButton.setStyle(selectButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
         selectButton.setTooltip(createTooltip("Вставить выбранную команду в поле вывода и закрыть окно (Ctrl+Enter)"));
         selectButton.setOnAction(e -> {
-            String selected = historyListView.getSelectionModel().getSelectedItem();
-            if (selected != null && !selected.isEmpty()) {
-                textArea.setText(selected);
+            HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
+            if (selected != null && selected.command != null && !selected.command.isEmpty()) {
+                textArea.setText(selected.command);
                 historyStage.close();
             } else {
                 showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите команду!");
@@ -679,9 +680,9 @@ public class RunYBase extends Application {
         // Двойной клик вставляет команду и закрывает окно
         historyListView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                String selected = historyListView.getSelectionModel().getSelectedItem();
-                if (selected != null && !selected.isEmpty()) {
-                    textArea.setText(selected);
+                HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
+                if (selected != null && selected.command != null && !selected.command.isEmpty()) {
+                    textArea.setText(selected.command);
                     historyStage.close();
                 }
             }
@@ -723,55 +724,100 @@ public class RunYBase extends Application {
     }
 
     /**
-     * Клетка ListView для отображения команды истории с полным текстом
+     * Клетка ListView для отображения команды истории с временем последнего использования
      */
-    private class HistoryListCell extends ListCell<String> {
-        private final HBox container = new HBox(5);
+    private class HistoryListCell extends ListCell<HistoryManager.CommandEntry> {
+        private final HBox container = new HBox(10);
         private final Label commandLabel = new Label();
-        private final Button copyCellButton = new Button("Копировать");
+        private final Label timeLabel = new Label();
 
         public HistoryListCell() {
-            copyCellButton.setMinWidth(70);
-            copyCellButton.setStyle(String.format("""
-                    -fx-background-color: %s;
-                    -fx-text-fill: %s;
-                    -fx-font-size: 10px;
-                    -fx-border-color: %s;
-                    -fx-border-width: 1px;
-                    -fx-border-radius: 2px;
-                    -fx-background-radius: 2px""",
-                    COLOR_BUTTON_SMALL_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
-            copyCellButton.setOnAction(e -> {
-                String cmd = getText();
-                if (cmd != null && !cmd.isEmpty()) {
-                    copyToClipboard(cmd);
-                }
-            });
-            container.getChildren().addAll(commandLabel, copyCellButton);
-            container.setPadding(new Insets(2, 5, 2, 5));
+            timeLabel.setMinWidth(110);
+            timeLabel.setMaxWidth(110);
+            timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: gray; -fx-alignment: center-right;");
+            
+            commandLabel.setWrapText(true);
+            //commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0;");
+            commandLabel.setMaxWidth(700);
+            HBox.setHgrow(commandLabel, Priority.ALWAYS);
+            
+            container.getChildren().addAll(commandLabel, timeLabel);
+            container.setPadding(new Insets(5, 5, 5, 5));
         }
 
         @Override
-        protected void updateItem(String item, boolean empty) {
+        protected void updateItem(HistoryManager.CommandEntry item, boolean empty) {
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);
             } else {
-                commandLabel.setText(item);
-                commandLabel.setWrapText(true);
-                commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0;");
-                commandLabel.setMaxWidth(650);
-
+                commandLabel.setText(item.command);
+                
+                // Форматируем время последнего использования
+                if (item.lastUsed > 0) {
+                    timeLabel.setText(formatLastUsed(item.lastUsed));
+                } else {
+                    timeLabel.setText("—");
+                }
+                
                 if (isSelected()) {
                     container.setStyle("-fx-background-color: -fx-selection-bar;");
                     commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0; -fx-text-fill: white;");
+                    timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #E0E0E0; -fx-alignment: center-right;");
                 } else {
                     container.setStyle("-fx-background-color: transparent;");
                     commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0;");
+                    timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: gray; -fx-alignment: center-right;");
                 }
                 setGraphic(container);
             }
         }
+    }
+    
+    /**
+     * Форматирует timestamp в читаемый вид "Вчера в 14:30" или "15.01.2026 в 10:45"
+     */
+    private String formatLastUsed(long timestamp) {
+        long now = System.currentTimeMillis();
+        long diff = now - timestamp;
+        
+        // Если timestamp в будущем — показываем полную дату
+        if (diff < 0) {
+            java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(timestamp), java.time.ZoneId.systemDefault());
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy в HH:mm");
+            return dt.format(formatter);
+        }
+        
+        // Менее минуты назад
+        if (diff < 60_000) return "Только что";
+        
+        // Менее часа назад
+        if (diff < 3_600_000) {
+            int minutes = (int) (diff / 60_000);
+            return minutes + " мин. назад";
+        }
+        
+        // Менее дня назад
+        if (diff < 86_400_000) {
+            java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(timestamp), java.time.ZoneId.systemDefault());
+            return "Сегодня в " + dt.getHour() + ":" + String.format("%02d", dt.getMinute());
+        }
+        
+        // Менее 7 дней назад
+        if (diff < 7 * 86_400_000) {
+            int days = (int) (diff / 86_400_000);
+            java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(timestamp), java.time.ZoneId.systemDefault());
+            return days + " дн. назад, в " + dt.getHour() + ":" + String.format("%02d", dt.getMinute());
+        }
+        
+        // старше 7 дней — полная дата
+        java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(timestamp), java.time.ZoneId.systemDefault());
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy в HH:mm");
+        return dt.format(formatter);
     }
 
     private MenuBar createMenuBar() {
@@ -949,8 +995,20 @@ public class RunYBase extends Application {
         HBox.setHgrow(textArea, Priority.ALWAYS);
 
         // Кнопка истории команд (компактная)
-        Button historyButton = createButton("И...");
-        historyButton.setStyle(historyButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + "; -fx-min-width: 26; -fx-min-height: 22; -fx-padding: 1 4 1 4;");
+        Button historyButton = new Button("И...");
+        historyButton.setStyle(String.format("""
+                -fx-background-color: %s;
+                -fx-text-fill: %s;
+                -fx-font-weight: bold;
+                -fx-font-size: 11px;
+                -fx-border-color: %s;
+                -fx-border-width: 1px;
+                -fx-border-radius: 3px;
+                -fx-background-radius: 3px;
+                -fx-padding: 1 4 1 4;
+                -fx-min-width: 30; -fx-max-width: 30;
+                -fx-min-height: 22; -fx-max-height: 22;""",
+                COLOR_BUTTON_SMALL_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
         historyButton.setTooltip(createTooltip("История команд для этой платформы (открыть окно)"));
         historyButton.setOnAction(e -> showCommandHistoryWindow(platformName, textArea));
 
