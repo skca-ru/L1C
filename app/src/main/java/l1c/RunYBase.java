@@ -798,24 +798,29 @@ public class RunYBase extends Application {
             return minutes + " мин. назад";
         }
         
-        // Менее дня назад
-        if (diff < 86_400_000) {
-            java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(timestamp), java.time.ZoneId.systemDefault());
+        // Получаем календарные даты для корректного сравнения суток
+        java.time.LocalDate nowDate = java.time.LocalDate.now();
+        java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(timestamp), java.time.ZoneId.systemDefault());
+        java.time.LocalDate eventDate = dt.toLocalDate();
+        
+        // Сегодня
+        if (eventDate.equals(nowDate)) {
             return "Сегодня в " + dt.getHour() + ":" + String.format("%02d", dt.getMinute());
         }
         
-        // Менее 7 дней назад
-        if (diff < 7 * 86_400_000) {
-            int days = (int) (diff / 86_400_000);
-            java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(timestamp), java.time.ZoneId.systemDefault());
-            return days + " дн. назад, в " + dt.getHour() + ":" + String.format("%02d", dt.getMinute());
+        // Вчера
+        if (eventDate.equals(nowDate.minusDays(1))) {
+            return "Вчера в " + dt.getHour() + ":" + String.format("%02d", dt.getMinute());
         }
         
-        // старше 7 дней — полная дата
-        java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
-            java.time.Instant.ofEpochMilli(timestamp), java.time.ZoneId.systemDefault());
+        // От 2 до 6 дней назад
+        long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(eventDate, nowDate);
+        if (daysDiff >= 2 && daysDiff <= 6) {
+            return daysDiff + " дн. назад, в " + dt.getHour() + ":" + String.format("%02d", dt.getMinute());
+        }
+        
+        // Старше 7 дней — полная дата
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy в HH:mm");
         return dt.format(formatter);
     }
