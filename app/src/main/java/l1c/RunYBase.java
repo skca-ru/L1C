@@ -563,7 +563,8 @@ public class RunYBase extends Application {
         runButton.setMaxWidth(80);
         runButton.setOnAction(e -> {
             String command = textArea.getText();
-            historyManager.addCommandToHistory(platform, command);
+            String runMode = getSelectedRunMode();
+            historyManager.addCommandToHistory(platform, command, runMode);
             runCommand(command, platform);
         });
 
@@ -724,24 +725,29 @@ public class RunYBase extends Application {
     }
 
     /**
-     * Клетка ListView для отображения команды истории с временем последнего использования
+     * Клетка ListView для отображения команды истории с временем последнего использования и режимом запуска
      */
     private class HistoryListCell extends ListCell<HistoryManager.CommandEntry> {
         private final HBox container = new HBox(10);
         private final Label commandLabel = new Label();
         private final Label timeLabel = new Label();
+        private final Label modeLabel = new Label();
 
         public HistoryListCell() {
             timeLabel.setMinWidth(110);
             timeLabel.setMaxWidth(110);
-            timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: gray; -fx-alignment: center-right;");
+            //timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: №fff; -fx-alignment: center-right;");
+            
+            modeLabel.setMinWidth(160);
+            modeLabel.setMaxWidth(160);
+            //modeLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #000; -fx-alignment: center-left; -fx-font-style: italic;");
             
             commandLabel.setWrapText(true);
             //commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0;");
-            commandLabel.setMaxWidth(700);
+            commandLabel.setMaxWidth(500);
             HBox.setHgrow(commandLabel, Priority.ALWAYS);
             
-            container.getChildren().addAll(commandLabel, timeLabel);
+            container.getChildren().addAll(commandLabel, modeLabel, timeLabel);
             container.setPadding(new Insets(5, 5, 5, 5));
         }
 
@@ -753,6 +759,13 @@ public class RunYBase extends Application {
             } else {
                 commandLabel.setText(item.command);
                 
+                // Отображаем режим запуска
+                if (item.runMode != null && !item.runMode.isEmpty()) {
+                    modeLabel.setText(item.runMode);
+                } else {
+                    modeLabel.setText("—");
+                }
+                
                 // Форматируем время последнего использования
                 if (item.lastUsed > 0) {
                     timeLabel.setText(formatLastUsed(item.lastUsed));
@@ -763,10 +776,12 @@ public class RunYBase extends Application {
                 if (isSelected()) {
                     container.setStyle("-fx-background-color: -fx-selection-bar;");
                     commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0; -fx-text-fill: white;");
+                    modeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #E0E0E0; -fx-alignment: center-left; -fx-font-style: italic;");
                     timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #E0E0E0; -fx-alignment: center-right;");
                 } else {
                     container.setStyle("-fx-background-color: transparent;");
                     commandLabel.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-padding: 2 0 2 0;");
+                    modeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #808080; -fx-alignment: center-left; -fx-font-style: italic;");
                     timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: gray; -fx-alignment: center-right;");
                 }
                 setGraphic(container);
@@ -1925,6 +1940,24 @@ public class RunYBase extends Application {
             showAlert(Alert.AlertType.ERROR, "Ошибка",
                     "Ошибка при поиске базы:\n" + e.getMessage());
         }
+    }
+
+    /**
+     * Получить текстовое название текущего выбранного режима запуска
+     */
+    private String getSelectedRunMode() {
+        if (designerRadio.isSelected()) {
+            return "Конфигуратор";
+        } else if (thinRadio.isSelected()) {
+            return "Тонкий клиент";
+        } else if (thickOrdinaryRadio.isSelected()) {
+            return "Толстый клиент (Обычное)";
+        } else if (thickManagedRadio.isSelected()) {
+            return "Толстый клиент (Управляемое)";
+        } else if (updateConfigRadio.isSelected()) {
+            return "Обновление конфигурации";
+        }
+        return "";
     }
 
     private void runCommand(String command, String platform) {

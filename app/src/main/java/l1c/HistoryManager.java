@@ -35,15 +35,21 @@ public class HistoryManager {
     private Map<String, String> notesMap;  // адрес -> заметка
     
     /**
-     * Запись истории команды с временем последнего использования
+     * Запись истории команды с временем последнего использования и режимом запуска
      */
     public static class CommandEntry {
         public final String command;
         public final long lastUsed;
+        public final String runMode;  // Режим запуска: "Конфигуратор", "Предприятие" и т.д.
         
         public CommandEntry(String command, long lastUsed) {
+            this(command, lastUsed, "");
+        }
+        
+        public CommandEntry(String command, long lastUsed, String runMode) {
             this.command = command;
             this.lastUsed = lastUsed;
+            this.runMode = runMode != null ? runMode : "";
         }
         
         @Override
@@ -94,7 +100,7 @@ public class HistoryManager {
     /**
      * Добавить команду в историю запусков для платформы.
      */
-    public void addCommandToHistory(String platform, String command) {
+    public void addCommandToHistory(String platform, String command, String runMode) {
         if (command == null || command.trim().isEmpty()) return;
         ObservableList<CommandEntry> commands = getCommandHistoryList(platform);
         String value = command.trim();
@@ -105,14 +111,14 @@ public class HistoryManager {
             if (commands.get(i).command.equals(value)) {
                 // Обновляем timestamp и перемещаем наверх
                 commands.remove(i);
-                commands.add(0, new CommandEntry(value, now));
+                commands.add(0, new CommandEntry(value, now, runMode));
                 saveHistoryToXml();
                 return;
             }
         }
         
         // Если команды не было — добавляем новую
-        commands.add(0, new CommandEntry(value, now));
+        commands.add(0, new CommandEntry(value, now, runMode));
         
         while (commands.size() > MAX_HISTORY_SIZE) {
             commands.remove(commands.size() - 1);
@@ -289,6 +295,9 @@ public class HistoryManager {
                     }
                 }
                 
+                // Загружаем режим запуска из атрибута runMode
+                String runMode = commandElem.getAttribute("runMode");
+                
                 // Проверяем дубликаты (по команде, берём первый с наибольшим timestamp)
                 boolean alreadyAdded = false;
                 for (CommandEntry entry : list) {
@@ -296,14 +305,14 @@ public class HistoryManager {
                         if (lastUsed > entry.lastUsed) {
                             // Заменяем на более свежий
                             list.remove(entry);
-                            list.add(new CommandEntry(command, lastUsed));
+                            list.add(new CommandEntry(command, lastUsed, runMode));
                         }
                         alreadyAdded = true;
                         break;
                     }
                 }
                 if (!alreadyAdded) {
-                    list.add(new CommandEntry(command, lastUsed));
+                    list.add(new CommandEntry(command, lastUsed, runMode));
                 }
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -412,6 +421,9 @@ public class HistoryManager {
                     Element commandElem = doc.createElement("command");
                     commandElem.setAttribute("platform", platform);
                     commandElem.setAttribute("lastUsed", String.valueOf(entry.lastUsed));
+                    if (entry.runMode != null && !entry.runMode.isEmpty()) {
+                        commandElem.setAttribute("runMode", entry.runMode);
+                    }
                     commandElem.setTextContent(entry.command);
                     commands.appendChild(commandElem);
                 }
