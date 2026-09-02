@@ -4,10 +4,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.layout.HBox;
 
 import javafx.collections.ObservableList;
-import javafx.geometry.Pos;
 
 /**
  * Компонент для работы с адресами баз 1С:Предприятие, расширяющий стандартный ComboBox.
@@ -27,16 +25,12 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
     
     public ComboBoxWithMenuButton(String exampleTooltipText, ObservableList<T> items, String promptText) {
         super(exampleTooltipText, items, promptText);
-        
-        // Убираем исходную кнопку из родительского HBox и добавляем свои
-        // В родительском классе кнопка называется choiceButton и доступна через геттер
-        Button originalChoiceButton = getChoiceButton();
-        
+       
         // Создаём новую кнопку - Меню
         menuButton = new Button("☰");
         menuButton.setPrefWidth(AppConstants.CHOICE_BUTTON_WIDTH + 5);
         menuButton.setMaxWidth(AppConstants.CHOICE_BUTTON_WIDTH + 5);
-        menuButton.setMinWidth(AppConstants.CHOICE_BUTTON_WIDTH+ + 5);
+        menuButton.setMinWidth(AppConstants.CHOICE_BUTTON_WIDTH + 5);
         menuButton.setFocusTraversable(false);
         menuButton.setCursor(javafx.scene.Cursor.HAND);
         
@@ -59,7 +53,7 @@ class ComboBoxWithMenuButton<T> extends ComboBoxWithButton<T> {
         MenuItem clearItem = new MenuItem("Очистить");
         clearItem.setOnAction(e -> {
             getComboBox().getEditor().clear();
-            getComboBox().setValue(null);
+            getComboBox().getSelectionModel().clearSelection();
         });
         
         contextMenu.getItems().addAll(clearItem, new SeparatorMenuItem());

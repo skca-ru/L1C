@@ -6,8 +6,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
-import javafx.collections.ObservableList;
-import javafx.scene.layout.Priority;
 
 /**
  * Компонент ComboBox с дополнительной кнопкой справа
