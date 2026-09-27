@@ -2052,10 +2052,20 @@ public class RunYBase extends Application {
             pane.setPadding(new Insets(10));
 
             Scene scene = new Scene(pane, 650, 450);
-            scene.setOnKeyPressed(e -> {
-                if (e.getCode() == KeyCode.ESCAPE)
+
+            // Escape закрывает окно без выбора базы. Фильтр на фазе захвата
+            // надёжнее setOnKeyPressed: событие перехватывается раньше, чем
+            // его успеет потребить ListView.
+            scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    e.consume();
                     dialog.close();
+                }
             });
+
+            // Фокус на списке сразу после показа окна: без focus owner в сцене
+            // клавиатурные события не доставляются и Escape не сработает
+            dialog.setOnShown(e -> listView.requestFocus());
 
             dialog.setScene(scene);
             dialog.showAndWait();
