@@ -2070,6 +2070,13 @@ public class RunYBase extends Application {
         }
     }
 
+    /**
+     * Удаляет BOM (U+FEFF) из начала строки, если он присутствует
+     */
+    private static String stripBom(String line) {
+        return (line != null && line.startsWith("\uFEFF")) ? line.substring(1) : line;
+    }
+
     private static void parseIniFormatWithOrder(Path path, List<BaseEntry> entries) throws IOException {
         List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
 
@@ -2109,13 +2116,6 @@ public class RunYBase extends Application {
         if (currentName != null && currentConnect != null) {
             entries.add(new BaseEntry(currentName, currentConnect, currentOrder));
         }
-    }
-
-    /**
-     * Удаляет BOM (U+FEFF) из начала строки, если он присутствует
-     */
-    private static String stripBom(String line) {
-        return (line != null && line.startsWith("\uFEFF")) ? line.substring(1) : line;
     }
 
     private static void parseXmlFormatWithOrder(Path path, List<BaseEntry> entries) throws Exception {
