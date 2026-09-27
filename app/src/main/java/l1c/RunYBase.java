@@ -28,10 +28,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -1402,25 +1398,26 @@ public class RunYBase extends Application {
         Platform.runLater(noteArea::requestFocus);
 
         dialog.showAndWait().ifPresent(result -> {
-            String note = noteArea.getText();
-            historyManager.saveNote(address, note);
-
             if (result == okButtonType) {
-                // Обновляем отображение заметки на основной форме
+                // Сохраняем введённую заметку
+                String note = noteArea.getText();
+                historyManager.saveNote(address, note);
                 updateBaseInfoDisplay(address);
+            
                 if (note.trim().isEmpty()) {
                     showAlert(Alert.AlertType.INFORMATION, "Удалено",
-                            "Заметка удалена для адреса:\n" + address);
+                        "Заметка удалена для адреса:\n" + address);
                 } else {
-                    showAutoClosingAlert("Успешно",
-                            "Заметка сохранена для адреса:\n" + address, 3);
+                    showAutoClosingAlert("Заметка сохранена для адреса:\n" + address, "Успешно", 3);
                 }
             } else if (result == clearButtonType) {
-                // Обновляем отображение заметки на основной форме
+            // Очищаем заметку (сохраняем пустую строку)
+                historyManager.saveNote(address, "");
                 updateBaseInfoDisplay(address);
                 showAlert(Alert.AlertType.INFORMATION, "Удалено",
-                        "Заметка удалена для адреса:\n" + address);
+                    "Заметка удалена для адреса:\n" + address);
             }
+        // Если result == cancelButtonType, ничего не делаем
         });
     }
 
