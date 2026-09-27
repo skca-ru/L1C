@@ -2072,6 +2072,13 @@ public class RunYBase extends Application {
 
     private static void parseIniFormatWithOrder(Path path, List<BaseEntry> entries) throws IOException {
         List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+
+        // Первая строка файла может начинаться с BOM (U+FEFF) — убираем его,
+        // иначе заголовок первой секции "[Имя базы]" не будет распознан
+        if (!lines.isEmpty()) {
+            lines.set(0, stripBom(lines.get(0)));
+        }
+
         String currentName = null;
         String currentConnect = null;
         double currentOrder = Double.MAX_VALUE;
@@ -2102,6 +2109,13 @@ public class RunYBase extends Application {
         if (currentName != null && currentConnect != null) {
             entries.add(new BaseEntry(currentName, currentConnect, currentOrder));
         }
+    }
+
+    /**
+     * Удаляет BOM (U+FEFF) из начала строки, если он присутствует
+     */
+    private static String stripBom(String line) {
+        return (line != null && line.startsWith("\uFEFF")) ? line.substring(1) : line;
     }
 
     private static void parseXmlFormatWithOrder(Path path, List<BaseEntry> entries) throws Exception {
