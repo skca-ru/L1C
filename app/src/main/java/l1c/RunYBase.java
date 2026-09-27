@@ -160,11 +160,11 @@ public class RunYBase extends Application {
         });
         primaryStage.show();
 
-        addContextMenu(addressComboBox.getEditor());
-        addContextMenu(outputArea);
-        addContextMenu(outputArea86);
+        installStandardEditContextMenu(addressComboBox.getEditor());
+        installStandardEditContextMenu(outputArea);
+        installStandardEditContextMenu(outputArea86);
         if (debugArea != null)
-            addContextMenu(debugArea);
+            installStandardEditContextMenu(debugArea);
 
         autoPasteFromClipboard();
 
@@ -1948,16 +1948,25 @@ public class RunYBase extends Application {
         return args;
     }
 
-    private void addContextMenu(TextInputControl control) {
+    /**
+     * Назначает полю ввода стандартное контекстное меню редактирования
+     * ("Вставить", "Вырезать", "Копировать", "Выделить всё").
+     * Без него у TextInputControl меню по умолчанию отсутствует.
+     */
+    private void installStandardEditContextMenu(TextInputControl control) {
         ContextMenu menu = new ContextMenu();
         MenuItem paste = new MenuItem("Вставить");
         paste.setOnAction(e -> control.paste());
+        paste.setAccelerator(KeyCombination.keyCombination("Shortcut+V"));
         MenuItem cut = new MenuItem("Вырезать");
         cut.setOnAction(e -> control.cut());
+        cut.setAccelerator(KeyCombination.keyCombination("Shortcut+X"));
         MenuItem copy = new MenuItem("Копировать");
         copy.setOnAction(e -> control.copy());
+        copy.setAccelerator(KeyCombination.keyCombination("Shortcut+C"));
         MenuItem selectAll = new MenuItem("Выделить всё");
         selectAll.setOnAction(e -> control.selectAll());
+        selectAll.setAccelerator(KeyCombination.keyCombination("Shortcut+A"));
         menu.getItems().addAll(paste, cut, copy, new javafx.scene.control.SeparatorMenuItem(), selectAll);
         control.setContextMenu(menu);
     }
