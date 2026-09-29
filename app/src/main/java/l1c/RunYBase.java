@@ -755,6 +755,26 @@ public class RunYBase extends Application {
     }
 
     /**
+     * Уменьшает собственные отступы составных частей сплит-кнопки: текстовой метки
+     * и области стрелки. Иначе к полям самой кнопки добавляются поля модификатора
+     * темы JavaFX и суммарные отступы слева/справа получаются слишком большими.
+     */
+    private void compactSplitButtonPadding(SplitMenuButton button) {
+        button.skinProperty().addListener((obs, oldSkin, newSkin) -> applyCompactSplitButtonPadding(button));
+        applyCompactSplitButtonPadding(button);
+    }
+
+    /** Задаёт компактные отступы метки и стрелки сплит-кнопки. */
+    private void applyCompactSplitButtonPadding(SplitMenuButton button) {
+        if (button.lookup(".label") instanceof Region) {
+            ((Region) button.lookup(".label")).setStyle("-fx-padding: 0 2 0 6;");
+        }
+        if (button.lookup(".arrow-button") instanceof Region) {
+            ((Region) button.lookup(".arrow-button")).setStyle("-fx-padding: 0 4 0 4;");
+        }
+    }
+
+    /**
      * Создаёт панель с режимами запуска и опциями
      * 
      * @return VBox с панелью режимов и опций
@@ -983,7 +1003,7 @@ public class RunYBase extends Application {
             -fx-text-fill: %2$s;
             -fx-font-weight: bold;
             -fx-font-size: 11px;
-            -fx-padding: 0 10 0 15;
+            -fx-padding: 0 6 0 8;
             -fx-min-height: 30;
             
             /* 3. Делаем внутренние части прозрачными */
@@ -998,6 +1018,8 @@ public class RunYBase extends Application {
             """, bgColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
 
         generateMenuButton.setMinHeight(30);
+        // Уменьшаем внутренние отступы text-части, чтобы кнопка не была слишком широкой
+        compactSplitButtonPadding(generateMenuButton);
 
         inputPanel.getChildren().addAll(
                 addressLabel, addressControl, userCredentialsButton, generateMenuButton);
