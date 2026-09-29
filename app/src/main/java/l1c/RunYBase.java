@@ -36,7 +36,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
-import javafx.animation.PauseTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 
 public class RunYBase extends Application {
 
@@ -1815,7 +1816,7 @@ public class RunYBase extends Application {
             outputArea86.setText(cmd86);
             outputArea.setText(cmd64);
 
-            showAutoClosingAlert("Команда сформирована по имени базы «" + base.name + "»", "Готово", 3);
+            showAutoClosingAlert("Команда сформирована по имени базы «" + base.name + "»", "Готово", 2);
 
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Ошибка",
@@ -1909,11 +1910,26 @@ public class RunYBase extends Application {
         alert.setHeaderText(null);
         alert.setContentText(message);
 
-        PauseTransition delay = new PauseTransition(Duration.seconds(delaySeconds));
-        delay.setOnFinished(e -> alert.hide());
-        delay.play();
+        // #region Обратный отсчёт на кнопке ОК: "OK (N)" - сколько секунд до автозакрытия
+        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
+        final String okText = okButton.getText();
+        final int[] remaining = {Math.max(1, delaySeconds)};
+        okButton.setText(okText + " (" + remaining[0] + ")");
 
-        alert.show();
+        Timeline countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            remaining[0]--;
+            if (remaining[0] <= 0) {
+                alert.hide();
+            } else {
+                okButton.setText(okText + " (" + remaining[0] + ")");
+            }
+        }));
+        countdown.setCycleCount(remaining[0]);
+        // Останавливаем таймер, если окно закрыл пользователь (ОК, крестик, Esc)
+        alert.setOnHidden(e -> countdown.stop());
+        countdown.play();
+        // #endregion
+        alert.showAndWait();
     }
 
     private static List<String> parseCommand(String command) {
