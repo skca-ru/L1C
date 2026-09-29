@@ -133,6 +133,11 @@ public final class RunYBaseHelpTexts {
             Клиент-сервер: Srvr="127.0.0.1";Ref="Base";
             """;
 
+    public static final String INFO_NO_USER_DATA = """
+            Для базы «%s» не сохранены учётные данные.
+            Строка запуска сформирована без данных пользователя.
+            """;
+
     public static final String NOTE_BUTTON_TOOLTIP = """
             Заметка к базе
             Нажмите для просмотра или редактирования текстовой заметки
