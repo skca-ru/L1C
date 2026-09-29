@@ -1,0 +1,24 @@
+/*
+ * Приложение к сцене для подавления дефолтных фонов JavaFX (modena.css).
+ *
+ * Проблема: SplitMenuButton после нажатия получает фокус, и modena закрашивает
+ * внутренние части .label и .arrow-button в состояние focused/hover/armed,
+ * из-за чего поверх жёлтого фона кнопки появляется серо-зелёная подложка.
+ * Инлайн-стиль на самой кнопке не может переопределить псевдоклассы дочерних
+ * частей, поэтому правила вынесены в этот стилевой файл.
+ */
+
+/* "Плоская" кнопка: внутренние части всегда прозрачны при любом состоянии */
+.flat-split-button > .label,
+.flat-split-button > .arrow-button,
+.flat-split-button:focused > .label,
+.flat-split-button:focused > .arrow-button,
+.flat-split-button:hover > .label,
+.flat-split-button:hover > .arrow-button,
+.flat-split-button:armed > .label,
+.flat-split-button:armed > .arrow-button,
+.flat-split-button:pressed > .label,
+.flat-split-button:pressed > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-color: transparent;
+}

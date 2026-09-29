@@ -1,6 +1,7 @@
 package l1c;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -148,6 +149,12 @@ public class RunYBase extends Application {
         borderRoot.setCenter(contentBox);
 
         Scene scene = new Scene(borderRoot, 1050, SHOW_DEBUG_PANEL ? 700 : 500);
+
+        // Стили приложения: подавляют фоны modena.css у внутренних частей кнопок (l1c/app.css)
+        URL appCss = RunYBase.class.getResource("/l1c/app.css");
+        if (appCss != null) {
+            scene.getStylesheets().add(appCss.toExternalForm());
+        }
 
         primaryStage.setTitle(
                 "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
@@ -963,6 +970,7 @@ public class RunYBase extends Application {
         // Создаём сплит-кнопку Сформировать (у кнопки будет меню)
         SplitMenuButton generateMenuButton = new SplitMenuButton();
         generateMenuButton.setText("С_формировать");
+        generateMenuButton.getStyleClass().add("flat-split-button"); // см. l1c/app.css
         generateMenuButton.setMnemonicParsing(true); // для ускорителя Alt+С
         generateMenuButton.setOnAction(e -> handleGenerateCommand()); // основное действие
 
