@@ -3,7 +3,7 @@ package l1c;
 public class AppConstants {
     
     // Версия приложения
-    public static final String VERSION = "2026.09.27.013";
+    public static final String VERSION = "2026.9.30.15";
     
     // @formatter:off
     public static final String APP_DATA_DIR        = ".1c_launcher";
@@ -20,6 +20,19 @@ public class AppConstants {
 
     // @formatter:on
 
+
+    // Заголовок главного окна (%s - версия приложения)
+    public static final String WINDOW_TITLE =
+            "Построитель команды запуска 1С (вер. %s) - Примеры: "
+            + "File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";";
+
+    // Текст окна "О программе" (%s - версия приложения)
+    public static final String ABOUT_TITLE = "О программе";
+    public static final String ABOUT_TEXT  = """
+            Построитель команды запуска 1С
+            Версия: %s
+            Программа для удобного формирования
+            команд запуска 1С: Предприятие и Конфигуратор.""";
 
     // Стили для всплывающих подсказок (Tooltip)
     public static final String TOOLTIP_STYLE = """

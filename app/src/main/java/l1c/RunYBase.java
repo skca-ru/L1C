@@ -5,19 +5,11 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.layout.*;
 import javafx.stage.*;
-import javafx.geometry.*;
-import javafx.beans.value.*;
-import javafx.event.*;
 import javafx.util.Duration;
 import javafx.scene.input.*;
-import javafx.scene.text.Text;
-
-import javax.swing.JOptionPane;
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
@@ -36,7 +28,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.util.Duration;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 
@@ -156,12 +147,8 @@ public class RunYBase extends Application {
             scene.getStylesheets().add(appCss.toExternalForm());
         }
 
-        primaryStage.setTitle(
-                "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
+        primaryStage.setTitle(String.format(AppConstants.WINDOW_TITLE, AppConstants.VERSION));
         primaryStage.setScene(scene);
-        primaryStage.setOnCloseRequest(e -> {
-            // saveHistoryToXml();
-        });
         primaryStage.show();
 
         installStandardEditContextMenu(addressComboBox.getEditor());
@@ -741,10 +728,7 @@ public class RunYBase extends Application {
 
         MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
-        exitItem.setOnAction(e -> {
-            // saveHistoryToXml();
-            Platform.exit();
-        });
+        exitItem.setOnAction(e -> Platform.exit());
 
         fileMenu.getItems().addAll(open1CStartItem, new javafx.scene.control.SeparatorMenuItem(), exitItem);
         menuBar.getMenus().add(fileMenu);
@@ -754,6 +738,8 @@ public class RunYBase extends Application {
         helpMenu.setStyle("-fx-padding: 5 10 5 10;");
 
         MenuItem aboutItem = new MenuItem("О _программе");
+        // Горячая клавиша F1 открывает окно "О программе"
+        aboutItem.setAccelerator(KeyCombination.keyCombination("F1"));
         aboutItem.setOnAction(e -> showAboutDialog());
 
         helpMenu.getItems().add(aboutItem);
@@ -999,6 +985,11 @@ public class RunYBase extends Application {
         generateByIBItem.setOnAction(e -> handleGenerateByIB());
         generateMenuButton.getItems().add(generateByIBItem);
 
+        // Пункт меню — формирование строки запуска без данных пользователя (/N, /P)
+        MenuItem generateWithoutUserDataItem = new MenuItem("Без данных пользователя");
+        generateWithoutUserDataItem.setOnAction(e -> handleGenerateCommandWithoutUserData());
+        generateMenuButton.getItems().add(generateWithoutUserDataItem);
+
         String bgColor = COLOR_BUTTON_BG;
         generateMenuButton.setStyle(String.format("""
             /* 1. Основной фон и рамка всей кнопки */
@@ -1209,22 +1200,10 @@ public class RunYBase extends Application {
         }
     }
 
+    /** Показывает окно "О программе". */
     private void showAboutDialog() {
-        String message = String.format(
-                "Построитель команды запуска 1С\n\n" +
-                        "Версия: %s\n\n" +
-                        "Программа для удобного формирования\n" +
-                        "команд запуска 1С: Предприятие и Конфигуратор.\n\n" +
-                        "Разработано с использованием:\n" +
-                        "• Koda-pro\n" +
-                        "• Koda-base",
-                AppConstants.VERSION);
-
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("О программе");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        showAlert(Alert.AlertType.INFORMATION, AppConstants.ABOUT_TITLE,
+                String.format(AppConstants.ABOUT_TEXT, AppConstants.VERSION));
     }
 
     private Button createHelpButton() {
@@ -1698,6 +1677,23 @@ public class RunYBase extends Application {
     }
 
     private void handleGenerateCommand() {
+        handleGenerateCommand(true);
+    }
+
+    /**
+     * Формирует строку запуска без данных пользователя (/N, /P),
+     * если для текущей базы сохранены учётные данные.
+     */
+    private void handleGenerateCommandWithoutUserData() {
+        handleGenerateCommand(false);
+    }
+
+    /**
+     * Основное действие «Сформировать».
+     *
+     * @param includeCredentials включать ли сохранённые учётные данные (/N, /P) в строку запуска
+     */
+    private void handleGenerateCommand(boolean includeCredentials) {
         String text = getCurrentAddress();
         if (text.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
@@ -1713,6 +1709,18 @@ public class RunYBase extends Application {
             addProcessingToHistory(processingPath);
         }
 
+        UserCredentials cred = credentialsManager.get(text);
+
+        // Вариант «без данных пользователя»: исключаем /N и /P из команды.
+        // Если сохранённых данных нет — сообщим, что строка и так сформирована без них.
+        if (!includeCredentials) {
+            if (cred == null || cred.getUsername().isEmpty()) {
+                showAlert(Alert.AlertType.INFORMATION, "Информация",
+                        String.format(RunYBaseHelpTexts.INFO_NO_USER_DATA, text));
+            }
+            cred = null;
+        }
+
         addToHistory(text);
 
         String commandPart = getCommandPart();
@@ -1720,7 +1728,6 @@ public class RunYBase extends Application {
         outputArea.setText("");
 
         String escaped = text.replace("\"", "\"\"");
-        UserCredentials cred = credentialsManager.get(text);
 
         boolean isDesigner = designerRadio.isSelected();
         boolean isUpdate = updateConfigRadio.isSelected();
