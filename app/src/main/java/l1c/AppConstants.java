@@ -21,6 +21,11 @@ public class AppConstants {
     // @formatter:on
 
 
+    // Заголовок главного окна (%s - версия приложения)
+    public static final String WINDOW_TITLE =
+            "Построитель команды запуска 1С (версия %s) - Примеры: "
+            + "File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";";
+
     // Текст окна "О программе" (%s - версия приложения)
     public static final String ABOUT_TITLE = "О программе";
     public static final String ABOUT_TEXT  = """

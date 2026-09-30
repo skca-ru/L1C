@@ -147,8 +147,7 @@ public class RunYBase extends Application {
             scene.getStylesheets().add(appCss.toExternalForm());
         }
 
-        primaryStage.setTitle(
-                "Построитель команды запуска 1С - Примеры: File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";");
+        primaryStage.setTitle(String.format(AppConstants.WINDOW_TITLE, AppConstants.VERSION));
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(e -> {
             // saveHistoryToXml();
@@ -745,6 +744,8 @@ public class RunYBase extends Application {
         helpMenu.setStyle("-fx-padding: 5 10 5 10;");
 
         MenuItem aboutItem = new MenuItem("О _программе");
+        // Горячая клавиша F1 открывает окно "О программе"
+        aboutItem.setAccelerator(KeyCombination.keyCombination("F1"));
         aboutItem.setOnAction(e -> showAboutDialog());
 
         helpMenu.getItems().add(aboutItem);
