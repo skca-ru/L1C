@@ -21,6 +21,14 @@ public class AppConstants {
     // @formatter:on
 
 
+    // Текст окна "О программе" (%s - версия приложения)
+    public static final String ABOUT_TITLE = "О программе";
+    public static final String ABOUT_TEXT  = """
+            Построитель команды запуска 1С
+            Версия: %s
+            Программа для удобного формирования
+            команд запуска 1С: Предприятие и Конфигуратор.""";
+
     // Стили для всплывающих подсказок (Tooltip)
     public static final String TOOLTIP_STYLE = """
             -fx-background-color: #F3E4BC;

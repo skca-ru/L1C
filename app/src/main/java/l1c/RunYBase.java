@@ -1205,22 +1205,10 @@ public class RunYBase extends Application {
         }
     }
 
+    /** Показывает окно "О программе". */
     private void showAboutDialog() {
-        String message = String.format(
-                "Построитель команды запуска 1С\n\n" +
-                        "Версия: %s\n\n" +
-                        "Программа для удобного формирования\n" +
-                        "команд запуска 1С: Предприятие и Конфигуратор.\n\n" +
-                        "Разработано с использованием:\n" +
-                        "• Koda-pro\n" +
-                        "• Koda-base",
-                AppConstants.VERSION);
-
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("О программе");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        showAlert(Alert.AlertType.INFORMATION, AppConstants.ABOUT_TITLE,
+                String.format(AppConstants.ABOUT_TEXT, AppConstants.VERSION));
     }
 
     private Button createHelpButton() {
