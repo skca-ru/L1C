@@ -89,6 +89,12 @@ public class RunYBase extends Application {
     // Контейнер для всех элементов интерфейса
     private VBox contentBox;
 
+    // Главное окно — владелец всплывающих уведомлений (Popup)
+    private Stage mainStage;
+
+    // Последнее показанное уведомление, чтобы закрывать его перед новым
+    private Popup activePopup;
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -150,6 +156,7 @@ public class RunYBase extends Application {
         primaryStage.setTitle(String.format(AppConstants.WINDOW_TITLE, AppConstants.VERSION));
         primaryStage.setScene(scene);
         primaryStage.show();
+        mainStage = primaryStage;
 
         installStandardEditContextMenu(addressComboBox.getEditor());
         installStandardEditContextMenu(outputArea);
@@ -1941,32 +1948,77 @@ public class RunYBase extends Application {
         }
     }
 
+    /**
+     * Показывает короткое уведомление в правом нижнем углу главного окна.
+     * Popup вместо Alert: уведомление немодальное, не перехватывает фокус
+     * и закрывается само по истечении delaySeconds (или по клику).
+     */
     private void showAutoClosingAlert(String message, String title, int delaySeconds) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
+        if (mainStage == null) {
+            return;
+        }
 
-        // #region Обратный отсчёт на кнопке ОК: "OK (N)" - сколько секунд до автозакрытия
-        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
-        final String okText = okButton.getText();
+        // Прежнее уведомление скрываем, иначе они накладываются друг на друга
+        if (activePopup != null && activePopup.isShowing()) {
+            activePopup.hide();
+        }
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: " + COLOR_TEXT_FG + ";");
+
+        Label textLabel = new Label(message);
+        textLabel.setWrapText(true);
+        textLabel.setMaxWidth(420);
+        textLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + COLOR_TEXT_FG + ";");
+
+        Label countdownLabel = new Label();
+        countdownLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + COLOR_ACCENT + ";");
+
+        HBox header = new HBox(10, titleLabel, countdownLabel);
+        header.setAlignment(Pos.BASELINE_LEFT);
+
+        VBox content = new VBox(4, header, textLabel);
+        content.setPadding(new Insets(8, 12, 8, 12));
+        content.setStyle("-fx-background-color: " + COLOR_BUTTON_SMALL_BG
+                + "; -fx-border-color: " + COLOR_BUTTON_BORDER
+                + "; -fx-border-radius: 4px; -fx-background-radius: 4px;");
+
+        Popup popup = new Popup();
+        popup.getContent().add(content);
+        // Клик по уведомлению закрывает его досрочно
+        content.setOnMouseClicked(e -> popup.hide());
+        activePopup = popup;
+
+        // #region Обратный отсчёт в заголовке: оставшиеся секунды до автозакрытия
         final int[] remaining = {Math.max(1, delaySeconds)};
-        okButton.setText(okText + " (" + remaining[0] + ")");
+        countdownLabel.setText("(" + remaining[0] + ")");
 
         Timeline countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             remaining[0]--;
             if (remaining[0] <= 0) {
-                alert.hide();
+                popup.hide();
             } else {
-                okButton.setText(okText + " (" + remaining[0] + ")");
+                countdownLabel.setText("(" + remaining[0] + ")");
             }
         }));
         countdown.setCycleCount(remaining[0]);
-        // Останавливаем таймер, если окно закрыл пользователь (ОК, крестик, Esc)
-        alert.setOnHidden(e -> countdown.stop());
-        countdown.play();
+        // Останавливаем таймер, если уведомление закрыл пользователь (клик)
+        popup.setOnHidden(e -> {
+            countdown.stop();
+            if (activePopup == popup) {
+                activePopup = null;
+            }
+        });
         // #endregion
-        alert.showAndWait();
+
+        // Размеры нужны до показа, иначе уведомление мелькнет в левом верхнем углу
+        content.applyCss();
+        content.autosize();
+
+        double x = mainStage.getX() + mainStage.getWidth() - content.getWidth() - 20;
+        double y = mainStage.getY() + mainStage.getHeight() - content.getHeight() - 20;
+        popup.show(mainStage, Math.max(x, mainStage.getX()), Math.max(y, mainStage.getY()));
+        countdown.play();
     }
 
     private static List<String> parseCommand(String command) {
