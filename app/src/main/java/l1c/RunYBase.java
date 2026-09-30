@@ -149,9 +149,6 @@ public class RunYBase extends Application {
 
         primaryStage.setTitle(String.format(AppConstants.WINDOW_TITLE, AppConstants.VERSION));
         primaryStage.setScene(scene);
-        primaryStage.setOnCloseRequest(e -> {
-            // saveHistoryToXml();
-        });
         primaryStage.show();
 
         installStandardEditContextMenu(addressComboBox.getEditor());
@@ -731,10 +728,7 @@ public class RunYBase extends Application {
 
         MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
-        exitItem.setOnAction(e -> {
-            // saveHistoryToXml();
-            Platform.exit();
-        });
+        exitItem.setOnAction(e -> Platform.exit());
 
         fileMenu.getItems().addAll(open1CStartItem, new javafx.scene.control.SeparatorMenuItem(), exitItem);
         menuBar.getMenus().add(fileMenu);
