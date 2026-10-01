@@ -2079,7 +2079,7 @@ public class RunYBase extends Application {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
-        showAlert(Alert.AlertType.INFORMATION, "Успешно", "Команда скопирована в буфер обмена!");
+        showAutoClosingAlert("Команда скопирована в буфер обмена!", "Успешно", 2);
     }
 
     private static List<BaseEntry> loadAndSortDatabases()
@@ -2088,8 +2088,8 @@ public class RunYBase extends Application {
         Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
 
         if (!Files.exists(ibasesPath)) {
-            Platform.runLater(() -> showAlertStatic(Alert.AlertType.ERROR, "Ошибка",
-                    "Файл списка баз не найден:\n" + ibasesPath.toString()));
+            showAlert(Alert.AlertType.ERROR, "Ошибка",
+                    "Файл списка баз не найден:\n" + ibasesPath.toString());
             return new ArrayList<>();
         }
 
@@ -2273,22 +2273,21 @@ public class RunYBase extends Application {
         return list.item(0).getTextContent();
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
+    /**
+     * Показывает модальное окно. Безопасен для вызова из любого потока:
+     * если вызов пришёл не из потока JavaFX, окно ставится в очередь Platform.runLater.
+     */
+    private static void showAlert(Alert.AlertType type, String title, String message) {
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> showAlert(type, title, message));
+            return;
+        }
+
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
-    }
-
-    private static void showAlertStatic(Alert.AlertType type, String title, String message) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(type);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        });
     }
 }
 
