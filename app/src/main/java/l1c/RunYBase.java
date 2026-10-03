@@ -626,6 +626,20 @@ public class RunYBase extends Application {
         historyStage.setTitle("История команд — " + platform);
         historyStage.setResizable(true);
 
+        // Заголовки колонок истории
+        HBox headerRow = new HBox(10);
+        headerRow.setPadding(new Insets(5, 5, 5, 5));
+        headerRow.setStyle("-fx-background-color: " + COLOR_BUTTON_SMALL_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
+        Label hdrBase = new Label("База");
+        hdrBase.setMinWidth(180); hdrBase.setMaxWidth(180);
+        Label hdrMode = new Label("Режим");
+        hdrMode.setMinWidth(160); hdrMode.setMaxWidth(160);
+        Label hdrCmd = new Label("Команда");
+        hdrCmd.setMaxWidth(500); HBox.setHgrow(hdrCmd, Priority.ALWAYS);
+        Label hdrTime = new Label("Последний запуск");
+        hdrTime.setMinWidth(110); hdrTime.setMaxWidth(110);
+        headerRow.getChildren().addAll(hdrBase, hdrMode, hdrCmd, hdrTime);
+
         // ListView для отображения команд
         ListView<HistoryManager.CommandEntry> historyListView = new ListView<>(historyManager.getCommandHistoryList(platform));
         historyListView.setCellFactory(lv -> new HistoryListCell());
@@ -667,12 +681,15 @@ public class RunYBase extends Application {
         buttonPanel.setPadding(new Insets(10, 0, 0, 0));
 
         // Основной контейнер
+        VBox mainBox = new VBox(0, headerRow, historyListView);
+        mainBox.setPadding(new Insets(0, 0, 0, 0));
+        
         BorderPane pane = new BorderPane();
-        pane.setCenter(historyListView);
+        pane.setCenter(mainBox);
         pane.setBottom(buttonPanel);
         pane.setPadding(new Insets(10));
 
-        Scene scene = new Scene(pane, 900, 400);
+        Scene scene = new Scene(pane, 1000, 400);
         scene.setFill(Color.TRANSPARENT);
         historyStage.setScene(scene);
 
