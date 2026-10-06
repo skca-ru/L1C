@@ -561,7 +561,7 @@ public class RunYBase extends Application {
         runButton.setMaxWidth(80);
         runButton.setOnAction(e -> {
             String command = textArea.getText();
-            String runMode = getSelectedRunMode();
+            String runMode = getRunModeFromCommand(command);
             historyManager.addCommandToHistory(platform, command, runMode);
             runCommand(command, platform);
         });
@@ -1886,19 +1886,62 @@ public class RunYBase extends Application {
     }
 
     /**
-     * Получить текстовое название текущего выбранного режима запуска
+     * Параметры командной строки 1С, после которых идёт значение.
+     * Значения пропускаются при разборе, чтобы имя базы, совпадающее
+     * с DESIGNER/ENTERPRISE, не было принято за режим запуска.
      */
-    private String getSelectedRunMode() {
-        if (designerRadio.isSelected()) {
-            return "Конфигуратор";
-        } else if (thinRadio.isSelected()) {
-            return "Тонкий клиент";
-        } else if (thickOrdinaryRadio.isSelected()) {
-            return "Толстый клиент (Обычное)";
-        } else if (thickManagedRadio.isSelected()) {
-            return "Толстый клиент (Управляемое)";
-        } else if (updateConfigRadio.isSelected()) {
+    private static final java.util.Set<String> MODE_VALUE_PARAMS = new java.util.HashSet<>(
+            java.util.Arrays.asList("/IBCONNECTIONSTRING", "/IBNAME", "/N", "/P", "/EXECUTE",
+                    "/DRID", "/L", "/S", "/AP", "/OUT", "/DEBUG", "/FRATESTER"));
+
+    /**
+     * Определяет режим запуска по содержимому строки команды,
+     * а не по выбранным RadioButton-ам. Это гарантирует, что режим
+     * соответствует именно той команде, которая будет запущена
+     * (строка могла быть сформирована ранее или отредактирована вручную).
+     *
+     * @param command полная строка команды из поля вывода
+     * @return человекочитаемое название режима, либо "" если распознать не удалось
+     */
+    private String getRunModeFromCommand(String command) {
+        if (command == null || command.trim().isEmpty())
+            return "";
+
+        List<String> args = parseCommand(command);
+        String mode = "";
+        boolean runOrdinary = false;
+        boolean runManaged = false;
+        boolean updateCfg = false;
+
+        // args.get(0) — путь к 1cestart.exe, режим ищется после него
+        for (int i = 1; i < args.size(); i++) {
+            String token = args.get(i).toUpperCase();
+            if (MODE_VALUE_PARAMS.contains(token)) {
+                i++; // пропускаем значение параметра
+                continue;
+            }
+            if (token.equals("DESIGNER"))
+                mode = "DESIGNER";
+            else if (token.equals("ENTERPRISE"))
+                mode = "ENTERPRISE";
+            else if (token.startsWith("/RUNMODEORDINARYAPPLICATION"))
+                runOrdinary = true;
+            else if (token.startsWith("/RUNMODEMANAGEDAPPLICATION"))
+                runManaged = true;
+            else if (token.startsWith("/UPDATEDBCFG"))
+                updateCfg = true;
+        }
+
+        if (updateCfg)
             return "Обновление конфигурации";
+        if ("DESIGNER".equals(mode))
+            return "Конфигуратор";
+        if ("ENTERPRISE".equals(mode)) {
+            if (runOrdinary)
+                return "Толстый клиент (Обычное)";
+            if (runManaged)
+                return "Толстый клиент (Управляемое)";
+            return "Тонкий клиент";
         }
         return "";
     }
@@ -1908,6 +1951,10 @@ public class RunYBase extends Application {
             showAlert(Alert.AlertType.ERROR, "Ошибка", "Нет команды для запуска!");
             return;
         }
+        // Режим определяется по самой команде, а не по выбранным радиокнопкам
+        String mode = getRunModeFromCommand(command);
+        if (mode.isEmpty())
+            mode = "Клиент 1С";
         if (SHOW_DEBUG_PANEL && debugArea != null) {
             debugArea.appendText("=== Запуск (" + platform + ") ===\nКоманда: " + command + "\n");
         }
@@ -1924,20 +1971,6 @@ public class RunYBase extends Application {
                 output.append(line).append("\n");
 
             boolean finished = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
-        String mode;
-        if (designerRadio.isSelected()) {
-            mode = "Конфигуратор";
-        } else if (thinRadio.isSelected()) {
-            mode = "Тонкий клиент";
-        } else if (thickOrdinaryRadio.isSelected()) {
-            mode = "Толстый клиент (Обычное)";
-        } else if (thickManagedRadio.isSelected()) {
-            mode = "Толстый клиент (Управляемое)";
-        } else if (updateConfigRadio.isSelected()) {
-            mode = "Обновление конфигурации";
-        } else {
-            mode = "Толстый клиент (Управляемое)";
-        }
 
             if (finished) {
                 int code = process.exitValue();
