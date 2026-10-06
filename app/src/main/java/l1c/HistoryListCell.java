@@ -19,11 +19,13 @@ import javafx.scene.layout.Priority;
 class HistoryListCell extends ListCell<HistoryManager.CommandEntry> {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy в HH:mm");
 
-    private final HBox container = new HBox(10);
+    // @formatter:off
+    private final HBox container      = new HBox(10);
     private final Label baseNameLabel = new Label();
-    private final Label commandLabel = new Label();
-    private final Label timeLabel = new Label();
-    private final Label modeLabel = new Label();
+    private final Label commandLabel  = new Label();
+    private final Label timeLabel     = new Label();
+    private final Label modeLabel     = new Label();
+    // @formatter oт
 
     HistoryListCell() {
         baseNameLabel.setMinWidth(180);
