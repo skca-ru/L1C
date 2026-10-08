@@ -52,6 +52,9 @@ public class RunYBase extends Application {
     private static final String COLOR_PANEL_BG        = "#FFFFFF";
     private static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
     private static final String COLOR_USER_NO_CRED    = "#F3E4BC";
+
+    // Единая минимальная ширина кнопок в диалогах
+    private static final double DIALOG_BUTTON_WIDTH   = 100;
     // #endregion ==================================
     // @formatter:on
 
@@ -88,6 +91,12 @@ public class RunYBase extends Application {
 
     // Контейнер для всех элементов интерфейса
     private VBox contentBox;
+
+    // Главное окно — владелец всплывающих уведомлений (Popup)
+    private Stage mainStage;
+
+    // Последнее показанное уведомление, чтобы закрывать его перед новым
+    private Popup activePopup;
 
     public static void main(String[] args) {
         launch(args);
@@ -150,6 +159,7 @@ public class RunYBase extends Application {
         primaryStage.setTitle(String.format(AppConstants.WINDOW_TITLE, AppConstants.VERSION));
         primaryStage.setScene(scene);
         primaryStage.show();
+        mainStage = primaryStage;
 
         installStandardEditContextMenu(addressComboBox.getEditor());
         installStandardEditContextMenu(outputArea);
@@ -448,40 +458,63 @@ public class RunYBase extends Application {
         return button;
     }
 
-    private Button createSystemButton(String text) {
+    /**
+     * Кнопка подтверждения в диалогах (OK в выборе базы, Выбрать в истории).
+     * Фон задаётся сразу, а не дописывается в style: иначе обработчики
+     * наведения из createButton возвращают базовый цвет и кнопка «прыгает».
+     */
+    private Button createDialogConfirmButton(String text) {
+        Button button = createButton(text, COLOR_BUTTON_SMALL_BG);
+        button.setMinWidth(DIALOG_BUTTON_WIDTH);
+        return button;
+    }
+
+    /**
+     * Второстепенная кнопка диалога (Отмена, Копировать, Закрыть) —
+     * имитирует стандартную кнопку Windows: белое поле, тонкая серая рамка
+     * с более тёмным нижним краем, скругление 4 px, при наведении и
+     * нажатии фон затемняется.
+     */
+    private Button createDialogCancelButton(String text) {
         Button button = new Button(text);
         button.setMnemonicParsing(true);
-        button.setMinHeight(28);
-        button.setMinWidth(80);
-        button.setStyle(String.format("""
-                -fx-background-color: #F3F3F3;
-                -fx-text-fill: #000000;
-                -fx-font-size: 11px;
-                -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
-                -fx-border-width: 1 1 1 1;
-                -fx-border-radius: 3;
-                -fx-background-radius: 3;"""));
-        button.setOnMouseEntered(e -> {
-            button.setStyle(String.format("""
-                    -fx-background-color: #EDEDED;
-                    -fx-text-fill: #000000;
-                    -fx-font-size: 11px;
-                    -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
-                    -fx-border-width: 1 1 1 1;
-                    -fx-border-radius: 3;
-                    -fx-background-radius: 3;"""));
-        });
-        button.setOnMouseExited(e -> {
-            button.setStyle(String.format("""
-                    -fx-background-color: #F3F3F3;
-                    -fx-text-fill: #000000;
-                    -fx-font-size: 11px;
-                    -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
-                    -fx-border-width: 1 1 1 1;
-                    -fx-border-radius: 3;
-                    -fx-background-radius: 3;"""));
-        });
+        button.setMinWidth(DIALOG_BUTTON_WIDTH);
+        button.setMinHeight(30);
+
+        // Состояние берём из свойств кнопки, а не из обработчиков мыши:
+        // иначе при уходе курсора во время нажатия кнопка останется тёмной
+        Runnable repaint = () -> applyNativeButtonStyle(button);
+        button.hoverProperty().addListener((obs, was, now) -> repaint.run());
+        button.pressedProperty().addListener((obs, was, now) -> repaint.run());
+        repaint.run();
+
         return button;
+    }
+
+    /**
+     * Палитра кнопки Windows 11 (светлая тема). Инлайновый CSS не умеет
+     * селекторы :hover/:pressed, поэтому состояния раскрашиваются вручную.
+     */
+    private static void applyNativeButtonStyle(Button button) {
+        // @formatter:off
+        String bg, side, bottom, text;
+        if (button.isPressed()) {
+            bg = "#F5F5F5"; side = "#C4C4C4"; bottom = "#7A7A7A"; text = "#5F5F5F";
+        } else if (button.isHover()) {
+            bg = "#F9F9F9"; side = "#C9C9C9"; bottom = "#8C8C8C"; text = "#1A1A1A";
+        } else {
+            bg = "#FDFDFD"; side = "#D8D8D8"; bottom = "#9A9A9A"; text = "#1A1A1A";
+        }
+        // @formatter:on
+        button.setStyle(String.format("""
+                -fx-background-color: %s;
+                -fx-background-radius: 4;
+                -fx-border-color: %s %s %s %s;
+                -fx-border-width: 1;
+                -fx-border-radius: 4;
+                -fx-text-fill: %s;
+                -fx-font-size: 12px;""",
+                bg, side, side, bottom, side, text));
     }
 
     private Button createFlatButton(String text) {
@@ -545,7 +578,8 @@ public class RunYBase extends Application {
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
         copyButton.setTooltip(createTooltip("Копировать команду в буфер обмена"));
-        copyButton.setOnAction(e -> copyToClipboard(textArea.getText()));
+        copyButton.setOnAction(e -> copyToClipboard(textArea.getText(),
+                textArea.getScene() != null ? textArea.getScene().getWindow() : null));
 
         Button runButton = createButton("Run");
         runButton.setStyle(runButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
@@ -554,7 +588,7 @@ public class RunYBase extends Application {
         runButton.setMaxWidth(80);
         runButton.setOnAction(e -> {
             String command = textArea.getText();
-            String runMode = getSelectedRunMode();
+            String runMode = getRunModeFromCommand(command);
             historyManager.addCommandToHistory(platform, command, runMode);
             runCommand(command, platform);
         });
@@ -616,29 +650,43 @@ public class RunYBase extends Application {
     private void showCommandHistoryWindow(String platform, TextArea textArea) {
         Stage historyStage = new Stage();
         historyStage.initModality(Modality.APPLICATION_MODAL);
+        historyStage.initOwner(mainStage);
         historyStage.setTitle("История команд — " + platform);
         historyStage.setResizable(true);
+
+        // Заголовки колонок истории
+        HBox headerRow = new HBox(10);
+        headerRow.setPadding(new Insets(5, 5, 5, 5));
+        headerRow.setStyle("-fx-background-color: " + COLOR_BUTTON_SMALL_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
+        Label hdrBase = new Label("База");
+        hdrBase.setMinWidth(180); hdrBase.setMaxWidth(180);
+        Label hdrMode = new Label("Режим");
+        hdrMode.setMinWidth(160); hdrMode.setMaxWidth(160);
+        Label hdrCmd = new Label("Команда");
+        hdrCmd.setMaxWidth(500); HBox.setHgrow(hdrCmd, Priority.ALWAYS);
+        Label hdrTime = new Label("Последний запуск");
+        hdrTime.setMinWidth(110); hdrTime.setMaxWidth(110);
+        headerRow.getChildren().addAll(hdrBase, hdrMode, hdrCmd, hdrTime);
 
         // ListView для отображения команд
         ListView<HistoryManager.CommandEntry> historyListView = new ListView<>(historyManager.getCommandHistoryList(platform));
         historyListView.setCellFactory(lv -> new HistoryListCell());
         historyListView.setPrefHeight(250);
 
-        // Кнопка копирования — спокойная, системная
-        Button copyButton = createSystemButton("Копировать");
+        // Кнопка копирования — второстепенная
+        Button copyButton = createDialogCancelButton("Копировать");
         copyButton.setTooltip(createTooltip("Скопировать выбранную команду в буфер обмена"));
         copyButton.setOnAction(e -> {
             HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
             if (selected != null && selected.command != null && !selected.command.isEmpty()) {
-                copyToClipboard(selected.command);
+                copyToClipboard(selected.command, historyStage);
             } else {
                 showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите команду для копирования!");
             }
         });
 
-        // Кнопка выбора (вставка в поле вывода) — акцентная, жёлтая, первая
-        Button selectButton = createButton("В_ыбрать");
-        selectButton.setStyle(selectButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        // Кнопка выбора (вставка в поле вывода) — подтверждающая, как OK в окне выбора базы
+        Button selectButton = createDialogConfirmButton("В_ыбрать");
         selectButton.setTooltip(createTooltip("Вставить выбранную команду в поле вывода и закрыть окно (Ctrl+Enter)"));
         selectButton.setOnAction(e -> {
             HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
@@ -650,8 +698,8 @@ public class RunYBase extends Application {
             }
         });
 
-        // Кнопка закрытия — спокойная, системная
-        Button closeButton = createSystemButton("Закрыть");
+        // Кнопка закрытия — второстепенная, как Отмена в окне выбора базы
+        Button closeButton = createDialogCancelButton("Закрыть");
         closeButton.setOnAction(e -> historyStage.close());
 
         // Панель кнопок
@@ -660,12 +708,15 @@ public class RunYBase extends Application {
         buttonPanel.setPadding(new Insets(10, 0, 0, 0));
 
         // Основной контейнер
+        VBox mainBox = new VBox(0, headerRow, historyListView);
+        mainBox.setPadding(new Insets(0, 0, 0, 0));
+        
         BorderPane pane = new BorderPane();
-        pane.setCenter(historyListView);
+        pane.setCenter(mainBox);
         pane.setBottom(buttonPanel);
         pane.setPadding(new Insets(10));
 
-        Scene scene = new Scene(pane, 900, 400);
+        Scene scene = new Scene(pane, 1000, 400);
         scene.setFill(Color.TRANSPARENT);
         historyStage.setScene(scene);
 
@@ -1862,19 +1913,62 @@ public class RunYBase extends Application {
     }
 
     /**
-     * Получить текстовое название текущего выбранного режима запуска
+     * Параметры командной строки 1С, после которых идёт значение.
+     * Значения пропускаются при разборе, чтобы имя базы, совпадающее
+     * с DESIGNER/ENTERPRISE, не было принято за режим запуска.
      */
-    private String getSelectedRunMode() {
-        if (designerRadio.isSelected()) {
-            return "Конфигуратор";
-        } else if (thinRadio.isSelected()) {
-            return "Тонкий клиент";
-        } else if (thickOrdinaryRadio.isSelected()) {
-            return "Толстый клиент (Обычное)";
-        } else if (thickManagedRadio.isSelected()) {
-            return "Толстый клиент (Управляемое)";
-        } else if (updateConfigRadio.isSelected()) {
+    private static final java.util.Set<String> MODE_VALUE_PARAMS = new java.util.HashSet<>(
+            java.util.Arrays.asList("/IBCONNECTIONSTRING", "/IBNAME", "/N", "/P", "/EXECUTE",
+                    "/DRID", "/L", "/S", "/AP", "/OUT", "/DEBUG", "/FRATESTER"));
+
+    /**
+     * Определяет режим запуска по содержимому строки команды,
+     * а не по выбранным RadioButton-ам. Это гарантирует, что режим
+     * соответствует именно той команде, которая будет запущена
+     * (строка могла быть сформирована ранее или отредактирована вручную).
+     *
+     * @param command полная строка команды из поля вывода
+     * @return человекочитаемое название режима, либо "" если распознать не удалось
+     */
+    private String getRunModeFromCommand(String command) {
+        if (command == null || command.trim().isEmpty())
+            return "";
+
+        List<String> args = parseCommand(command);
+        String mode = "";
+        boolean runOrdinary = false;
+        boolean runManaged = false;
+        boolean updateCfg = false;
+
+        // args.get(0) — путь к 1cestart.exe, режим ищется после него
+        for (int i = 1; i < args.size(); i++) {
+            String token = args.get(i).toUpperCase();
+            if (MODE_VALUE_PARAMS.contains(token)) {
+                i++; // пропускаем значение параметра
+                continue;
+            }
+            if (token.equals("DESIGNER"))
+                mode = "DESIGNER";
+            else if (token.equals("ENTERPRISE"))
+                mode = "ENTERPRISE";
+            else if (token.startsWith("/RUNMODEORDINARYAPPLICATION"))
+                runOrdinary = true;
+            else if (token.startsWith("/RUNMODEMANAGEDAPPLICATION"))
+                runManaged = true;
+            else if (token.startsWith("/UPDATEDBCFG"))
+                updateCfg = true;
+        }
+
+        if (updateCfg)
             return "Обновление конфигурации";
+        if ("DESIGNER".equals(mode))
+            return "Конфигуратор";
+        if ("ENTERPRISE".equals(mode)) {
+            if (runOrdinary)
+                return "Толстый клиент (Обычное)";
+            if (runManaged)
+                return "Толстый клиент (Управляемое)";
+            return "Тонкий клиент";
         }
         return "";
     }
@@ -1884,6 +1978,10 @@ public class RunYBase extends Application {
             showAlert(Alert.AlertType.ERROR, "Ошибка", "Нет команды для запуска!");
             return;
         }
+        // Режим определяется по самой команде, а не по выбранным радиокнопкам
+        String mode = getRunModeFromCommand(command);
+        if (mode.isEmpty())
+            mode = "Клиент 1С";
         if (SHOW_DEBUG_PANEL && debugArea != null) {
             debugArea.appendText("=== Запуск (" + platform + ") ===\nКоманда: " + command + "\n");
         }
@@ -1900,20 +1998,6 @@ public class RunYBase extends Application {
                 output.append(line).append("\n");
 
             boolean finished = process.waitFor(3, java.util.concurrent.TimeUnit.SECONDS);
-        String mode;
-        if (designerRadio.isSelected()) {
-            mode = "Конфигуратор";
-        } else if (thinRadio.isSelected()) {
-            mode = "Тонкий клиент";
-        } else if (thickOrdinaryRadio.isSelected()) {
-            mode = "Толстый клиент (Обычное)";
-        } else if (thickManagedRadio.isSelected()) {
-            mode = "Толстый клиент (Управляемое)";
-        } else if (updateConfigRadio.isSelected()) {
-            mode = "Обновление конфигурации";
-        } else {
-            mode = "Толстый клиент (Управляемое)";
-        }
 
             if (finished) {
                 int code = process.exitValue();
@@ -1941,32 +2025,99 @@ public class RunYBase extends Application {
         }
     }
 
+    /**
+     * Показывает короткое уведомление в правом нижнем углу главного окна.
+     * Popup вместо Alert: уведомление немодальное, не перехватывает фокус
+     * и закрывается само по истечении delaySeconds (или по клику).
+     */
     private void showAutoClosingAlert(String message, String title, int delaySeconds) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
+        showAutoClosingAlert(message, title, delaySeconds, null);
+    }
 
-        // #region Обратный отсчёт на кнопке ОК: "OK (N)" - сколько секунд до автозакрытия
-        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
-        final String okText = okButton.getText();
+    /**
+     * Показывает короткое уведомление в правом нижнем углу указанного окна.
+     * Нужно, когда действие выполнено из дочернего окна (например, копирование
+     * из окна истории) — иначе уведомление появляется за активным окном
+     * и пользователь не видит подтверждения.
+     *
+     * @param owner окно, относительно которого позиционируется уведомление;
+     *              null — главное окно приложения
+     */
+    private void showAutoClosingAlert(String message, String title, int delaySeconds, Window owner) {
+        Window anchor = (owner != null) ? owner : mainStage;
+        if (anchor == null) {
+            return;
+        }
+
+        // Прежнее уведомление скрываем, иначе они накладываются друг на друга
+        if (activePopup != null && activePopup.isShowing()) {
+            activePopup.hide();
+        }
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: " + COLOR_TEXT_FG + ";");
+
+        Label textLabel = new Label(message);
+        textLabel.setWrapText(true);
+        textLabel.setMaxWidth(420);
+        textLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + COLOR_TEXT_FG + ";");
+
+        Label countdownLabel = new Label();
+        countdownLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + COLOR_ACCENT + ";");
+
+        HBox header = new HBox(10, titleLabel, countdownLabel);
+        header.setAlignment(Pos.BASELINE_LEFT);
+
+        VBox content = new VBox(4, header, textLabel);
+        content.setPadding(new Insets(8, 12, 8, 12));
+        content.setStyle("-fx-background-color: " + COLOR_BUTTON_SMALL_BG
+                + "; -fx-border-color: " + COLOR_BUTTON_BORDER
+                + "; -fx-border-radius: 4px; -fx-background-radius: 4px;");
+
+        Popup popup = new Popup();
+        popup.getContent().add(content);
+        // Клик по уведомлению закрывает его досрочно
+        content.setOnMouseClicked(e -> popup.hide());
+        activePopup = popup;
+
+        // #region Обратный отсчёт в заголовке: оставшиеся секунды до автозакрытия
         final int[] remaining = {Math.max(1, delaySeconds)};
-        okButton.setText(okText + " (" + remaining[0] + ")");
+        countdownLabel.setText("(" + remaining[0] + ")");
 
         Timeline countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             remaining[0]--;
             if (remaining[0] <= 0) {
-                alert.hide();
+                popup.hide();
             } else {
-                okButton.setText(okText + " (" + remaining[0] + ")");
+                countdownLabel.setText("(" + remaining[0] + ")");
             }
         }));
         countdown.setCycleCount(remaining[0]);
-        // Останавливаем таймер, если окно закрыл пользователь (ОК, крестик, Esc)
-        alert.setOnHidden(e -> countdown.stop());
-        countdown.play();
+        // Останавливаем таймер, если уведомление закрыл пользователь (клик)
+        popup.setOnHidden(e -> {
+            countdown.stop();
+            if (activePopup == popup) {
+                activePopup = null;
+            }
+        });
         // #endregion
-        alert.showAndWait();
+
+        // Размеры нужны до показа, иначе уведомление мелькнет в левом верхнем углу
+        content.applyCss();
+        content.autosize();
+
+        // Окно могло быть свёрнуто/не иметь размеров — берём координаты экрана
+        double anchorRight = anchor.getX() + Math.max(anchor.getWidth(), 0);
+        double anchorBottom = anchor.getY() + Math.max(anchor.getHeight(), 0);
+        if (anchor.getWidth() <= 0 || anchor.getHeight() <= 0) {
+            javafx.geometry.Rectangle2D vb = Screen.getPrimary().getVisualBounds();
+            anchorRight = vb.getMaxX();
+            anchorBottom = vb.getMaxY();
+        }
+        double x = anchorRight - content.getWidth() - 20;
+        double y = anchorBottom - content.getHeight() - 20;
+        popup.show(anchor, x, y);
+        countdown.play();
     }
 
     private static List<String> parseCommand(String command) {
@@ -2021,13 +2172,40 @@ public class RunYBase extends Application {
         control.setContextMenu(menu);
     }
 
+    /**
+     * Копирует текст в буфер обмена, показывает подтверждение
+     * относительно главного окна.
+     */
     private void copyToClipboard(String text) {
-        if (text == null || text.isEmpty())
+        copyToClipboard(text, null);
+    }
+
+    /**
+     * Копирует текст в буфер обмена и показывает подтверждение
+     * относительно указанного окна.
+     *
+     * @param owner окно-владелец уведомления (null — главное окно)
+     */
+    private void copyToClipboard(String text, Window owner) {
+        if (text == null || text.isEmpty()) {
             return;
-        ClipboardContent content = new ClipboardContent();
-        content.putString(text);
-        Clipboard.getSystemClipboard().setContent(content);
-        showAlert(Alert.AlertType.INFORMATION, "Успешно", "Команда скопирована в буфер обмена!");
+        }
+        try {
+            ClipboardContent content = new ClipboardContent();
+            content.putString(text);
+            Clipboard.getSystemClipboard().setContent(content);
+            showAutoClosingAlert("Скопировано в буфер обмена", "Копирование", 2, owner);
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText(null);
+            alert.setContentText("Не удалось скопировать текст:\n" + e.getMessage());
+            Stage ownerStage = (owner instanceof Stage) ? (Stage) owner : mainStage;
+            if (ownerStage != null) {
+                alert.initOwner(ownerStage);
+            }
+            alert.showAndWait();
+        }
     }
 
     private static List<BaseEntry> loadAndSortDatabases()
@@ -2036,8 +2214,8 @@ public class RunYBase extends Application {
         Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
 
         if (!Files.exists(ibasesPath)) {
-            Platform.runLater(() -> showAlertStatic(Alert.AlertType.ERROR, "Ошибка",
-                    "Файл списка баз не найден:\n" + ibasesPath.toString()));
+            showAlert(Alert.AlertType.ERROR, "Ошибка",
+                    "Файл списка баз не найден:\n" + ibasesPath.toString());
             return new ArrayList<>();
         }
 
@@ -2080,10 +2258,10 @@ public class RunYBase extends Application {
             ListView<BaseEntry> listView = new ListView<>(FXCollections.observableArrayList(baseEntries));
             listView.setCellFactory(lv -> new BaseEntryListCell());
 
-            Button okButton = new Button("OK");
+            Button okButton = createDialogConfirmButton("OK");
             okButton.setOnAction(e -> selectCurrentBase(listView, dialog));
 
-            Button cancelButton = new Button("Отмена");
+            Button cancelButton = createDialogCancelButton("Отмена");
             cancelButton.setOnAction(e -> dialog.close());
 
             listView.setOnMouseClicked(e -> {
@@ -2221,22 +2399,21 @@ public class RunYBase extends Application {
         return list.item(0).getTextContent();
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
+    /**
+     * Показывает модальное окно. Безопасен для вызова из любого потока:
+     * если вызов пришёл не из потока JavaFX, окно ставится в очередь Platform.runLater.
+     */
+    private static void showAlert(Alert.AlertType type, String title, String message) {
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> showAlert(type, title, message));
+            return;
+        }
+
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
-    }
-
-    private static void showAlertStatic(Alert.AlertType type, String title, String message) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(type);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        });
     }
 }
 

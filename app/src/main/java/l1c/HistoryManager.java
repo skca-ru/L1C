@@ -39,7 +39,7 @@ public class HistoryManager {
     public static class CommandEntry {
         public final String command;
         public final long lastUsed;
-        public final String runMode;  // Режим запуска: "Конфигуратор", "Предприятие" и т.д.
+        public final String runMode;  // Режим запуска: "Конфигуратор", "Тонкий клиент", "Толстый клиент (Управляемое)" и т.д.
         
         public CommandEntry(String command, long lastUsed) {
             this(command, lastUsed, "");
