@@ -52,6 +52,9 @@ public class RunYBase extends Application {
     private static final String COLOR_PANEL_BG        = "#FFFFFF";
     private static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
     private static final String COLOR_USER_NO_CRED    = "#F3E4BC";
+
+    // Единая минимальная ширина кнопок в диалогах
+    private static final double DIALOG_BUTTON_WIDTH   = 100;
     // #endregion ==================================
     // @formatter:on
 
@@ -455,40 +458,63 @@ public class RunYBase extends Application {
         return button;
     }
 
-    private Button createSystemButton(String text) {
+    /**
+     * Кнопка подтверждения в диалогах (OK в выборе базы, Выбрать в истории).
+     * Фон задаётся сразу, а не дописывается в style: иначе обработчики
+     * наведения из createButton возвращают базовый цвет и кнопка «прыгает».
+     */
+    private Button createDialogConfirmButton(String text) {
+        Button button = createButton(text, COLOR_BUTTON_SMALL_BG);
+        button.setMinWidth(DIALOG_BUTTON_WIDTH);
+        return button;
+    }
+
+    /**
+     * Второстепенная кнопка диалога (Отмена, Копировать, Закрыть) —
+     * имитирует стандартную кнопку Windows: белое поле, тонкая серая рамка
+     * с более тёмным нижним краем, скругление 4 px, при наведении и
+     * нажатии фон затемняется.
+     */
+    private Button createDialogCancelButton(String text) {
         Button button = new Button(text);
         button.setMnemonicParsing(true);
-        button.setMinHeight(28);
-        button.setMinWidth(80);
-        button.setStyle(String.format("""
-                -fx-background-color: #F3F3F3;
-                -fx-text-fill: #000000;
-                -fx-font-size: 11px;
-                -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
-                -fx-border-width: 1 1 1 1;
-                -fx-border-radius: 3;
-                -fx-background-radius: 3;"""));
-        button.setOnMouseEntered(e -> {
-            button.setStyle(String.format("""
-                    -fx-background-color: #EDEDED;
-                    -fx-text-fill: #000000;
-                    -fx-font-size: 11px;
-                    -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
-                    -fx-border-width: 1 1 1 1;
-                    -fx-border-radius: 3;
-                    -fx-background-radius: 3;"""));
-        });
-        button.setOnMouseExited(e -> {
-            button.setStyle(String.format("""
-                    -fx-background-color: #F3F3F3;
-                    -fx-text-fill: #000000;
-                    -fx-font-size: 11px;
-                    -fx-border-color: #ACA899 #E8E6D3 #E8E6D3 #E8E6D3;
-                    -fx-border-width: 1 1 1 1;
-                    -fx-border-radius: 3;
-                    -fx-background-radius: 3;"""));
-        });
+        button.setMinWidth(DIALOG_BUTTON_WIDTH);
+        button.setMinHeight(30);
+
+        // Состояние берём из свойств кнопки, а не из обработчиков мыши:
+        // иначе при уходе курсора во время нажатия кнопка останется тёмной
+        Runnable repaint = () -> applyNativeButtonStyle(button);
+        button.hoverProperty().addListener((obs, was, now) -> repaint.run());
+        button.pressedProperty().addListener((obs, was, now) -> repaint.run());
+        repaint.run();
+
         return button;
+    }
+
+    /**
+     * Палитра кнопки Windows 11 (светлая тема). Инлайновый CSS не умеет
+     * селекторы :hover/:pressed, поэтому состояния раскрашиваются вручную.
+     */
+    private static void applyNativeButtonStyle(Button button) {
+        // @formatter:off
+        String bg, side, bottom, text;
+        if (button.isPressed()) {
+            bg = "#F5F5F5"; side = "#C4C4C4"; bottom = "#7A7A7A"; text = "#5F5F5F";
+        } else if (button.isHover()) {
+            bg = "#F9F9F9"; side = "#C9C9C9"; bottom = "#8C8C8C"; text = "#1A1A1A";
+        } else {
+            bg = "#FDFDFD"; side = "#D8D8D8"; bottom = "#9A9A9A"; text = "#1A1A1A";
+        }
+        // @formatter:on
+        button.setStyle(String.format("""
+                -fx-background-color: %s;
+                -fx-background-radius: 4;
+                -fx-border-color: %s %s %s %s;
+                -fx-border-width: 1;
+                -fx-border-radius: 4;
+                -fx-text-fill: %s;
+                -fx-font-size: 12px;""",
+                bg, side, side, bottom, side, text));
     }
 
     private Button createFlatButton(String text) {
@@ -552,7 +578,8 @@ public class RunYBase extends Application {
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
         copyButton.setTooltip(createTooltip("Копировать команду в буфер обмена"));
-        copyButton.setOnAction(e -> copyToClipboard(textArea.getText()));
+        copyButton.setOnAction(e -> copyToClipboard(textArea.getText(),
+                textArea.getScene() != null ? textArea.getScene().getWindow() : null));
 
         Button runButton = createButton("Run");
         runButton.setStyle(runButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
@@ -623,6 +650,7 @@ public class RunYBase extends Application {
     private void showCommandHistoryWindow(String platform, TextArea textArea) {
         Stage historyStage = new Stage();
         historyStage.initModality(Modality.APPLICATION_MODAL);
+        historyStage.initOwner(mainStage);
         historyStage.setTitle("История команд — " + platform);
         historyStage.setResizable(true);
 
@@ -645,21 +673,20 @@ public class RunYBase extends Application {
         historyListView.setCellFactory(lv -> new HistoryListCell());
         historyListView.setPrefHeight(250);
 
-        // Кнопка копирования — спокойная, системная
-        Button copyButton = createSystemButton("Копировать");
+        // Кнопка копирования — второстепенная
+        Button copyButton = createDialogCancelButton("Копировать");
         copyButton.setTooltip(createTooltip("Скопировать выбранную команду в буфер обмена"));
         copyButton.setOnAction(e -> {
             HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
             if (selected != null && selected.command != null && !selected.command.isEmpty()) {
-                copyToClipboard(selected.command);
+                copyToClipboard(selected.command, historyStage);
             } else {
                 showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите команду для копирования!");
             }
         });
 
-        // Кнопка выбора (вставка в поле вывода) — акцентная, жёлтая, первая
-        Button selectButton = createButton("В_ыбрать");
-        selectButton.setStyle(selectButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        // Кнопка выбора (вставка в поле вывода) — подтверждающая, как OK в окне выбора базы
+        Button selectButton = createDialogConfirmButton("В_ыбрать");
         selectButton.setTooltip(createTooltip("Вставить выбранную команду в поле вывода и закрыть окно (Ctrl+Enter)"));
         selectButton.setOnAction(e -> {
             HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
@@ -671,8 +698,8 @@ public class RunYBase extends Application {
             }
         });
 
-        // Кнопка закрытия — спокойная, системная
-        Button closeButton = createSystemButton("Закрыть");
+        // Кнопка закрытия — второстепенная, как Отмена в окне выбора базы
+        Button closeButton = createDialogCancelButton("Закрыть");
         closeButton.setOnAction(e -> historyStage.close());
 
         // Панель кнопок
@@ -2004,7 +2031,21 @@ public class RunYBase extends Application {
      * и закрывается само по истечении delaySeconds (или по клику).
      */
     private void showAutoClosingAlert(String message, String title, int delaySeconds) {
-        if (mainStage == null) {
+        showAutoClosingAlert(message, title, delaySeconds, null);
+    }
+
+    /**
+     * Показывает короткое уведомление в правом нижнем углу указанного окна.
+     * Нужно, когда действие выполнено из дочернего окна (например, копирование
+     * из окна истории) — иначе уведомление появляется за активным окном
+     * и пользователь не видит подтверждения.
+     *
+     * @param owner окно, относительно которого позиционируется уведомление;
+     *              null — главное окно приложения
+     */
+    private void showAutoClosingAlert(String message, String title, int delaySeconds, Window owner) {
+        Window anchor = (owner != null) ? owner : mainStage;
+        if (anchor == null) {
             return;
         }
 
@@ -2065,9 +2106,17 @@ public class RunYBase extends Application {
         content.applyCss();
         content.autosize();
 
-        double x = mainStage.getX() + mainStage.getWidth() - content.getWidth() - 20;
-        double y = mainStage.getY() + mainStage.getHeight() - content.getHeight() - 20;
-        popup.show(mainStage, Math.max(x, mainStage.getX()), Math.max(y, mainStage.getY()));
+        // Окно могло быть свёрнуто/не иметь размеров — берём координаты экрана
+        double anchorRight = anchor.getX() + Math.max(anchor.getWidth(), 0);
+        double anchorBottom = anchor.getY() + Math.max(anchor.getHeight(), 0);
+        if (anchor.getWidth() <= 0 || anchor.getHeight() <= 0) {
+            javafx.geometry.Rectangle2D vb = Screen.getPrimary().getVisualBounds();
+            anchorRight = vb.getMaxX();
+            anchorBottom = vb.getMaxY();
+        }
+        double x = anchorRight - content.getWidth() - 20;
+        double y = anchorBottom - content.getHeight() - 20;
+        popup.show(anchor, x, y);
         countdown.play();
     }
 
@@ -2123,13 +2172,40 @@ public class RunYBase extends Application {
         control.setContextMenu(menu);
     }
 
+    /**
+     * Копирует текст в буфер обмена, показывает подтверждение
+     * относительно главного окна.
+     */
     private void copyToClipboard(String text) {
-        if (text == null || text.isEmpty())
+        copyToClipboard(text, null);
+    }
+
+    /**
+     * Копирует текст в буфер обмена и показывает подтверждение
+     * относительно указанного окна.
+     *
+     * @param owner окно-владелец уведомления (null — главное окно)
+     */
+    private void copyToClipboard(String text, Window owner) {
+        if (text == null || text.isEmpty()) {
             return;
-        ClipboardContent content = new ClipboardContent();
-        content.putString(text);
-        Clipboard.getSystemClipboard().setContent(content);
-        showAutoClosingAlert("Команда скопирована в буфер обмена!", "Успешно", 2);
+        }
+        try {
+            ClipboardContent content = new ClipboardContent();
+            content.putString(text);
+            Clipboard.getSystemClipboard().setContent(content);
+            showAutoClosingAlert("Скопировано в буфер обмена", "Копирование", 2, owner);
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText(null);
+            alert.setContentText("Не удалось скопировать текст:\n" + e.getMessage());
+            Stage ownerStage = (owner instanceof Stage) ? (Stage) owner : mainStage;
+            if (ownerStage != null) {
+                alert.initOwner(ownerStage);
+            }
+            alert.showAndWait();
+        }
     }
 
     private static List<BaseEntry> loadAndSortDatabases()
@@ -2182,10 +2258,10 @@ public class RunYBase extends Application {
             ListView<BaseEntry> listView = new ListView<>(FXCollections.observableArrayList(baseEntries));
             listView.setCellFactory(lv -> new BaseEntryListCell());
 
-            Button okButton = new Button("OK");
+            Button okButton = createDialogConfirmButton("OK");
             okButton.setOnAction(e -> selectCurrentBase(listView, dialog));
 
-            Button cancelButton = new Button("Отмена");
+            Button cancelButton = createDialogCancelButton("Отмена");
             cancelButton.setOnAction(e -> dialog.close());
 
             listView.setOnMouseClicked(e -> {
