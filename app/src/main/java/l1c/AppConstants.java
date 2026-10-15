@@ -18,6 +18,27 @@ public class AppConstants {
     public static final String FOCUS_BORDER_COLOR  = "#0078D7";
     public static final String NORMAL_BORDER_COLOR = "#a0a0a0";
 
+    // Цвета для интерфейса (белый фон + приглушённые жёлтые акценты)
+    public static final String COLOR_BG              = "#FFFFFF";
+    public static final String COLOR_BUTTON_BG       = "#E6C878";
+    public static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
+    public static final String COLOR_BUTTON_FG       = "#000000";
+    public static final String COLOR_BUTTON_BORDER   = "#C0A050";
+    public static final String COLOR_ACCENT          = "#C8A046";
+    public static final String COLOR_TEXT_FG         = "#000000";
+    public static final String COLOR_INPUT_BG        = "#FFFFFF";
+    public static final String COLOR_OUTPUT_BG       = "#FAFAFA";
+    public static final String COLOR_PANEL_BG        = "#FFFFFF";
+    public static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
+    public static final String COLOR_USER_NO_CRED    = "#F3E4BC";
+
+    // Форматирование краткого адреса базы в команде запуска
+    public static final String GENERATE_SHORT_ADDRESS_MENU_TEXT = "Адрес в виде /SСервер\\База или /FКаталог";
+    public static final String SHORT_ADDRESS_NOT_RECOGNIZED_WARNING = "Не удалось определить адрес базы.\n"
+            + "Для серверной базы адрес должен быть строкой подключения вида Srvr=\"сервер\";Ref=\"база\"\n"
+            + "или адресом вида сервер\\база,\n"
+            + "для файловой — строкой подключения File=\"каталог\" или путём к каталогу базы.";
+
     // @formatter:on
 
 

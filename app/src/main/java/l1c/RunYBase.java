@@ -40,18 +40,8 @@ public class RunYBase extends Application {
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
-    private static final String COLOR_BG              = "#FFFFFF";
-    private static final String COLOR_BUTTON_BG       = "#E6C878";
-    private static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
-    private static final String COLOR_BUTTON_FG       = "#000000";
-    private static final String COLOR_BUTTON_BORDER   = "#C0A050";
-    private static final String COLOR_ACCENT          = "#C8A046";
-    private static final String COLOR_TEXT_FG         = "#000000";
-    private static final String COLOR_INPUT_BG        = "#FFFFFF";
-    private static final String COLOR_OUTPUT_BG       = "#FAFAFA";
-    private static final String COLOR_PANEL_BG        = "#FFFFFF";
-    private static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
-    private static final String COLOR_USER_NO_CRED    = "#F3E4BC";
+    // Цвета вынесены в AppConstants.COLOR_*
+    // #endregion ==================================
 
     // Единая минимальная ширина кнопок в диалогах
     private static final double DIALOG_BUTTON_WIDTH   = 100;
@@ -112,13 +102,13 @@ public class RunYBase extends Application {
 
         // Корневой BorderPane без отступов
         BorderPane borderRoot = new BorderPane();
-        borderRoot.setStyle("-fx-background-color: " + COLOR_BG + ";");
+        borderRoot.setStyle("-fx-background-color: " + AppConstants.COLOR_BG + ";");
         borderRoot.setTop(menuBar);
 
         // Все остальные элементы помещаем в VBox с отступами
         contentBox = new VBox(8);
         contentBox.setPadding(new Insets(10));
-        contentBox.setStyle("-fx-background-color: " + COLOR_BG + ";");
+        contentBox.setStyle("-fx-background-color: " + AppConstants.COLOR_BG + ";");
 
         // --- Область Адреса БД ---
         contentBox.getChildren().add(createAddressPanel());
@@ -139,8 +129,8 @@ public class RunYBase extends Application {
             debugArea = new TextArea();
             debugArea.setPrefRowCount(8);
             debugArea.setStyle(
-                    "-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_OUTPUT_BG + ";");
-            debugArea.setStyle(debugArea.getStyle() + "-fx-border-color: " + COLOR_ACCENT + ";");
+                    "-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + AppConstants.COLOR_OUTPUT_BG + ";");
+            debugArea.setStyle(debugArea.getStyle() + "-fx-border-color: " + AppConstants.COLOR_ACCENT + ";");
             contentBox.getChildren().add(debugArea);
         } else {
             debugArea = new TextArea();
@@ -337,7 +327,7 @@ public class RunYBase extends Application {
     }
 
     private Button createButton(String text) {
-        return createButton(text, COLOR_BUTTON_BG);
+        return createButton(text, AppConstants.COLOR_BUTTON_BG);
     }
 
     /**
@@ -411,7 +401,7 @@ public class RunYBase extends Application {
                 -fx-border-width: 1px;
                 -fx-border-radius: 3px;
                 -fx-background-radius: 3px""",
-                bgColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                bgColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
 
         // Эффект наведения курсора
         button.setOnMouseEntered(e -> {
@@ -425,7 +415,7 @@ public class RunYBase extends Application {
                     -fx-border-width: 1px;
                     -fx-border-radius: 3px;
                     -fx-background-radius: 3px""",
-                    adjustColorBrightness(baseColor, 1.1), COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                    adjustColorBrightness(baseColor, 1.1), AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
         });
 
         button.setOnMouseExited(e -> {
@@ -439,7 +429,7 @@ public class RunYBase extends Application {
                     -fx-border-width: 1px;
                     -fx-border-radius: 3px;
                     -fx-background-radius: 3px""",
-                    baseColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                    baseColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
             button.setTranslateY(0);
             button.setTranslateX(0);
         });
@@ -464,7 +454,7 @@ public class RunYBase extends Application {
      * наведения из createButton возвращают базовый цвет и кнопка «прыгает».
      */
     private Button createDialogConfirmButton(String text) {
-        Button button = createButton(text, COLOR_BUTTON_SMALL_BG);
+        Button button = createButton(text, AppConstants.COLOR_BUTTON_SMALL_BG);
         button.setMinWidth(DIALOG_BUTTON_WIDTH);
         return button;
     }
@@ -527,7 +517,7 @@ public class RunYBase extends Application {
                 -fx-border-color: gray;
                 -fx-border-radius: 3px;
                 -fx-background-radius: 3px""",
-                COLOR_INPUT_BG, COLOR_TEXT_FG));
+                AppConstants.COLOR_INPUT_BG, AppConstants.COLOR_TEXT_FG));
         return button;
     }
 
@@ -573,7 +563,7 @@ public class RunYBase extends Application {
         buttonPanel.setAlignment(Pos.CENTER);
 
         Button copyButton = createButton("Copy");
-        copyButton.setStyle(copyButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        copyButton.setStyle(copyButton.getStyle() + "-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
@@ -582,7 +572,7 @@ public class RunYBase extends Application {
                 textArea.getScene() != null ? textArea.getScene().getWindow() : null));
 
         Button runButton = createButton("Run");
-        runButton.setStyle(runButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        runButton.setStyle(runButton.getStyle() + "-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
         runButton.setMinWidth(80);
         runButton.setPrefWidth(80);
         runButton.setMaxWidth(80);
@@ -657,7 +647,7 @@ public class RunYBase extends Application {
         // Заголовки колонок истории
         HBox headerRow = new HBox(10);
         headerRow.setPadding(new Insets(5, 5, 5, 5));
-        headerRow.setStyle("-fx-background-color: " + COLOR_BUTTON_SMALL_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
+        headerRow.setStyle("-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
         Label hdrBase = new Label("База");
         hdrBase.setMinWidth(180); hdrBase.setMaxWidth(180);
         Label hdrMode = new Label("Режим");
@@ -826,7 +816,7 @@ public class RunYBase extends Application {
      */
     private VBox createModePanel() {
         VBox panel = new VBox(8);
-        panel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
+        panel.setStyle("-fx-background-color: " + AppConstants.COLOR_PANEL_BG + ";");
         panel.setPadding(new Insets(5));
 
         // Основная панель с переключателями режимов
@@ -892,7 +882,7 @@ public class RunYBase extends Application {
 
         executeProcessingField = new ComboBoxWithMenuButton<String>("Введите имя файла внешней обработки", historyManager.getProcessingHistoryList(), "Путь к файлу внешнего отчета или обработки"); 
         executeProcessingField.setPrefWidth(250);
-        //executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
+        //executeProcessingField.setStyle("-fx-background-color: " + AppConstants.COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
         executeProcessingField.setVisible(false);
         // Обработчик нажатия на кнопку выбора 
         executeProcessingField.getChoiceButton().setOnAction(e -> {
@@ -955,7 +945,7 @@ public class RunYBase extends Application {
         TextArea textArea = new TextArea();
         textArea.setWrapText(true);
         textArea.setPrefRowCount(4);
-        textArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG
+        textArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + AppConstants.COLOR_INPUT_BG
                 + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
         HBox.setHgrow(textArea, Priority.ALWAYS);
 
@@ -973,7 +963,7 @@ public class RunYBase extends Application {
                 -fx-padding: 1 4 1 4;
                 -fx-min-width: 30; -fx-max-width: 30;
                 -fx-min-height: 22; -fx-max-height: 22;""",
-                COLOR_BUTTON_SMALL_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
         historyButton.setTooltip(createTooltip("История команд для этой платформы (открыть окно)"));
         historyButton.setOnAction(e -> showCommandHistoryWindow(platformName, textArea));
 
@@ -997,7 +987,7 @@ public class RunYBase extends Application {
      */
     private VBox createAddressPanel() {
         VBox addressPanel = new VBox(5);
-        addressPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
+        addressPanel.setStyle("-fx-background-color: " + AppConstants.COLOR_PANEL_BG + ";");
         addressPanel.setPadding(new Insets(5));
         //addressPanel.setAlignment(Pos.CENTER);
 
@@ -1042,11 +1032,11 @@ public class RunYBase extends Application {
         generateMenuButton.getItems().add(generateWithoutUserDataItem);
 
         // Пункт меню — адрес базы в виде /SСервер\База (серверная) или /FКаталог (файловая)
-        MenuItem generateByShortAddressItem = new MenuItem("Адрес в виде /SСервер\\База или /FКаталог");
+        MenuItem generateByShortAddressItem = new MenuItem(AppConstants.GENERATE_SHORT_ADDRESS_MENU_TEXT);
         generateByShortAddressItem.setOnAction(e -> handleGenerateByShortAddress());
         generateMenuButton.getItems().add(generateByShortAddressItem);
 
-        String bgColor = COLOR_BUTTON_BG;
+        String bgColor = AppConstants.COLOR_BUTTON_BG;
         generateMenuButton.setStyle(String.format("""
             /* 1. Основной фон и рамка всей кнопки */
             -fx-background-color: %1$s;
@@ -1071,7 +1061,7 @@ public class RunYBase extends Application {
             /* 4. Принудительно возвращаем нужный цвет для текста и стрелочки */
             -fx-text-base-color: %2$s; /* Цвет основного текста кнопки */
             -fx-mark-color: %2$s;      /* Цвет иконки-стрелочки */
-            """, bgColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+            """, bgColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
 
         generateMenuButton.setMinHeight(30);
         // Уменьшаем внутренние отступы text-части, чтобы кнопка не была слишком широкой
@@ -1317,15 +1307,15 @@ public class RunYBase extends Application {
         String address = getCurrentAddress();
         UserCredentials cred = credentialsManager.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
-            userCredentialsButton.setUserData(COLOR_USER_HAS_CRED);
+            userCredentialsButton.setUserData(AppConstants.COLOR_USER_HAS_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_HAS_CRED));
+                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + AppConstants.COLOR_USER_HAS_CRED));
             userCredentialsButton
                     .setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
         } else {
-            userCredentialsButton.setUserData(COLOR_USER_NO_CRED);
+            userCredentialsButton.setUserData(AppConstants.COLOR_USER_NO_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_NO_CRED));
+                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + AppConstants.COLOR_USER_NO_CRED));
             userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_NO_CRED_TOOLTIP));
         }
     }
@@ -1561,7 +1551,7 @@ public class RunYBase extends Application {
         noteArea.setPromptText("Введите текстовую заметку к этой базе...\n" +
                 "Например: \"Проверить печатную форму заказа клиента\"");
         noteArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-background-color: " +
-                COLOR_INPUT_BG + "; -fx-border-color: " + COLOR_BUTTON_BORDER + "; -fx-border-width: 1px;");
+                AppConstants.COLOR_INPUT_BG + "; -fx-border-color: " + AppConstants.COLOR_BUTTON_BORDER + "; -fx-border-width: 1px;");
 
         Label charCountLabel = new Label("0 / " + AppConstants.MAX_NOTE_LENGTH + " символов");
         charCountLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: gray;");
@@ -2068,10 +2058,7 @@ public class RunYBase extends Application {
         String addressParam = buildShortAddressParam(text);
         if (addressParam == null) {
             showAlert(Alert.AlertType.WARNING, "Предупреждение",
-                    "Не удалось определить адрес базы.\n"
-                            + "Для серверной базы адрес должен быть строкой подключения вида Srvr=\"сервер\";Ref=\"база\"\n"
-                            + "или адресом вида сервер\\база,\n"
-                            + "для файловой — строкой подключения File=\"каталог\" или путём к каталогу базы.");
+                    AppConstants.SHORT_ADDRESS_NOT_RECOGNIZED_WARNING);
             return;
         }
 
@@ -2337,23 +2324,23 @@ public class RunYBase extends Application {
         }
 
         Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: " + COLOR_TEXT_FG + ";");
+        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: " + AppConstants.COLOR_TEXT_FG + ";");
 
         Label textLabel = new Label(message);
         textLabel.setWrapText(true);
         textLabel.setMaxWidth(420);
-        textLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + COLOR_TEXT_FG + ";");
+        textLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + AppConstants.COLOR_TEXT_FG + ";");
 
         Label countdownLabel = new Label();
-        countdownLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + COLOR_ACCENT + ";");
+        countdownLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + AppConstants.COLOR_ACCENT + ";");
 
         HBox header = new HBox(10, titleLabel, countdownLabel);
         header.setAlignment(Pos.BASELINE_LEFT);
 
         VBox content = new VBox(4, header, textLabel);
         content.setPadding(new Insets(8, 12, 8, 12));
-        content.setStyle("-fx-background-color: " + COLOR_BUTTON_SMALL_BG
-                + "; -fx-border-color: " + COLOR_BUTTON_BORDER
+        content.setStyle("-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG
+                + "; -fx-border-color: " + AppConstants.COLOR_BUTTON_BORDER
                 + "; -fx-border-radius: 4px; -fx-background-radius: 4px;");
 
         Popup popup = new Popup();
