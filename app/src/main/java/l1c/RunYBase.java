@@ -40,18 +40,8 @@ public class RunYBase extends Application {
     // #endregion =================================
 
     // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
-    private static final String COLOR_BG              = "#FFFFFF";
-    private static final String COLOR_BUTTON_BG       = "#E6C878";
-    private static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
-    private static final String COLOR_BUTTON_FG       = "#000000";
-    private static final String COLOR_BUTTON_BORDER   = "#C0A050";
-    private static final String COLOR_ACCENT          = "#C8A046";
-    private static final String COLOR_TEXT_FG         = "#000000";
-    private static final String COLOR_INPUT_BG        = "#FFFFFF";
-    private static final String COLOR_OUTPUT_BG       = "#FAFAFA";
-    private static final String COLOR_PANEL_BG        = "#FFFFFF";
-    private static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
-    private static final String COLOR_USER_NO_CRED    = "#F3E4BC";
+    // Цвета вынесены в AppConstants.COLOR_*
+    // #endregion ==================================
 
     // Единая минимальная ширина кнопок в диалогах
     private static final double DIALOG_BUTTON_WIDTH   = 100;
@@ -112,13 +102,13 @@ public class RunYBase extends Application {
 
         // Корневой BorderPane без отступов
         BorderPane borderRoot = new BorderPane();
-        borderRoot.setStyle("-fx-background-color: " + COLOR_BG + ";");
+        borderRoot.setStyle("-fx-background-color: " + AppConstants.COLOR_BG + ";");
         borderRoot.setTop(menuBar);
 
         // Все остальные элементы помещаем в VBox с отступами
         contentBox = new VBox(8);
         contentBox.setPadding(new Insets(10));
-        contentBox.setStyle("-fx-background-color: " + COLOR_BG + ";");
+        contentBox.setStyle("-fx-background-color: " + AppConstants.COLOR_BG + ";");
 
         // --- Область Адреса БД ---
         contentBox.getChildren().add(createAddressPanel());
@@ -139,8 +129,8 @@ public class RunYBase extends Application {
             debugArea = new TextArea();
             debugArea.setPrefRowCount(8);
             debugArea.setStyle(
-                    "-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_OUTPUT_BG + ";");
-            debugArea.setStyle(debugArea.getStyle() + "-fx-border-color: " + COLOR_ACCENT + ";");
+                    "-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + AppConstants.COLOR_OUTPUT_BG + ";");
+            debugArea.setStyle(debugArea.getStyle() + "-fx-border-color: " + AppConstants.COLOR_ACCENT + ";");
             contentBox.getChildren().add(debugArea);
         } else {
             debugArea = new TextArea();
@@ -337,7 +327,7 @@ public class RunYBase extends Application {
     }
 
     private Button createButton(String text) {
-        return createButton(text, COLOR_BUTTON_BG);
+        return createButton(text, AppConstants.COLOR_BUTTON_BG);
     }
 
     /**
@@ -411,7 +401,7 @@ public class RunYBase extends Application {
                 -fx-border-width: 1px;
                 -fx-border-radius: 3px;
                 -fx-background-radius: 3px""",
-                bgColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                bgColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
 
         // Эффект наведения курсора
         button.setOnMouseEntered(e -> {
@@ -425,7 +415,7 @@ public class RunYBase extends Application {
                     -fx-border-width: 1px;
                     -fx-border-radius: 3px;
                     -fx-background-radius: 3px""",
-                    adjustColorBrightness(baseColor, 1.1), COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                    adjustColorBrightness(baseColor, 1.1), AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
         });
 
         button.setOnMouseExited(e -> {
@@ -439,7 +429,7 @@ public class RunYBase extends Application {
                     -fx-border-width: 1px;
                     -fx-border-radius: 3px;
                     -fx-background-radius: 3px""",
-                    baseColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                    baseColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
             button.setTranslateY(0);
             button.setTranslateX(0);
         });
@@ -464,7 +454,7 @@ public class RunYBase extends Application {
      * наведения из createButton возвращают базовый цвет и кнопка «прыгает».
      */
     private Button createDialogConfirmButton(String text) {
-        Button button = createButton(text, COLOR_BUTTON_SMALL_BG);
+        Button button = createButton(text, AppConstants.COLOR_BUTTON_SMALL_BG);
         button.setMinWidth(DIALOG_BUTTON_WIDTH);
         return button;
     }
@@ -527,7 +517,7 @@ public class RunYBase extends Application {
                 -fx-border-color: gray;
                 -fx-border-radius: 3px;
                 -fx-background-radius: 3px""",
-                COLOR_INPUT_BG, COLOR_TEXT_FG));
+                AppConstants.COLOR_INPUT_BG, AppConstants.COLOR_TEXT_FG));
         return button;
     }
 
@@ -573,7 +563,7 @@ public class RunYBase extends Application {
         buttonPanel.setAlignment(Pos.CENTER);
 
         Button copyButton = createButton("Copy");
-        copyButton.setStyle(copyButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        copyButton.setStyle(copyButton.getStyle() + "-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
@@ -582,7 +572,7 @@ public class RunYBase extends Application {
                 textArea.getScene() != null ? textArea.getScene().getWindow() : null));
 
         Button runButton = createButton("Run");
-        runButton.setStyle(runButton.getStyle() + "-fx-background-color: " + COLOR_BUTTON_SMALL_BG + ";");
+        runButton.setStyle(runButton.getStyle() + "-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
         runButton.setMinWidth(80);
         runButton.setPrefWidth(80);
         runButton.setMaxWidth(80);
@@ -657,7 +647,7 @@ public class RunYBase extends Application {
         // Заголовки колонок истории
         HBox headerRow = new HBox(10);
         headerRow.setPadding(new Insets(5, 5, 5, 5));
-        headerRow.setStyle("-fx-background-color: " + COLOR_BUTTON_SMALL_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
+        headerRow.setStyle("-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
         Label hdrBase = new Label("База");
         hdrBase.setMinWidth(180); hdrBase.setMaxWidth(180);
         Label hdrMode = new Label("Режим");
@@ -826,7 +816,7 @@ public class RunYBase extends Application {
      */
     private VBox createModePanel() {
         VBox panel = new VBox(8);
-        panel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
+        panel.setStyle("-fx-background-color: " + AppConstants.COLOR_PANEL_BG + ";");
         panel.setPadding(new Insets(5));
 
         // Основная панель с переключателями режимов
@@ -892,7 +882,7 @@ public class RunYBase extends Application {
 
         executeProcessingField = new ComboBoxWithMenuButton<String>("Введите имя файла внешней обработки", historyManager.getProcessingHistoryList(), "Путь к файлу внешнего отчета или обработки"); 
         executeProcessingField.setPrefWidth(250);
-        //executeProcessingField.setStyle("-fx-background-color: " + COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
+        //executeProcessingField.setStyle("-fx-background-color: " + AppConstants.COLOR_INPUT_BG + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px;");
         executeProcessingField.setVisible(false);
         // Обработчик нажатия на кнопку выбора 
         executeProcessingField.getChoiceButton().setOnAction(e -> {
@@ -955,7 +945,7 @@ public class RunYBase extends Application {
         TextArea textArea = new TextArea();
         textArea.setWrapText(true);
         textArea.setPrefRowCount(4);
-        textArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + COLOR_INPUT_BG
+        textArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + AppConstants.COLOR_INPUT_BG
                 + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
         HBox.setHgrow(textArea, Priority.ALWAYS);
 
@@ -973,7 +963,7 @@ public class RunYBase extends Application {
                 -fx-padding: 1 4 1 4;
                 -fx-min-width: 30; -fx-max-width: 30;
                 -fx-min-height: 22; -fx-max-height: 22;""",
-                COLOR_BUTTON_SMALL_BG, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
         historyButton.setTooltip(createTooltip("История команд для этой платформы (открыть окно)"));
         historyButton.setOnAction(e -> showCommandHistoryWindow(platformName, textArea));
 
@@ -997,7 +987,7 @@ public class RunYBase extends Application {
      */
     private VBox createAddressPanel() {
         VBox addressPanel = new VBox(5);
-        addressPanel.setStyle("-fx-background-color: " + COLOR_PANEL_BG + ";");
+        addressPanel.setStyle("-fx-background-color: " + AppConstants.COLOR_PANEL_BG + ";");
         addressPanel.setPadding(new Insets(5));
         //addressPanel.setAlignment(Pos.CENTER);
 
@@ -1041,7 +1031,12 @@ public class RunYBase extends Application {
         generateWithoutUserDataItem.setOnAction(e -> handleGenerateCommandWithoutUserData());
         generateMenuButton.getItems().add(generateWithoutUserDataItem);
 
-        String bgColor = COLOR_BUTTON_BG;
+        // Пункт меню — адрес базы в виде /SСервер\База (серверная) или /FКаталог (файловая)
+        MenuItem generateByShortAddressItem = new MenuItem(AppConstants.GENERATE_SHORT_ADDRESS_MENU_TEXT);
+        generateByShortAddressItem.setOnAction(e -> handleGenerateByShortAddress());
+        generateMenuButton.getItems().add(generateByShortAddressItem);
+
+        String bgColor = AppConstants.COLOR_BUTTON_BG;
         generateMenuButton.setStyle(String.format("""
             /* 1. Основной фон и рамка всей кнопки */
             -fx-background-color: %1$s;
@@ -1066,7 +1061,7 @@ public class RunYBase extends Application {
             /* 4. Принудительно возвращаем нужный цвет для текста и стрелочки */
             -fx-text-base-color: %2$s; /* Цвет основного текста кнопки */
             -fx-mark-color: %2$s;      /* Цвет иконки-стрелочки */
-            """, bgColor, COLOR_BUTTON_FG, COLOR_BUTTON_BORDER));
+            """, bgColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
 
         generateMenuButton.setMinHeight(30);
         // Уменьшаем внутренние отступы text-части, чтобы кнопка не была слишком широкой
@@ -1203,7 +1198,10 @@ public class RunYBase extends Application {
 
         MenuItem pasteCredsItem = new MenuItem("Вставить учётные данные");
         pasteCredsItem.setOnAction(e -> pasteCredentials());
-        addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem);
+
+        MenuItem savedUsersItem = new MenuItem("Скопировать из ...");
+        savedUsersItem.setOnAction(e -> showSavedUsersDialog());
+        addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem, savedUsersItem);
     }
 
     /**
@@ -1309,15 +1307,15 @@ public class RunYBase extends Application {
         String address = getCurrentAddress();
         UserCredentials cred = credentialsManager.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
-            userCredentialsButton.setUserData(COLOR_USER_HAS_CRED);
+            userCredentialsButton.setUserData(AppConstants.COLOR_USER_HAS_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_HAS_CRED));
+                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + AppConstants.COLOR_USER_HAS_CRED));
             userCredentialsButton
                     .setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
         } else {
-            userCredentialsButton.setUserData(COLOR_USER_NO_CRED);
+            userCredentialsButton.setUserData(AppConstants.COLOR_USER_NO_CRED);
             userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + COLOR_USER_NO_CRED));
+                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + AppConstants.COLOR_USER_NO_CRED));
             userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_NO_CRED_TOOLTIP));
         }
     }
@@ -1412,6 +1410,119 @@ public class RunYBase extends Application {
     }
 
     // -----------------------------------------------------------------
+    // Выбор сохранённого пользователя
+    // -----------------------------------------------------------------
+
+    /**
+     * Собирает все сохранённые учётные данные в список, отсортированный
+     * по адресу базы, затем по имени пользователя.
+     */
+    private List<SavedUserEntry> collectSavedUsers(String currentAddress) {
+        List<SavedUserEntry> savedUsers = new ArrayList<>();
+        for (Map.Entry<String, UserCredentials> entry : credentialsManager.getAllCredentials().entrySet()) {
+            UserCredentials cred = entry.getValue();
+            if (cred == null || cred.getUsername().isEmpty())
+                continue;
+            savedUsers.add(new SavedUserEntry(
+                    cred.getUsername(),
+                    cred.getPassword(),
+                    entry.getKey(),
+                    registeredAddressMap.get(entry.getKey()),
+                    entry.getKey().equals(currentAddress)));
+        }
+        savedUsers.sort(Comparator.comparing((SavedUserEntry e) -> e.address, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(e -> e.username, String.CASE_INSENSITIVE_ORDER));
+        return savedUsers;
+    }
+
+    /**
+     * Открывает окно со списком всех сохранённых учётных данных.
+     * Выбранная запись сохраняется как пользователь для текущего адреса.
+     */
+    private void showSavedUsersDialog() {
+        String address = getCurrentAddress();
+        if (address.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Сначала введите адрес базы данных!");
+            return;
+        }
+
+        List<SavedUserEntry> savedUsers = collectSavedUsers(address);
+        if (savedUsers.isEmpty()) {
+            showAlert(Alert.AlertType.INFORMATION, "Сохранённые пользователи",
+                    "Нет ни одних сохранённых учётных данных!");
+            return;
+        }
+
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(mainStage);
+        dialog.setTitle("Сохранённые пользователи");
+
+        Label header = new Label("Сохранить выбранного пользователя для адреса: " + address);
+        header.setWrapText(true);
+        header.setStyle("-fx-font-size: 12px; -fx-font-style: italic; -fx-padding: 0 0 8 0;");
+
+        ListView<SavedUserEntry> listView = new ListView<>(FXCollections.observableArrayList(savedUsers));
+        listView.setCellFactory(lv -> new SavedUserListCell());
+
+        Button okButton = createDialogConfirmButton("В_ыбрать");
+        okButton.setOnAction(e -> applySavedUser(listView, dialog, address));
+
+        Button cancelButton = createDialogCancelButton("Отмена");
+        cancelButton.setOnAction(e -> dialog.close());
+
+        listView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                applySavedUser(listView, dialog, address);
+            }
+        });
+
+        HBox buttonPanel = new HBox(10, okButton, cancelButton);
+        buttonPanel.setAlignment(Pos.CENTER);
+        buttonPanel.setPadding(new Insets(10, 0, 0, 0));
+
+        BorderPane pane = new BorderPane();
+        pane.setTop(header);
+        pane.setCenter(listView);
+        pane.setBottom(buttonPanel);
+        pane.setPadding(new Insets(10));
+
+        Scene scene = new Scene(pane, 700, 450);
+
+        // Escape закрывает окно без выбора, Ctrl+Enter — выбирает выделенную запись
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.ESCAPE) {
+                e.consume();
+                dialog.close();
+            } else if (e.getCode() == KeyCode.ENTER && e.isControlDown()) {
+                e.consume();
+                applySavedUser(listView, dialog, address);
+            }
+        });
+
+        dialog.setOnShown(e -> listView.requestFocus());
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    /**
+     * Сохраняет выделенную в списке запись как учётные данные для адреса
+     * и закрывает окно выбора.
+     */
+    private void applySavedUser(ListView<SavedUserEntry> listView, Stage dialog, String address) {
+        SavedUserEntry selected = listView.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите пользователя из списка!");
+            return;
+        }
+        credentialsManager.put(address, new UserCredentials(selected.username, selected.password));
+        updateUserButtonState();
+        dialog.close();
+        showAutoClosingAlert("Пользователь '" + selected.username + "' сохранён для адреса:\n" + address,
+                "Успешно", 3);
+    }
+
+    // -----------------------------------------------------------------
     // Заметки к базам
     // -----------------------------------------------------------------
 
@@ -1440,7 +1551,7 @@ public class RunYBase extends Application {
         noteArea.setPromptText("Введите текстовую заметку к этой базе...\n" +
                 "Например: \"Проверить печатную форму заказа клиента\"");
         noteArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-background-color: " +
-                COLOR_INPUT_BG + "; -fx-border-color: " + COLOR_BUTTON_BORDER + "; -fx-border-width: 1px;");
+                AppConstants.COLOR_INPUT_BG + "; -fx-border-color: " + AppConstants.COLOR_BUTTON_BORDER + "; -fx-border-width: 1px;");
 
         Label charCountLabel = new Label("0 / " + AppConstants.MAX_NOTE_LENGTH + " символов");
         charCountLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: gray;");
@@ -1628,10 +1739,30 @@ public class RunYBase extends Application {
      */
      private String buildCommand(String platformPath, String appArch, String escaped,
         String commandPart, UserCredentials cred, boolean isDesigner, boolean isUpdate) {
+        return buildCommandWithAddressParam(platformPath, appArch,
+                "/IBConnectionString \"" + escaped + "\"",
+                commandPart, cred, isDesigner, isUpdate);
+    }
+
+    /**
+     * Формирует строку запуска с произвольным указанием адреса базы
+     * (например, /IBConnectionString "...", /IBName "..." или /S "сервер\база").
+     *
+     * @param platformPath путь к exe файлу (с учётом разрядности)
+     * @param appArch      значение параметра /AppArch (x86 или x86_64)
+     * @param addressParam готовый параметр адреса базы
+     * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
+     * @param cred         учётные данные пользователя (могут быть null)
+     * @param isDesigner   запущен ли Конфигуратор
+     * @param isUpdate     нужна реструктуризация
+     * @return сформированная строка запуска
+     */
+     private String buildCommandWithAddressParam(String platformPath, String appArch, String addressParam,
+        String commandPart, UserCredentials cred, boolean isDesigner, boolean isUpdate) {
         StringBuilder cmd = new StringBuilder();
         cmd.append("\"").append(platformPath).append("\" ");
         cmd.append(commandPart).append(" ");
-        cmd.append("/IBConnectionString \"").append(escaped).append("\"");
+        cmd.append(addressParam);
 
         if (cred != null && !cred.getUsername().isEmpty()) {
             cmd.append(" /N \"").append(cred.getUsername()).append("\"");
@@ -1911,6 +2042,144 @@ public class RunYBase extends Application {
                     "Ошибка при поиске базы:\n" + e.getMessage());
         }
     }
+    /**
+     * Формирует команду запуска с кратким указанием адреса базы:
+     * - /S "сервер\база" — для серверной базы;
+     * - /F "каталог"     — для файловой базы (путь без имени файла 1Cv8.1CD).
+     * Тип базы и адрес определяются по содержимому поля адреса.
+     */
+    private void handleGenerateByShortAddress() {
+        String text = getCurrentAddress();
+        if (text.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
+            return;
+        }
+
+        String addressParam = buildShortAddressParam(text);
+        if (addressParam == null) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение",
+                    AppConstants.SHORT_ADDRESS_NOT_RECOGNIZED_WARNING);
+            return;
+        }
+
+        // Учётные данные ищутся по исходному адресу, как в основном режиме
+        UserCredentials cred = credentialsManager.get(text);
+
+        addToHistory(text);
+
+        String commandPart = getCommandPart();
+        outputArea86.setText("");
+        outputArea.setText("");
+
+        boolean isDesigner = designerRadio.isSelected();
+        boolean isUpdate = updateConfigRadio.isSelected();
+
+        String cmd86 = buildCommandWithAddressParam(
+                "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
+                "x86",
+                addressParam,
+                commandPart,
+                cred,
+                isDesigner,
+                isUpdate);
+
+        String cmd64 = buildCommandWithAddressParam(
+                "C:\\Program Files\\1cv8\\common\\1cestart.exe",
+                "x86_64",
+                addressParam,
+                commandPart,
+                cred,
+                isDesigner,
+                isUpdate);
+
+        outputArea86.setText(cmd86);
+        outputArea.setText(cmd64);
+
+        showAutoClosingAlert("Адрес указан как «" + addressParam + "»", "Готово", 2);
+    }
+
+    /**
+     * Формирует краткий параметр адреса базы:
+     * - /S "сервер\база" — для серверной базы;
+     * - /F "каталог"     — для файловой базы.
+     *
+     * Поддерживаемые форматы адреса:
+     * - серверная: Srvr="сервер";Ref="база", сервер\база (в том числе с префиксом /S);
+     * - файловая:  File="каталог", путь к каталогу (локальный или UNC).
+     *
+     * @return готовый параметр адреса или null, если формат не распознан
+     */
+    private String buildShortAddressParam(String text) {
+        String t = text == null ? "" : text.trim();
+        if (t.isEmpty())
+            return null;
+
+        // Файловая база, заданная строкой подключения File="..."
+        java.util.regex.Matcher fileM = java.util.regex.Pattern
+                .compile("File\\s*=\\s*\"([^\"]*)\"").matcher(t);
+        if (fileM.find()) {
+            String dir = fileM.group(1).trim().replace('/', '\\');
+            // Если указан файл базы 1Cv8.1CD — оставляем только каталог
+            if (dir.toLowerCase(java.util.Locale.ROOT).endsWith("\\1cv8.1cd")) {
+                dir = dir.substring(0, dir.length() - "\\1cv8.1cd".length());
+            }
+            if (dir.isEmpty())
+                return null;
+            return "/F \"" + dir.replace("\"", "\"\"") + "\"";
+        }
+
+        // Файловая база — путь к каталогу (локальный C:\... или UNC \\сервер\папка)
+        String dir = StringExtractor.extractDirectoryPath(t);
+        if (dir != null && !dir.isEmpty())
+            return "/F \"" + dir.replace("\"", "\"\"") + "\"";
+
+        // Серверная база — Srvr="...";Ref="..." или сервер\база
+        String[] serverBase = extractServerAndBase(t);
+        if (serverBase != null && !serverBase[0].isEmpty() && !serverBase[1].isEmpty()) {
+            String serverAddress = serverBase[0] + "\\" + serverBase[1];
+            return "/S \"" + serverAddress.replace("\"", "\"\"") + "\"";
+        }
+
+        return null;
+    }
+
+    /**
+     * Извлекает сервер и имя базы из адреса.
+     * Поддерживаемые форматы:
+     * - строка подключения: Srvr="сервер";Ref="база";
+     * - адрес вида сервер\база (в том числе с префиксом /S).
+     *
+     * @return массив {сервер, база} или null, если формат не распознан
+     */
+    private String[] extractServerAndBase(String text) {
+        String t = text == null ? "" : text.trim();
+        if (t.isEmpty())
+            return null;
+
+        // Убираем возможный префикс /S
+        if (t.length() > 2 && t.charAt(0) == '/' && (t.charAt(1) == 'S' || t.charAt(1) == 's')) {
+            t = t.substring(2).trim();
+        }
+        // Убираем обрамляющие кавычки
+        if (t.length() >= 2 && t.startsWith("\"") && t.endsWith("\"")) {
+            t = t.substring(1, t.length() - 1).trim();
+        }
+
+        // Строка подключения: Srvr="сервер";Ref="база";
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("Srvr\\s*=\\s*\"([^\"]*)\"\\s*;\\s*Ref\\s*=\\s*\"([^\"]*)\"")
+                .matcher(t);
+        if (m.find())
+            return new String[] { m.group(1).trim(), m.group(2).trim() };
+
+        // Адрес вида сервер\база (UNC-пути \\сервер\папка — это файловые базы, не подходит)
+        int slashIdx = t.indexOf('\\');
+        if (slashIdx > 0 && !t.startsWith("\\\\")) {
+            return new String[] { t.substring(0, slashIdx).trim(), t.substring(slashIdx + 1).trim() };
+        }
+
+        return null;
+    }
 
     /**
      * Параметры командной строки 1С, после которых идёт значение.
@@ -2055,23 +2324,23 @@ public class RunYBase extends Application {
         }
 
         Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: " + COLOR_TEXT_FG + ";");
+        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: " + AppConstants.COLOR_TEXT_FG + ";");
 
         Label textLabel = new Label(message);
         textLabel.setWrapText(true);
         textLabel.setMaxWidth(420);
-        textLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + COLOR_TEXT_FG + ";");
+        textLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + AppConstants.COLOR_TEXT_FG + ";");
 
         Label countdownLabel = new Label();
-        countdownLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + COLOR_ACCENT + ";");
+        countdownLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + AppConstants.COLOR_ACCENT + ";");
 
         HBox header = new HBox(10, titleLabel, countdownLabel);
         header.setAlignment(Pos.BASELINE_LEFT);
 
         VBox content = new VBox(4, header, textLabel);
         content.setPadding(new Insets(8, 12, 8, 12));
-        content.setStyle("-fx-background-color: " + COLOR_BUTTON_SMALL_BG
-                + "; -fx-border-color: " + COLOR_BUTTON_BORDER
+        content.setStyle("-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG
+                + "; -fx-border-color: " + AppConstants.COLOR_BUTTON_BORDER
                 + "; -fx-border-radius: 4px; -fx-background-radius: 4px;");
 
         Popup popup = new Popup();
@@ -2482,6 +2751,63 @@ class BaseEntryListCell extends ListCell<BaseEntry> {
             }
             setGraphic(container);
         }
+    }
+}
+
+class SavedUserEntry {
+    final String username;
+    final String password;
+    final String address;
+    final String baseName;
+    final boolean forCurrentAddress;
+
+    SavedUserEntry(String username, String password, String address, String baseName, boolean forCurrentAddress) {
+        this.username = username;
+        this.password = password;
+        this.address = address;
+        this.baseName = baseName;
+        this.forCurrentAddress = forCurrentAddress;
+    }
+}
+
+class SavedUserListCell extends ListCell<SavedUserEntry> {
+    private final Label userLabel = new Label();
+    private final Label addressLabel = new Label();
+    private final VBox container = new VBox(2, userLabel, addressLabel);
+
+    public SavedUserListCell() {
+        container.setPadding(new Insets(5, 10, 5, 10));
+        userLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+        addressLabel.setStyle("-fx-font-style: italic; -fx-font-size: 10px;");
+        addressLabel.setPadding(new Insets(0, 0, 0, 20));
+        addressLabel.setWrapText(true);
+        addressLabel.setMaxWidth(600);
+    }
+
+    @Override
+    protected void updateItem(SavedUserEntry item, boolean empty) {
+        super.updateItem(item, empty);
+        if (empty || item == null) {
+            setGraphic(null);
+            return;
+        }
+
+        String mark = item.forCurrentAddress ? "  (текущая база)" : "";
+        userLabel.setText("👤 " + item.username + mark + (item.password.isEmpty() ? "" : "  🔑"));
+
+        String location = item.baseName != null ? item.baseName + " — " + item.address : item.address;
+        addressLabel.setText(location);
+
+        if (isSelected()) {
+            container.setStyle("-fx-background-color: -fx-selection-bar;");
+            userLabel.setTextFill(Color.WHITE);
+            addressLabel.setTextFill(Color.WHITE);
+        } else {
+            container.setStyle("-fx-background-color: transparent;");
+            userLabel.setTextFill(Color.BLACK);
+            addressLabel.setTextFill(Color.BLACK);
+        }
+        setGraphic(container);
     }
 }
 

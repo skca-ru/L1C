@@ -46,6 +46,14 @@ public class CredentialsManager {
         return credentialsMap.containsKey(address);
     }
 
+    /**
+     * Возвращает копию карты "адрес -> учётные данные" со всеми сохранёнными
+     * пользователями. Используется для отображения списка в интерфейсе.
+     */
+    public Map<String, UserCredentials> getAllCredentials() {
+        return new HashMap<>(credentialsMap);
+    }
+
     private Path getCredentialsPath() {
         String userHome = System.getProperty("user.home");
         Path dir = Paths.get(userHome, AppConstants.APP_DATA_DIR);
