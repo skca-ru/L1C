@@ -37,11 +37,6 @@ public class RunYBase extends Application {
     // #region ========== НАСТРОЙКИ ==========
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
-    // #endregion =================================
-
-    // #region ========== ЦВЕТА 1С (белый фон + приглушённые жёлтые акценты) ==========
-    // Цвета вынесены в AppConstants.COLOR_*
-    // #endregion ==================================
 
     // Единая минимальная ширина кнопок в диалогах
     private static final double DIALOG_BUTTON_WIDTH   = 100;
@@ -563,7 +558,7 @@ public class RunYBase extends Application {
         buttonPanel.setAlignment(Pos.CENTER);
 
         Button copyButton = createButton("Copy");
-        copyButton.setStyle(copyButton.getStyle() + "-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
+        copyButton.setStyle(copyButton.getStyle() + "; -fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
@@ -572,7 +567,7 @@ public class RunYBase extends Application {
                 textArea.getScene() != null ? textArea.getScene().getWindow() : null));
 
         Button runButton = createButton("Run");
-        runButton.setStyle(runButton.getStyle() + "-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
+        runButton.setStyle(runButton.getStyle() + "; -fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
         runButton.setMinWidth(80);
         runButton.setPrefWidth(80);
         runButton.setMaxWidth(80);
