@@ -158,7 +158,7 @@ public class RunYBase extends Application {
 
         // Загружаем список зарегистрированных баз для отображения имён
         try {
-            List<BaseEntry> baseEntries = loadAndSortDatabases();
+            List<BaseEntry> baseEntries = DatabaseListService.loadAndSortDatabases();
             if (!baseEntries.isEmpty()) {
                 registeredAddressMap.clear();
                 for (BaseEntry entry : baseEntries) {
@@ -183,7 +183,7 @@ public class RunYBase extends Application {
 
         try {
             // Проверяем, есть ли уже такой адрес
-            List<BaseEntry> existing = loadAndSortDatabases();
+            List<BaseEntry> existing = DatabaseListService.loadAndSortDatabases();
             for (BaseEntry entry : existing) {
                 if (entry.connect != null && entry.connect.equals(address)) {
                     showAlert(Alert.AlertType.INFORMATION, "Информация",
@@ -223,7 +223,7 @@ public class RunYBase extends Application {
      */
     private void refreshDatabaseList() {
         try {
-            List<BaseEntry> baseEntries = loadAndSortDatabases();
+            List<BaseEntry> baseEntries = DatabaseListService.loadAndSortDatabases();
             if (!baseEntries.isEmpty()) {
                 registeredAddressMap.clear();
                 for (BaseEntry entry : baseEntries) {
@@ -1310,7 +1310,7 @@ public class RunYBase extends Application {
 
                     // Поиск совпадения в списке зарегистрированных баз
                     try {
-                        List<BaseEntry> baseEntries = loadAndSortDatabases();
+                        List<BaseEntry> baseEntries = DatabaseListService.loadAndSortDatabases();
                         for (BaseEntry base : baseEntries) {
                             if (base.connect != null && base.connect.equals(extractedAddress)) {
                                 addressControl.setAdressIB(base.name);
@@ -1579,7 +1579,7 @@ public class RunYBase extends Application {
         }
 
         try {
-            List<BaseEntry> allBases = loadAndSortDatabases();
+            List<BaseEntry> allBases = DatabaseListService.loadAndSortDatabases();
 
             // Ищем все базы с указанным адресом
             List<BaseEntry> matches = new ArrayList<>();
@@ -2106,113 +2106,6 @@ public class RunYBase extends Application {
         }
     }
 
-    public static List<BaseEntry> loadAndSortDatabases()
-            throws IOException, ParserConfigurationException, SAXException, Exception {
-        String userHome = System.getProperty("user.home");
-        Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
-
-        if (!Files.exists(ibasesPath)) {
-            showAlert(Alert.AlertType.ERROR, "Ошибка",
-                    "Файл списка баз не найден:\n" + ibasesPath.toString());
-            return new ArrayList<>();
-        }
-
-        List<BaseEntry> baseEntries = new ArrayList<>();
-
-        String content = new String(Files.readAllBytes(ibasesPath), StandardCharsets.UTF_8);
-
-        if (content.trim().startsWith("<?xml") || content.contains("<infobase>")) {
-            parseXmlFormatWithOrder(ibasesPath, baseEntries);
-        } else {
-            parseIniFormatWithOrder(ibasesPath, baseEntries);
-        }
-
-        baseEntries.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
-        return baseEntries;
-    }
-
-
-    /**
-     * Удаляет BOM (U+FEFF) из начала строки, если он присутствует
-     */
-    private static String stripBom(String line) {
-        return (line != null && line.startsWith("\uFEFF")) ? line.substring(1) : line;
-    }
-
-    private static void parseIniFormatWithOrder(Path path, List<BaseEntry> entries) throws IOException {
-        List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-
-        // Первая строка файла может начинаться с BOM (U+FEFF) — убираем его,
-        // иначе заголовок первой секции "[Имя базы]" не будет распознан
-        if (!lines.isEmpty()) {
-            lines.set(0, stripBom(lines.get(0)));
-        }
-
-        String currentName = null;
-        String currentConnect = null;
-        double currentOrder = Double.MAX_VALUE;
-
-        for (String line : lines) {
-            line = line.trim();
-            if (line.isEmpty())
-                continue;
-
-            if (line.startsWith("[") && line.endsWith("]")) {
-                if (currentName != null && currentConnect != null) {
-                    entries.add(new BaseEntry(currentName, currentConnect, currentOrder));
-                }
-                currentName = line.substring(1, line.length() - 1);
-                currentConnect = null;
-                currentOrder = Double.MAX_VALUE;
-            } else if (line.startsWith("Connect=") && currentName != null) {
-                currentConnect = line.substring(8);
-            } else if (line.startsWith("OrderInList=") && currentName != null) {
-                try {
-                    currentOrder = Double.parseDouble(line.substring(12));
-                } catch (NumberFormatException e) {
-                    currentOrder = Double.MAX_VALUE;
-                }
-            }
-        }
-
-        if (currentName != null && currentConnect != null) {
-            entries.add(new BaseEntry(currentName, currentConnect, currentOrder));
-        }
-    }
-
-    private static void parseXmlFormatWithOrder(Path path, List<BaseEntry> entries) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(path.toFile());
-
-        NodeList infos = doc.getElementsByTagName("infobase");
-        for (int i = 0; i < infos.getLength(); i++) {
-            Element info = (Element) infos.item(i);
-            String name = getTagValue("name", info);
-            String connect = getTagValue("connect", info);
-            double order = Double.MAX_VALUE;
-
-            NodeList orderNodes = info.getElementsByTagName("orderInList");
-            if (orderNodes.getLength() > 0) {
-                try {
-                    order = Double.parseDouble(orderNodes.item(0).getTextContent());
-                } catch (NumberFormatException e) {
-                    order = Double.MAX_VALUE;
-                }
-            }
-
-            if (name != null && !name.isEmpty() && connect != null && !connect.isEmpty()) {
-                entries.add(new BaseEntry(name, connect, order));
-            }
-        }
-    }
-
-    private static String getTagValue(String tag, Element element) {
-        NodeList list = element.getElementsByTagName(tag);
-        if (list.getLength() == 0)
-            return null;
-        return list.item(0).getTextContent();
-    }
 
     // -----------------------------------------------------------------
     // Доступ для классов-диалогов

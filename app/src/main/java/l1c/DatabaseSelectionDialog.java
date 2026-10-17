@@ -27,7 +27,7 @@ public final class DatabaseSelectionDialog {
 
     public static void show(RunYBase owner) {
         try {
-            List<BaseEntry> baseEntries = RunYBase.loadAndSortDatabases();
+            List<BaseEntry> baseEntries = DatabaseListService.loadAndSortDatabases();
 
             // Загружаем заметки для каждой базы
             for (BaseEntry entry : baseEntries) {
