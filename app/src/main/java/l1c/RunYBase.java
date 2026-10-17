@@ -448,7 +448,7 @@ public class RunYBase extends Application {
      * Фон задаётся сразу, а не дописывается в style: иначе обработчики
      * наведения из createButton возвращают базовый цвет и кнопка «прыгает».
      */
-    private Button createDialogConfirmButton(String text) {
+    public Button createDialogConfirmButton(String text) {
         Button button = createButton(text, AppConstants.COLOR_BUTTON_SMALL_BG);
         button.setMinWidth(DIALOG_BUTTON_WIDTH);
         return button;
@@ -460,7 +460,7 @@ public class RunYBase extends Application {
      * с более тёмным нижним краем, скругление 4 px, при наведении и
      * нажатии фон затемняется.
      */
-    private Button createDialogCancelButton(String text) {
+    public Button createDialogCancelButton(String text) {
         Button button = new Button(text);
         button.setMnemonicParsing(true);
         button.setMinWidth(DIALOG_BUTTON_WIDTH);
@@ -627,129 +627,6 @@ public class RunYBase extends Application {
         popup.setAutoFix(true);
     }
 
-    /**
-     * Открывает полноценное окно истории команд для выбранной платформы.
-     * В окне отображаются все команды полностью, каждую можно скопировать.
-     * Двойной клик по команде вставляет её в TextArea и закрывает окно.
-     */
-    private void showCommandHistoryWindow(String platform, TextArea textArea) {
-        Stage historyStage = new Stage();
-        historyStage.initModality(Modality.APPLICATION_MODAL);
-        historyStage.initOwner(mainStage);
-        historyStage.setTitle("История команд — " + platform);
-        historyStage.setResizable(true);
-
-        // Заголовки колонок истории
-        HBox headerRow = new HBox(10);
-        headerRow.setPadding(new Insets(5, 5, 5, 5));
-        headerRow.setStyle("-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
-        Label hdrBase = new Label("База");
-        hdrBase.setMinWidth(180); hdrBase.setMaxWidth(180);
-        Label hdrMode = new Label("Режим");
-        hdrMode.setMinWidth(160); hdrMode.setMaxWidth(160);
-        Label hdrCmd = new Label("Команда");
-        hdrCmd.setMaxWidth(500); HBox.setHgrow(hdrCmd, Priority.ALWAYS);
-        Label hdrTime = new Label("Последний запуск");
-        hdrTime.setMinWidth(110); hdrTime.setMaxWidth(110);
-        headerRow.getChildren().addAll(hdrBase, hdrMode, hdrCmd, hdrTime);
-
-        // ListView для отображения команд
-        ListView<HistoryManager.CommandEntry> historyListView = new ListView<>(historyManager.getCommandHistoryList(platform));
-        historyListView.setCellFactory(lv -> new HistoryListCell());
-        historyListView.setPrefHeight(250);
-
-        // Кнопка копирования — второстепенная
-        Button copyButton = createDialogCancelButton("Копировать");
-        copyButton.setTooltip(createTooltip("Скопировать выбранную команду в буфер обмена"));
-        copyButton.setOnAction(e -> {
-            HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
-            if (selected != null && selected.command != null && !selected.command.isEmpty()) {
-                copyToClipboard(selected.command, historyStage);
-            } else {
-                showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите команду для копирования!");
-            }
-        });
-
-        // Кнопка выбора (вставка в поле вывода) — подтверждающая, как OK в окне выбора базы
-        Button selectButton = createDialogConfirmButton("В_ыбрать");
-        selectButton.setTooltip(createTooltip("Вставить выбранную команду в поле вывода и закрыть окно (Ctrl+Enter)"));
-        selectButton.setOnAction(e -> {
-            HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
-            if (selected != null && selected.command != null && !selected.command.isEmpty()) {
-                textArea.setText(selected.command);
-                historyStage.close();
-            } else {
-                showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите команду!");
-            }
-        });
-
-        // Кнопка закрытия — второстепенная, как Отмена в окне выбора базы
-        Button closeButton = createDialogCancelButton("Закрыть");
-        closeButton.setOnAction(e -> historyStage.close());
-
-        // Панель кнопок
-        HBox buttonPanel = new HBox(10, selectButton, copyButton, closeButton);
-        buttonPanel.setAlignment(Pos.CENTER);
-        buttonPanel.setPadding(new Insets(10, 0, 0, 0));
-
-        // Основной контейнер
-        VBox mainBox = new VBox(0, headerRow, historyListView);
-        mainBox.setPadding(new Insets(0, 0, 0, 0));
-        
-        BorderPane pane = new BorderPane();
-        pane.setCenter(mainBox);
-        pane.setBottom(buttonPanel);
-        pane.setPadding(new Insets(10));
-
-        Scene scene = new Scene(pane, 1000, 400);
-        scene.setFill(Color.TRANSPARENT);
-        historyStage.setScene(scene);
-
-        // Двойной клик вставляет команду и закрывает окно
-        historyListView.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
-                HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
-                if (selected != null && selected.command != null && !selected.command.isEmpty()) {
-                    textArea.setText(selected.command);
-                    historyStage.close();
-                }
-            }
-        });
-
-        // Escape закрывает окно
-        scene.addEventHandler(javafx.scene.input.KeyEvent.ANY, e -> {
-            if (e.getCode() == KeyCode.ESCAPE) {
-                e.consume();
-                historyStage.close();
-            }
-        });
-        
-        // CTRL+Enter — нажать кнопку "Выбрать"
-        scene.addEventHandler(javafx.scene.input.KeyEvent.ANY, e -> {
-            if (e.getCode() == KeyCode.ENTER && e.isControlDown()) {
-                e.consume();
-                selectButton.fire();
-            }
-        });
-        historyListView.addEventHandler(javafx.scene.input.KeyEvent.ANY, e -> {
-            if (e.getCode() == KeyCode.ESCAPE) {
-                e.consume();
-                historyStage.close();
-            }
-        });
-        pane.addEventHandler(javafx.scene.input.KeyEvent.ANY, e -> {
-            if (e.getCode() == KeyCode.ESCAPE) {
-                e.consume();
-                historyStage.close();
-            }
-        });
-
-        historyStage.show();
-        
-        // Запрашиваем фокус на ListView после показа окна
-        historyListView.setFocusTraversable(true);
-        javafx.application.Platform.runLater(() -> historyListView.requestFocus());
-    }
 
     private MenuBar createMenuBar() {
         MenuBar menuBar = new MenuBar();
@@ -960,7 +837,7 @@ public class RunYBase extends Application {
                 -fx-min-height: 22; -fx-max-height: 22;""",
                 AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
         historyButton.setTooltip(createTooltip("История команд для этой платформы (открыть окно)"));
-        historyButton.setOnAction(e -> showCommandHistoryWindow(platformName, textArea));
+        historyButton.setOnAction(e -> CommandHistoryDialog.show(this, platformName, textArea));
 
         // Сохраняем ссылку на TextArea в зависимости от разрядности
         if (bits == 32) {
@@ -1002,12 +879,12 @@ public class RunYBase extends Application {
         addressControl.setPrefHeight(30);
         addressControl.setMaxHeight(30);
         addressComboBox = addressControl.getComboBox();
-        addressControl.getChoiceButton().setOnAction(e -> selectDatabaseFromList());
+        addressControl.getChoiceButton().setOnAction(e -> DatabaseSelectionDialog.show(this));
 
         setupAddressContextMenu();
 
         userCredentialsButton = createButton("П_ользователь");
-        userCredentialsButton.setOnAction(e -> showUserCredentialsDialog());
+        userCredentialsButton.setOnAction(e -> UserCredentialsDialog.show(this));
 
         // Создаём сплит-кнопку Сформировать (у кнопки будет меню)
         SplitMenuButton generateMenuButton = new SplitMenuButton();
@@ -1174,7 +1051,7 @@ public class RunYBase extends Application {
 
         // Добавляем пункт меню "Заметка..."
         MenuItem noteItem = new MenuItem("_Заметка...");
-        noteItem.setOnAction(e -> showNoteDialog());
+        noteItem.setOnAction(e -> NoteDialog.show(this));
         addressControl.getContextMenu().getItems().add(noteItem);
 
         // Добавляем пункт меню "Добавить в список баз"
@@ -1195,14 +1072,14 @@ public class RunYBase extends Application {
         pasteCredsItem.setOnAction(e -> pasteCredentials());
 
         MenuItem savedUsersItem = new MenuItem("Скопировать из ...");
-        savedUsersItem.setOnAction(e -> showSavedUsersDialog());
+        savedUsersItem.setOnAction(e -> SavedUsersDialog.show(this));
         addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem, savedUsersItem);
     }
 
     /**
      * Обновляет отображение имени БД и заметки
      */
-    private void updateBaseInfoDisplay(String address) {
+    public void updateBaseInfoDisplay(String address) {
         if (address == null) {
             address = "";
         }
@@ -1279,7 +1156,7 @@ public class RunYBase extends Application {
     /**
      * Создаёт Tooltip со стандартным стилем
      */
-    private Tooltip createTooltip(String text) {
+    public Tooltip createTooltip(String text) {
         Tooltip tooltip = new Tooltip(text);
         tooltip.setStyle(AppConstants.TOOLTIP_STYLE);
         tooltip.setWrapText(true);
@@ -1296,7 +1173,7 @@ public class RunYBase extends Application {
         return tooltip;
     }
 
-    private void updateUserButtonState() {
+    public void updateUserButtonState() {
         if (userCredentialsButton == null)
             return;
         String address = getCurrentAddress();
@@ -1344,249 +1221,6 @@ public class RunYBase extends Application {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Учётные данные пользователей
-    // -----------------------------------------------------------------
-
-    private void showUserCredentialsDialog() {
-        String address = getCurrentAddress();
-        if (address.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Сначала введите адрес базы данных!");
-            return;
-        }
-
-        UserCredentials existing = credentialsManager.get(address);
-        String currentUsername = existing != null ? existing.getUsername() : "";
-        String currentPassword = existing != null ? existing.getPassword() : "";
-
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Учётные данные для базы");
-        dialog.setHeaderText(address);
-
-        ButtonType okButtonType = new ButtonType("OK", javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelButtonType = new ButtonType("Отмена", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
-        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, cancelButtonType);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(10));
-
-        TextField usernameField = new TextField(currentUsername);
-        usernameField.setPromptText("Имя пользователя");
-        PasswordField passwordField = new PasswordField();
-        passwordField.setText(currentPassword);
-        passwordField.setPromptText("Пароль");
-
-        grid.add(new Label("Имя пользователя:"), 0, 0);
-        grid.add(usernameField, 1, 0);
-        grid.add(new Label("Пароль:"), 0, 1);
-        grid.add(passwordField, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-        Platform.runLater(usernameField::requestFocus);
-
-        dialog.showAndWait().ifPresent(result -> {
-            if (result == okButtonType) {
-                String username = usernameField.getText().trim();
-                String password = passwordField.getText();
-
-                if (!username.isEmpty()) {
-                    credentialsManager.put(address, new UserCredentials(username, password));
-                    showAlert(Alert.AlertType.INFORMATION, "Успешно",
-                            "Учётные данные сохранены для адреса:\n" + address);
-                } else if (existing != null) {
-                    credentialsManager.remove(address);
-                    showAlert(Alert.AlertType.INFORMATION, "Удалено", "Учётные данные удалены для адреса:\n" + address);
-                }
-                updateUserButtonState();
-            }
-        });
-    }
-
-    // -----------------------------------------------------------------
-    // Выбор сохранённого пользователя
-    // -----------------------------------------------------------------
-
-    /**
-     * Собирает все сохранённые учётные данные в список, отсортированный
-     * по адресу базы, затем по имени пользователя.
-     */
-    private List<SavedUserEntry> collectSavedUsers(String currentAddress) {
-        List<SavedUserEntry> savedUsers = new ArrayList<>();
-        for (Map.Entry<String, UserCredentials> entry : credentialsManager.getAllCredentials().entrySet()) {
-            UserCredentials cred = entry.getValue();
-            if (cred == null || cred.getUsername().isEmpty())
-                continue;
-            savedUsers.add(new SavedUserEntry(
-                    cred.getUsername(),
-                    cred.getPassword(),
-                    entry.getKey(),
-                    registeredAddressMap.get(entry.getKey()),
-                    entry.getKey().equals(currentAddress)));
-        }
-        savedUsers.sort(Comparator.comparing((SavedUserEntry e) -> e.address, String.CASE_INSENSITIVE_ORDER)
-                .thenComparing(e -> e.username, String.CASE_INSENSITIVE_ORDER));
-        return savedUsers;
-    }
-
-    /**
-     * Открывает окно со списком всех сохранённых учётных данных.
-     * Выбранная запись сохраняется как пользователь для текущего адреса.
-     */
-    private void showSavedUsersDialog() {
-        String address = getCurrentAddress();
-        if (address.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Сначала введите адрес базы данных!");
-            return;
-        }
-
-        List<SavedUserEntry> savedUsers = collectSavedUsers(address);
-        if (savedUsers.isEmpty()) {
-            showAlert(Alert.AlertType.INFORMATION, "Сохранённые пользователи",
-                    "Нет ни одних сохранённых учётных данных!");
-            return;
-        }
-
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initOwner(mainStage);
-        dialog.setTitle("Сохранённые пользователи");
-
-        Label header = new Label("Сохранить выбранного пользователя для адреса: " + address);
-        header.setWrapText(true);
-        header.setStyle("-fx-font-size: 12px; -fx-font-style: italic; -fx-padding: 0 0 8 0;");
-
-        ListView<SavedUserEntry> listView = new ListView<>(FXCollections.observableArrayList(savedUsers));
-        listView.setCellFactory(lv -> new SavedUserListCell());
-
-        Button okButton = createDialogConfirmButton("В_ыбрать");
-        okButton.setOnAction(e -> applySavedUser(listView, dialog, address));
-
-        Button cancelButton = createDialogCancelButton("Отмена");
-        cancelButton.setOnAction(e -> dialog.close());
-
-        listView.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
-                applySavedUser(listView, dialog, address);
-            }
-        });
-
-        HBox buttonPanel = new HBox(10, okButton, cancelButton);
-        buttonPanel.setAlignment(Pos.CENTER);
-        buttonPanel.setPadding(new Insets(10, 0, 0, 0));
-
-        BorderPane pane = new BorderPane();
-        pane.setTop(header);
-        pane.setCenter(listView);
-        pane.setBottom(buttonPanel);
-        pane.setPadding(new Insets(10));
-
-        Scene scene = new Scene(pane, 700, 450);
-
-        // Escape закрывает окно без выбора, Ctrl+Enter — выбирает выделенную запись
-        scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-            if (e.getCode() == KeyCode.ESCAPE) {
-                e.consume();
-                dialog.close();
-            } else if (e.getCode() == KeyCode.ENTER && e.isControlDown()) {
-                e.consume();
-                applySavedUser(listView, dialog, address);
-            }
-        });
-
-        dialog.setOnShown(e -> listView.requestFocus());
-        dialog.setScene(scene);
-        dialog.showAndWait();
-    }
-
-    /**
-     * Сохраняет выделенную в списке запись как учётные данные для адреса
-     * и закрывает окно выбора.
-     */
-    private void applySavedUser(ListView<SavedUserEntry> listView, Stage dialog, String address) {
-        SavedUserEntry selected = listView.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите пользователя из списка!");
-            return;
-        }
-        credentialsManager.put(address, new UserCredentials(selected.username, selected.password));
-        updateUserButtonState();
-        dialog.close();
-        showAutoClosingAlert("Пользователь '" + selected.username + "' сохранён для адреса:\n" + address,
-                "Успешно", 3);
-    }
-
-    // -----------------------------------------------------------------
-    // Заметки к базам
-    // -----------------------------------------------------------------
-
-    private void showNoteDialog() {
-        String address = getCurrentAddress();
-        if (address.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Сначала введите адрес базы данных!");
-            return;
-        }
-
-        String currentNote = historyManager.getNote(address);
-
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle(RunYBaseHelpTexts.NOTE_DIALOG_TITLE);
-        dialog.setHeaderText(address);
-
-        ButtonType okButtonType = new ButtonType("OK", javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
-        ButtonType clearButtonType = new ButtonType("Очистить", javafx.scene.control.ButtonBar.ButtonData.YES);
-        ButtonType cancelButtonType = new ButtonType("Отмена", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
-        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, clearButtonType, cancelButtonType);
-
-        TextArea noteArea = new TextArea(currentNote != null ? currentNote : "");
-        noteArea.setPrefRowCount(6);
-        noteArea.setPrefColumnCount(50);
-        noteArea.setWrapText(true);
-        noteArea.setPromptText("Введите текстовую заметку к этой базе...\n" +
-                "Например: \"Проверить печатную форму заказа клиента\"");
-        noteArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-background-color: " +
-                AppConstants.COLOR_INPUT_BG + "; -fx-border-color: " + AppConstants.COLOR_BUTTON_BORDER + "; -fx-border-width: 1px;");
-
-        Label charCountLabel = new Label("0 / " + AppConstants.MAX_NOTE_LENGTH + " символов");
-        charCountLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: gray;");
-
-        noteArea.textProperty().addListener((obs, old, newVal) -> {
-            int len = newVal == null ? 0 : newVal.length();
-            charCountLabel.setText(len + " / " + AppConstants.MAX_NOTE_LENGTH + " символов");
-            charCountLabel.setStyle(len > AppConstants.MAX_NOTE_LENGTH ? "-fx-font-size: 10px; -fx-text-fill: red;"
-                    : "-fx-font-size: 10px; -fx-text-fill: gray;");
-        });
-
-        VBox content = new VBox(8, noteArea, charCountLabel);
-        content.setPadding(new Insets(10));
-        dialog.getDialogPane().setContent(content);
-
-        Platform.runLater(noteArea::requestFocus);
-
-        dialog.showAndWait().ifPresent(result -> {
-            if (result == okButtonType) {
-                // Сохраняем введённую заметку
-                String note = noteArea.getText();
-                historyManager.saveNote(address, note);
-                updateBaseInfoDisplay(address);
-            
-                if (note.trim().isEmpty()) {
-                    showAlert(Alert.AlertType.INFORMATION, "Удалено",
-                        "Заметка удалена для адреса:\n" + address);
-                } else {
-                    showAutoClosingAlert("Заметка сохранена для адреса:\n" + address, "Успешно", 3);
-                }
-            } else if (result == clearButtonType) {
-            // Очищаем заметку (сохраняем пустую строку)
-                historyManager.saveNote(address, "");
-                updateBaseInfoDisplay(address);
-                showAlert(Alert.AlertType.INFORMATION, "Удалено",
-                    "Заметка удалена для адреса:\n" + address);
-            }
-        // Если result == cancelButtonType, ничего не делаем
-        });
-    }
 
     private void askAndRunWithCredentials(String address, String baseCommand) {
         UserCredentials cred = credentialsManager.get(address);
@@ -1705,7 +1339,7 @@ public class RunYBase extends Application {
         }
     }
 
-    private String getCurrentAddress() {
+    public String getCurrentAddress() {
         String text = addressComboBox.getEditor().getText();
         return text == null ? "" : text.trim();
     }
@@ -2294,7 +1928,7 @@ public class RunYBase extends Application {
      * Popup вместо Alert: уведомление немодальное, не перехватывает фокус
      * и закрывается само по истечении delaySeconds (или по клику).
      */
-    private void showAutoClosingAlert(String message, String title, int delaySeconds) {
+    public void showAutoClosingAlert(String message, String title, int delaySeconds) {
         showAutoClosingAlert(message, title, delaySeconds, null);
     }
 
@@ -2307,7 +1941,7 @@ public class RunYBase extends Application {
      * @param owner окно, относительно которого позиционируется уведомление;
      *              null — главное окно приложения
      */
-    private void showAutoClosingAlert(String message, String title, int delaySeconds, Window owner) {
+    public void showAutoClosingAlert(String message, String title, int delaySeconds, Window owner) {
         Window anchor = (owner != null) ? owner : mainStage;
         if (anchor == null) {
             return;
@@ -2450,7 +2084,7 @@ public class RunYBase extends Application {
      *
      * @param owner окно-владелец уведомления (null — главное окно)
      */
-    private void copyToClipboard(String text, Window owner) {
+    public void copyToClipboard(String text, Window owner) {
         if (text == null || text.isEmpty()) {
             return;
         }
@@ -2472,7 +2106,7 @@ public class RunYBase extends Application {
         }
     }
 
-    private static List<BaseEntry> loadAndSortDatabases()
+    public static List<BaseEntry> loadAndSortDatabases()
             throws IOException, ParserConfigurationException, SAXException, Exception {
         String userHome = System.getProperty("user.home");
         Path ibasesPath = Paths.get(userHome, "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
@@ -2497,89 +2131,6 @@ public class RunYBase extends Application {
         return baseEntries;
     }
 
-    private void selectDatabaseFromList() {
-        try {
-            List<BaseEntry> baseEntries = loadAndSortDatabases();
-
-            // Загружаем заметки для каждой базы
-            for (BaseEntry entry : baseEntries) {
-                String note = historyManager.getNote(entry.connect);
-                if (note != null && !note.isEmpty()) {
-                    entry.setNote(note);
-                }
-            }
-
-            if (baseEntries.isEmpty()) {
-                showAlert(Alert.AlertType.INFORMATION, "Список баз", "Нет зарегистрированных баз 1С");
-                return;
-            }
-
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.setTitle("Выбор базы 1С");
-            dialog.setResizable(true);
-
-            ListView<BaseEntry> listView = new ListView<>(FXCollections.observableArrayList(baseEntries));
-            listView.setCellFactory(lv -> new BaseEntryListCell());
-
-            Button okButton = createDialogConfirmButton("OK");
-            okButton.setOnAction(e -> selectCurrentBase(listView, dialog));
-
-            Button cancelButton = createDialogCancelButton("Отмена");
-            cancelButton.setOnAction(e -> dialog.close());
-
-            listView.setOnMouseClicked(e -> {
-                if (e.getClickCount() == 2) {
-                    selectCurrentBase(listView, dialog);
-                }
-            });
-
-            HBox buttonPanel = new HBox(10, okButton, cancelButton);
-            buttonPanel.setAlignment(Pos.CENTER);
-            buttonPanel.setPadding(new Insets(10));
-
-            BorderPane pane = new BorderPane();
-            pane.setCenter(listView);
-            pane.setBottom(buttonPanel);
-            pane.setPadding(new Insets(10));
-
-            Scene scene = new Scene(pane, 650, 450);
-
-            // Escape закрывает окно без выбора базы. Фильтр на фазе захвата
-            // надёжнее setOnKeyPressed: событие перехватывается раньше, чем
-            // его успеет потребить ListView.
-            scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-                if (e.getCode() == KeyCode.ESCAPE) {
-                    e.consume();
-                    dialog.close();
-                }
-            });
-
-            // Фокус на списке сразу после показа окна: без focus owner в сцене
-            // клавиатурные события не доставляются и Escape не сработает
-            dialog.setOnShown(e -> listView.requestFocus());
-
-            dialog.setScene(scene);
-            dialog.showAndWait();
-
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка при чтении списка баз:\n" + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Выбирает текущую выделенную базу и закрывает диалог
-     */
-    private void selectCurrentBase(ListView<BaseEntry> listView, Stage dialog) {
-        BaseEntry selected = listView.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            addressComboBox.setValue(selected.connect);
-            addressControl.setAdressIB(selected.name);
-            updateUserButtonState();
-            dialog.close();
-        }
-    }
 
     /**
      * Удаляет BOM (U+FEFF) из начала строки, если он присутствует
@@ -2663,11 +2214,39 @@ public class RunYBase extends Application {
         return list.item(0).getTextContent();
     }
 
+    // -----------------------------------------------------------------
+    // Доступ для классов-диалогов
+    // -----------------------------------------------------------------
+
+    public CredentialsManager getCredentialsManager() {
+        return credentialsManager;
+    }
+
+    public HistoryManager getHistoryManager() {
+        return historyManager;
+    }
+
+    public Stage getMainStage() {
+        return mainStage;
+    }
+
+    public Map<String, String> getRegisteredAddressMap() {
+        return registeredAddressMap;
+    }
+
+    public ComboBox<String> getAddressComboBox() {
+        return addressComboBox;
+    }
+
+    public ComboBoxWithMenuButton<String> getAddressControl() {
+        return addressControl;
+    }
+
     /**
      * Показывает модальное окно. Безопасен для вызова из любого потока:
      * если вызов пришёл не из потока JavaFX, окно ставится в очередь Platform.runLater.
      */
-    private static void showAlert(Alert.AlertType type, String title, String message) {
+    public static void showAlert(Alert.AlertType type, String title, String message) {
         if (!Platform.isFxApplicationThread()) {
             Platform.runLater(() -> showAlert(type, title, message));
             return;
