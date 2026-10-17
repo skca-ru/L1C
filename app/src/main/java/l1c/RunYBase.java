@@ -201,7 +201,7 @@ public class RunYBase extends Application {
 
             if (result.isPresent() && !result.get().trim().isEmpty()) {
                 String name = result.get().trim();
-                addDatabaseEntryToFile(address, name);
+                DatabaseListService.addDatabaseEntry(address, name);
                 // Обновляем карту для подсказок
                 registeredAddressMap.put(address, name);
                 showAlert(Alert.AlertType.INFORMATION, "Успешно",
@@ -323,57 +323,6 @@ public class RunYBase extends Application {
 
     private Button createButton(String text) {
         return createButton(text, AppConstants.COLOR_BUTTON_BG);
-    }
-
-    /**
-     * Добавляет запись о новой базе в файл ibases.v8i
-     */
-    private void addDatabaseEntryToFile(String connect, String name) throws IOException {
-        Path ibasesPath = Paths.get(System.getProperty("user.home"),
-                "AppData", "Roaming", "1C", "1CEStart", "ibases.v8i");
-
-        // Создаём директорию и файл, если их нет
-        if (!Files.exists(ibasesPath)) {
-            Files.createDirectories(ibasesPath.getParent());
-            Files.createFile(ibasesPath);
-        }
-
-        // Читаем существующие строки
-        List<String> lines = Files.readAllLines(ibasesPath, StandardCharsets.UTF_8);
-
-        // Находим максимальный OrderInList для корректного порядка
-        double maxOrder = 0;
-        for (String line : lines) {
-            if (line.startsWith("OrderInList=")) {
-                try {
-                    double val = Double.parseDouble(line.substring(12));
-                    if (val > maxOrder)
-                        maxOrder = val;
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        }
-
-        // Генерируем уникальный ID
-        String guid = UUID.randomUUID().toString();
-
-        // Формируем новую секцию
-        List<String> newEntry = new ArrayList<>();
-        newEntry.add("[" + name + "]");
-        newEntry.add("Connect=" + connect);
-        newEntry.add("ID=" + guid);
-        newEntry.add("OrderInList=" + (maxOrder + 16384));
-        newEntry.add("Folder=/");
-        newEntry.add("OrderInTree=" + (maxOrder + 16384));
-        newEntry.add("External=0");
-        newEntry.add("App=Auto");
-        newEntry.add("WA=1");
-        newEntry.add("DisableLocalSpeechToText=0");
-        newEntry.add(""); // пустая строка для разделения
-
-        // Добавляем в конец файла
-        lines.addAll(newEntry);
-        Files.write(ibasesPath, lines, StandardCharsets.UTF_8);
     }
 
     private Button createButton(String text, String bgColor) {

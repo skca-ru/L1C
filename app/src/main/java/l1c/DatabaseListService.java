@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -142,5 +143,58 @@ public final class DatabaseListService {
         if (list.getLength() == 0)
             return null;
         return list.item(0).getTextContent();
+    }
+
+    /**
+     * Добавляет запись о новой информационной базе в файл ibases.v8i.
+     * Если файл или каталог не существует, они создаются.
+     *
+     * @param connect строка подключения к базе (значение Connect)
+     * @param name    имя базы (заголовок секции)
+     * @throws IOException если файл не читается или не записывается
+     */
+    public static void addDatabaseEntry(String connect, String name) throws IOException {
+        // Создаём директорию и файл, если их нет
+        if (!Files.exists(IBASES_PATH)) {
+            Files.createDirectories(IBASES_PATH.getParent());
+            Files.createFile(IBASES_PATH);
+        }
+
+        // Читаем существующие строки
+        List<String> lines = Files.readAllLines(IBASES_PATH, StandardCharsets.UTF_8);
+
+        // Находим максимальный OrderInList для корректного порядка
+        double maxOrder = 0;
+        for (String line : lines) {
+            if (line.startsWith("OrderInList=")) {
+                try {
+                    double val = Double.parseDouble(line.substring(12));
+                    if (val > maxOrder)
+                        maxOrder = val;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        // Генерируем уникальный ID
+        String guid = UUID.randomUUID().toString();
+
+        // Формируем новую секцию
+        List<String> newEntry = new ArrayList<>();
+        newEntry.add("[" + name + "]");
+        newEntry.add("Connect=" + connect);
+        newEntry.add("ID=" + guid);
+        newEntry.add("OrderInList=" + (maxOrder + 16384));
+        newEntry.add("Folder=/");
+        newEntry.add("OrderInTree=" + (maxOrder + 16384));
+        newEntry.add("External=0");
+        newEntry.add("App=Auto");
+        newEntry.add("WA=1");
+        newEntry.add("DisableLocalSpeechToText=0");
+        newEntry.add(""); // пустая строка для разделения
+
+        // Добавляем в конец файла
+        lines.addAll(newEntry);
+        Files.write(IBASES_PATH, lines, StandardCharsets.UTF_8);
     }
 }
