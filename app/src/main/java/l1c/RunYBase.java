@@ -2092,7 +2092,8 @@ public class RunYBase extends Application {
         addressComboBox.setValue(connection);
         addressControl.setAdressIB(name);
         updateUserButtonState();
-    }   
+    }
+
     /**
      * Показывает модальное окно. Безопасен для вызова из любого потока:
      * если вызов пришёл не из потока JavaFX, окно ставится в очередь Platform.runLater.
