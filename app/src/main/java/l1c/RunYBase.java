@@ -2076,12 +2076,23 @@ public class RunYBase extends Application {
         return registeredAddressMap;
     }
 
-    void selectDatabase(String connection, String name) {
+    /**
+     * Делает переданную базу текущей в интерфейсе: подставляет строку
+     * подключения в поле адреса, показывает имя базы и обновляет состояние
+     * кнопки «Пользователь».
+     *
+     * Источник данных не важен — это может быть выбор из стандартного списка
+     * баз 1С, ответ внешнего сервиса, буфер обмена или восстановление
+     * последней базы при старте.
+     *
+     * @param connection строка подключения к базе
+     * @param name       имя базы для отображения
+     */
+    void setCurrentDatabase(String connection, String name) {
         addressComboBox.setValue(connection);
         addressControl.setAdressIB(name);
         updateUserButtonState();
-    }
-
+    }   
     /**
      * Показывает модальное окно. Безопасен для вызова из любого потока:
      * если вызов пришёл не из потока JavaFX, окно ставится в очередь Platform.runLater.

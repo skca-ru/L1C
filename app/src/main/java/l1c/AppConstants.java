@@ -3,6 +3,7 @@ package l1c;
 public class AppConstants {
     
     // Версия приложения
+    // Формат: год.месяц.день.порядковый номер
     public static final String VERSION = "2026.10.17.19";
     
     // @formatter:off
