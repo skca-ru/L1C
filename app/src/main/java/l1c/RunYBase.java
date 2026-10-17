@@ -2076,12 +2076,10 @@ public class RunYBase extends Application {
         return registeredAddressMap;
     }
 
-    public ComboBox<String> getAddressComboBox() {
-        return addressComboBox;
-    }
-
-    public ComboBoxWithMenuButton<String> getAddressControl() {
-        return addressControl;
+    void selectDatabase(String connection, String name) {
+        addressComboBox.setValue(connection);
+        addressControl.setAdressIB(name);
+        updateUserButtonState();
     }
 
     /**

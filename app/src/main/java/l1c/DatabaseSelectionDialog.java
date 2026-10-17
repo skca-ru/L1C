@@ -102,9 +102,7 @@ public final class DatabaseSelectionDialog {
     private static void selectCurrentBase(RunYBase owner, ListView<BaseEntry> listView, Stage dialog) {
         BaseEntry selected = listView.getSelectionModel().getSelectedItem();
         if (selected != null) {
-            owner.getAddressComboBox().setValue(selected.connect);
-            owner.getAddressControl().setAdressIB(selected.name);
-            owner.updateUserButtonState();
+            owner.selectDatabase(selected.connect, selected.name);
             dialog.close();
         }
     }
