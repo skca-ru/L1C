@@ -1,4 +1,4 @@
-package l1c;
+package l1c.dialogs;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -10,6 +10,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
+import l1c.RunYBase;
+import l1c.UserCredentials;
 
 /**
  * Диалог ввода и сохранения учётных данных пользователя для текущей базы.

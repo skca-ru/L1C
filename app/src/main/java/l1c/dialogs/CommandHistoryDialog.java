@@ -1,4 +1,4 @@
-package l1c;
+package l1c.dialogs;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -18,6 +18,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import l1c.AppConstants;
+import l1c.HistoryListCell;
+import l1c.HistoryManager;
+import l1c.RunYBase;
 
 /**
  * Полноценное окно истории команд для выбранной платформы.

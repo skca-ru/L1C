@@ -1,4 +1,4 @@
-package l1c;
+package l1c.dialogs;
 
 import java.util.List;
 
@@ -15,6 +15,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import l1c.BaseEntry;
+import l1c.BaseEntryListCell;
+import l1c.DatabaseListService;
+import l1c.RunYBase;
 
 /**
  * Окно выбора информационной базы из списка зарегистрированных баз

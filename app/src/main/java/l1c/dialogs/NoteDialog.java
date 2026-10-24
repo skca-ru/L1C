@@ -1,4 +1,4 @@
-package l1c;
+package l1c.dialogs;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -9,6 +9,9 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
+import l1c.AppConstants;
+import l1c.RunYBase;
+import l1c.RunYBaseHelpTexts;
 
 /**
  * Диалог редактирования текстовой заметки, привязанной к адресу базы.

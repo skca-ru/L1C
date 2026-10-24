@@ -1,4 +1,4 @@
-package l1c;
+package l1c.dialogs;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,6 +19,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import l1c.RunYBase;
+import l1c.SavedUserEntry;
+import l1c.SavedUserListCell;
+import l1c.UserCredentials;
 
 /**
  * Окно со списком всех сохранённых учётных данных.

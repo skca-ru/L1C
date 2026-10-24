@@ -31,6 +31,12 @@ import javafx.scene.paint.Color;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 
+import l1c.dialogs.CommandHistoryDialog;
+import l1c.dialogs.DatabaseSelectionDialog;
+import l1c.dialogs.NoteDialog;
+import l1c.dialogs.SavedUsersDialog;
+import l1c.dialogs.UserCredentialsDialog;
+
 public class RunYBase extends Application {
 
     // @formatter:off
@@ -2088,7 +2094,7 @@ public class RunYBase extends Application {
      * @param connection строка подключения к базе
      * @param name       имя базы для отображения
      */
-    void setCurrentDatabase(String connection, String name) {
+    public void setCurrentDatabase(String connection, String name) {
         addressComboBox.setValue(connection);
         addressControl.setAdressIB(name);
         updateUserButtonState();
@@ -2112,145 +2118,5 @@ public class RunYBase extends Application {
     }
 }
 
-// ========== ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ ==========
 
-class BaseEntry {
-    String name;
-    String connect;
-    double order;
-    String note;
 
-    BaseEntry(String name, String connect, double order) {
-        this.name = name;
-        this.connect = connect;
-        this.order = order;
-    }
-
-    void setNote(String note) {
-        this.note = note;
-    }
-}
-
-class BaseEntryListCell extends ListCell<BaseEntry> {
-    private final Label nameLabel = new Label();
-    private final Label connectLabel = new Label();
-    private final Label noteLabel = new Label();
-    private final VBox container = new VBox(2, nameLabel, connectLabel, noteLabel);
-
-    public BaseEntryListCell() {
-        container.setPadding(new Insets(5, 10, 5, 10));
-        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-        connectLabel.setStyle("-fx-font-style: italic; -fx-font-size: 10px;");
-        connectLabel.setPadding(new Insets(0, 0, 0, 20));
-        noteLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #C8A046; -fx-font-style: italic;");
-        noteLabel.setPadding(new Insets(0, 0, 0, 20));
-        noteLabel.setWrapText(true);
-        noteLabel.setMaxWidth(500);
-    }
-
-    @Override
-    protected void updateItem(BaseEntry item, boolean empty) {
-        super.updateItem(item, empty);
-        if (empty || item == null) {
-            setGraphic(null);
-        } else {
-            nameLabel.setText(item.name);
-            connectLabel.setText(item.connect);
-            if (item.note != null && !item.note.isEmpty()) {
-                // Обрезаем длинную заметку для отображения
-                String displayNote = item.note.length() > 80 ? item.note.substring(0, 80) + "..." : item.note;
-                noteLabel.setText("📝 " + displayNote);
-                noteLabel.setVisible(true);
-            } else {
-                noteLabel.setVisible(false);
-            }
-            if (isSelected()) {
-                container.setStyle("-fx-background-color: -fx-selection-bar;");
-                nameLabel.setTextFill(Color.WHITE);
-                connectLabel.setTextFill(Color.WHITE);
-                noteLabel.setTextFill(Color.WHITE);
-            } else {
-                container.setStyle("-fx-background-color: transparent;");
-                nameLabel.setTextFill(Color.BLACK);
-                connectLabel.setTextFill(Color.BLACK);
-                noteLabel.setTextFill(Color.GRAY);
-            }
-            setGraphic(container);
-        }
-    }
-}
-
-class SavedUserEntry {
-    final String username;
-    final String password;
-    final String address;
-    final String baseName;
-    final boolean forCurrentAddress;
-
-    SavedUserEntry(String username, String password, String address, String baseName, boolean forCurrentAddress) {
-        this.username = username;
-        this.password = password;
-        this.address = address;
-        this.baseName = baseName;
-        this.forCurrentAddress = forCurrentAddress;
-    }
-}
-
-class SavedUserListCell extends ListCell<SavedUserEntry> {
-    private final Label userLabel = new Label();
-    private final Label addressLabel = new Label();
-    private final VBox container = new VBox(2, userLabel, addressLabel);
-
-    public SavedUserListCell() {
-        container.setPadding(new Insets(5, 10, 5, 10));
-        userLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-        addressLabel.setStyle("-fx-font-style: italic; -fx-font-size: 10px;");
-        addressLabel.setPadding(new Insets(0, 0, 0, 20));
-        addressLabel.setWrapText(true);
-        addressLabel.setMaxWidth(600);
-    }
-
-    @Override
-    protected void updateItem(SavedUserEntry item, boolean empty) {
-        super.updateItem(item, empty);
-        if (empty || item == null) {
-            setGraphic(null);
-            return;
-        }
-
-        String mark = item.forCurrentAddress ? "  (текущая база)" : "";
-        userLabel.setText("👤 " + item.username + mark + (item.password.isEmpty() ? "" : "  🔑"));
-
-        String location = item.baseName != null ? item.baseName + " — " + item.address : item.address;
-        addressLabel.setText(location);
-
-        if (isSelected()) {
-            container.setStyle("-fx-background-color: -fx-selection-bar;");
-            userLabel.setTextFill(Color.WHITE);
-            addressLabel.setTextFill(Color.WHITE);
-        } else {
-            container.setStyle("-fx-background-color: transparent;");
-            userLabel.setTextFill(Color.BLACK);
-            addressLabel.setTextFill(Color.BLACK);
-        }
-        setGraphic(container);
-    }
-}
-
-class UserCredentials {
-    private String username;
-    private String password;
-
-    public UserCredentials(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-}

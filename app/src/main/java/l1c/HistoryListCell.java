@@ -16,7 +16,7 @@ import javafx.scene.layout.Priority;
 /**
  * Клетка ListView для отображения команды истории с временем последнего использования и режимом запуска.
  */
-class HistoryListCell extends ListCell<HistoryManager.CommandEntry> {
+public final class HistoryListCell extends ListCell<HistoryManager.CommandEntry> {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy в HH:mm");
 
     // @formatter:off
@@ -27,7 +27,7 @@ class HistoryListCell extends ListCell<HistoryManager.CommandEntry> {
     private final Label modeLabel     = new Label();
     // @formatter oт
 
-    HistoryListCell() {
+    public HistoryListCell() {
         baseNameLabel.setMinWidth(180);
         baseNameLabel.setMaxWidth(180);
         baseNameLabel.setWrapText(true);
