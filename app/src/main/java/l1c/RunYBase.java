@@ -863,6 +863,12 @@ public class RunYBase extends Application {
         generateByShortAddressItem.setOnAction(e -> handleGenerateByShortAddress());
         generateMenuButton.getItems().add(generateByShortAddressItem);
 
+        // Пункт меню — формирование строки запуска с кодом разблокировки (/UC):
+        // для установки соединения с базой, на которую установлена блокировка соединений
+        MenuItem generateWithUnlockCodeItem = new MenuItem(AppConstants.GENERATE_UNLOCK_CODE_MENU_TEXT);
+        generateWithUnlockCodeItem.setOnAction(e -> handleGenerateCommandWithUnlockCode());
+        generateMenuButton.getItems().add(generateWithUnlockCodeItem);
+
         String bgColor = AppConstants.COLOR_BUTTON_BG;
         generateMenuButton.setStyle(String.format("""
             /* 1. Основной фон и рамка всей кнопки */
@@ -1455,11 +1461,44 @@ public class RunYBase extends Application {
     }
 
     /**
+     * Формирует строку запуска с кодом разблокировки (/UC) — для установки
+     * соединения с информационной базой, на которую установлена блокировка
+     * установки соединений. Не используется при работе тонкого клиента
+     * через веб-сервер.
+     */
+    private void handleGenerateCommandWithUnlockCode() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle(RunYBaseHelpTexts.UNLOCK_CODE_DIALOG_TITLE);
+        dialog.setHeaderText(RunYBaseHelpTexts.UNLOCK_CODE_DIALOG_HEADER);
+        dialog.setContentText(RunYBaseHelpTexts.UNLOCK_CODE_DIALOG_PROMPT);
+
+        dialog.showAndWait().ifPresent(code -> {
+            String unlockCode = code == null ? "" : code.trim();
+            if (unlockCode.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение",
+                        RunYBaseHelpTexts.WARNING_EMPTY_UNLOCK_CODE);
+                return;
+            }
+            handleGenerateCommand(true, unlockCode);
+        });
+    }
+
+    /**
      * Основное действие «Сформировать».
      *
      * @param includeCredentials включать ли сохранённые учётные данные (/N, /P) в строку запуска
      */
     private void handleGenerateCommand(boolean includeCredentials) {
+        handleGenerateCommand(includeCredentials, null);
+    }
+
+    /**
+     * Основное действие «Сформировать» с возможностью указать код разблокировки.
+     *
+     * @param includeCredentials включать ли сохранённые учётные данные (/N, /P) в строку запуска
+     * @param unlockCode         код разблокировки (/UC) или null, если параметр не нужен
+     */
+    private void handleGenerateCommand(boolean includeCredentials, String unlockCode) {
         String text = getCurrentAddress();
         if (text.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
@@ -1515,6 +1554,11 @@ public class RunYBase extends Application {
                 cred,
                 isDesigner,
                 isUpdate);
+
+        if (unlockCode != null && !unlockCode.isEmpty()) {
+            cmd86 += " /UC \"" + unlockCode + "\"";
+            cmd64 += " /UC \"" + unlockCode + "\"";
+        }
 
         outputArea86.setText(cmd86);
         outputArea.setText(cmd64);

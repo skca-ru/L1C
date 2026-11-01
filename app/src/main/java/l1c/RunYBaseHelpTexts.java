@@ -138,6 +138,20 @@ public final class RunYBaseHelpTexts {
             Строка запуска сформирована без данных пользователя.
             """;
 
+    // Диалог ввода кода разблокировки (/UC)
+    public static final String UNLOCK_CODE_DIALOG_TITLE = "Код разблокировки";
+    public static final String UNLOCK_CODE_DIALOG_HEADER = """
+            Установка соединения с базой, на которую установлена
+            блокировка установки соединений (/UC <код доступа>).
+            Не используется при работе тонкого клиента через веб-сервер.
+            """;
+    public static final String UNLOCK_CODE_DIALOG_PROMPT = "Код доступа:";
+    public static final String WARNING_EMPTY_UNLOCK_CODE = """
+            Код доступа не указан!
+            Если при установке блокировки задан непустой код доступа,
+            то для установки соединения необходимо указать этот код в параметре /UC.
+            """;
+
     public static final String NOTE_BUTTON_TOOLTIP = """
             Заметка к базе
             Нажмите для просмотра или редактирования текстовой заметки
