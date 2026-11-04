@@ -126,6 +126,13 @@ public final class RunYBaseHelpTexts {
             Нажмите чтобы задать учётные данные
             """;
 
+    // --- Подсказка к полю имени пользователя (%s — список часто используемых имён) ---
+    public static final String USER_NAME_COMMON_TOOLTIP = """
+            Можно выбрать имя из списка часто используемых или ввести своё.
+            Часто используемые: %s
+            """;
+
+
     public static final String WARNING_NO_ADDRESS = """
             Введите адрес базы данных! Например:
 

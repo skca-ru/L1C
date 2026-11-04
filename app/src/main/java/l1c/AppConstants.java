@@ -1,5 +1,7 @@
 package l1c;
 
+import java.util.List;
+
 public class AppConstants {
     
     // Версия приложения
@@ -14,6 +16,10 @@ public class AppConstants {
     public static final int    MAX_HISTORY_SIZE    = 20;
     public static final int    MAX_NOTE_LENGTH     = 500;
     public static final int    CHOICE_BUTTON_WIDTH = 25;
+
+    // Часто используемые имена пользователей 1С — предлагаются к выбору в диалогах учётных данных
+    public static final List<String> COMMON_USER_NAMES = List.of("Администратор", "Админ", "admin");
+
 
     // Цвета для рамки при фокусе
     public static final String FOCUS_BORDER_COLOR  = "#0078D7";
