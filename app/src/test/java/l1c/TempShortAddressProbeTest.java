@@ -1,23 +1,14 @@
 /*
- * ВРЕМЕННЫЙ тест: вызывает реальные приватные методы RunYBase через рефлексию.
- * Задачa — подтвердить работоспособность разбора адреса /S и /F на реальном коде.
+ * ВРЕМЕННЫЙ тест: проверяет разбор адреса /S и /F на реальном коде CommandBuilder.
  */
 package l1c;
 
-import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 
 class TempShortAddressProbeTest {
 
     @Test
-    void probeRealMethods() throws Exception {
-        RunYBase app = new RunYBase();
-
-        Method build = RunYBase.class.getDeclaredMethod("buildShortAddressParam", String.class);
-        build.setAccessible(true);
-        Method extract = RunYBase.class.getDeclaredMethod("extractServerAndBase", String.class);
-        extract.setAccessible(true);
-
+    void probeRealMethods() {
         String[] inputs = {
                 "Srvr=\"W1CBASE2022SQL\";Ref=\"Base\";",
                 "Srvr=\"srv\";Ref=\"SQL2012\\db\";Usr=\"u\";",
@@ -44,9 +35,9 @@ class TempShortAddressProbeTest {
 
         StringBuilder sb = new StringBuilder("\n===== РЕАЛЬНЫЙ РАЗБОР АДРЕСА =====\n");
         for (String in : inputs) {
-            Object param = build.invoke(app, in);
-            Object[] sbArr = (Object[]) extract.invoke(app, in);
-            String pair = sbArr == null ? "null" : ("{" + sbArr[0] + ", " + sbArr[1] + "}");
+            String param = CommandBuilder.shortAddressParam(in);
+            String[] pairArr = CommandBuilder.extractServerAndBase(in);
+            String pair = pairArr == null ? "null" : ("{" + pairArr[0] + ", " + pairArr[1] + "}");
             sb.append("IN [").append(in).append("]\n   param  = ").append(param)
                     .append("\n   pair   = ").append(pair).append('\n');
         }

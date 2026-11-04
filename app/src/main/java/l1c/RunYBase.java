@@ -1439,147 +1439,37 @@ public class RunYBase extends Application {
         return text == null ? "" : text.trim();
     }
 
-    private String getCommandPart() {
-        if (designerRadio.isSelected() || updateConfigRadio.isSelected())
-            return "DESIGNER";
+    private CommandBuilder.RunMode getRunMode() {
+        if (designerRadio.isSelected())
+            return CommandBuilder.RunMode.DESIGNER;
+        if (updateConfigRadio.isSelected())
+            return CommandBuilder.RunMode.UPDATE_CONFIG;
         if (thinRadio.isSelected())
-            return "ENTERPRISE";
+            return CommandBuilder.RunMode.THIN_CLIENT;
         if (thickOrdinaryRadio.isSelected())
-            return "ENTERPRISE /RunModeOrdinaryApplication";
-        return "ENTERPRISE /RunModeManagedApplication";
+            return CommandBuilder.RunMode.THICK_ORDINARY;
+        return CommandBuilder.RunMode.THICK_MANAGED;
     }
 
     /**
-     * Формирует строку запуска для указанной разрядности платформы
-     * 
-     * @param platformPath путь к exe файлу (с учётом разрядности)
-     * @param appArch      значение параметра /AppArch (x86 или x86_64)
-     * @param escaped      экранированный адрес базы
-     * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
-     * @param cred         учётные данные пользователя (могут быть null)
-     * @param isDesigner   запущен ли Конфигуратор
-     * @param isUpdate     нужна реструктуризация
-     * @return сформированная строка запуска
-     */
-     private String buildCommand(String platformPath, String appArch, String escaped,
-        String commandPart, UserCredentials cred, boolean isDesigner, boolean isUpdate) {
-        return buildCommandWithAddressParam(platformPath, appArch,
-                "/IBConnectionString \"" + escaped + "\"",
-                commandPart, cred, isDesigner, isUpdate);
-    }
-
-    /**
-     * Формирует строку запуска с произвольным указанием адреса базы
-     * (например, /IBConnectionString "...", /IBName "..." или /S "сервер\база").
+     * Создаёт построитель команд с учётом текущих опций интерфейса:
+     * приоритет разрядности платформы, режим отладки, очистка кэша
+     * и запуск внешней обработки.
      *
-     * @param platformPath путь к exe файлу (с учётом разрядности)
-     * @param appArch      значение параметра /AppArch (x86 или x86_64)
-     * @param addressParam готовый параметр адреса базы
-     * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
-     * @param cred         учётные данные пользователя (могут быть null)
-     * @param isDesigner   запущен ли Конфигуратор
-     * @param isUpdate     нужна реструктуризация
-     * @return сформированная строка запуска
+     * @param runMode режим запуска
+     * @return построитель, которому осталось задать адрес базы и учётные данные
      */
-     private String buildCommandWithAddressParam(String platformPath, String appArch, String addressParam,
-        String commandPart, UserCredentials cred, boolean isDesigner, boolean isUpdate) {
-        StringBuilder cmd = new StringBuilder();
-        cmd.append("\"").append(platformPath).append("\" ");
-        cmd.append(commandPart).append(" ");
-        cmd.append(addressParam);
+    private CommandBuilder newCommandBuilder(CommandBuilder.RunMode runMode) {
+        String processingPath = executeProcessingCheckbox.isSelected()
+                ? executeProcessingField.getText()
+                : null;
 
-        if (cred != null && !cred.getUsername().isEmpty()) {
-            cmd.append(" /N \"").append(cred.getUsername()).append("\"");
-            if (!cred.getPassword().isEmpty()) {
-                cmd.append(" /P \"").append(cred.getPassword()).append("\"");
-            }
-        }
-
-        if (priorityPlatformCheckbox.isSelected()) {
-            cmd.append(" /AppArch ").append(appArch);
-        }
-
-        // Режим отладки игнорируется для Конфигуратора и Реструктуризации
-        if (debugModeCheckbox.isSelected() && !isDesigner && !isUpdate) {
-            String debugParam = " /Debug -attach";
-            String protocol = debugProtocolCombo.getValue();
-            if (protocol != null && !"по умолчанию".equals(protocol)) {
-                debugParam += " " + protocol;
-            }
-            cmd.append(debugParam);
-        }
-
-        if (clearCacheCheckbox.isSelected()) {
-            cmd.append(" /ClearCache");
-        }
-        if (isUpdate) {
-                cmd.append(" /UpdateDBCfg -v2 -Server");}
-
-        if (executeProcessingCheckbox.isSelected()) {
-            String processingPath = executeProcessingField.getText();
-            if (processingPath != null && !processingPath.trim().isEmpty()) {
-                cmd.append(" /Execute \"").append(processingPath.trim()).append("\"");
-            }
-        }
-
-        return cmd.toString();
-    }
-
-    /**
-     * Формирует строку запуска с использованием /IBName (по имени информационной базы)
-     * 
-     * @param platformPath путь к exe файлу
-     * @param appArch      значение /AppArch
-     * @param ibName       экранированное имя базы в кавычках
-     * @param commandPart  часть команды (DESIGNER или ENTERPRISE ...)
-     * @param cred         учётные данные пользователя
-     * @param isDesigner   запущен ли Конфигуратор
-     * @param isUpdate     нужна реструктуризация
-     * @return сформированная строка запуска
-     */
-    private String buildCommandWithIBName(String platformPath, String appArch, String ibName,
-            String commandPart, UserCredentials cred, boolean isDesigner, boolean isUpdate) {
-        StringBuilder cmd = new StringBuilder();
-        cmd.append("\"").append(platformPath).append("\" ");
-        cmd.append(commandPart).append(" ");
-        cmd.append("/IBName ").append(ibName);
-
-        if (cred != null && !cred.getUsername().isEmpty()) {
-            cmd.append(" /N \"").append(cred.getUsername()).append("\"");
-            if (!cred.getPassword().isEmpty()) {
-                cmd.append(" /P \"").append(cred.getPassword()).append("\"");
-            }
-        }
-
-        if (priorityPlatformCheckbox.isSelected()) {
-            cmd.append(" /AppArch ").append(appArch);
-        }
-
-        // Режим отладки игнорируется для Конфигуратора и Реструктуризации
-        if (debugModeCheckbox.isSelected() && !isDesigner && !isUpdate) {
-            String debugParam = " /Debug -attach";
-            String protocol = debugProtocolCombo.getValue();
-            if (protocol != null && !"по умолчанию".equals(protocol)) {
-                debugParam += " " + protocol;
-            }
-            cmd.append(debugParam);
-        }
-
-        if (clearCacheCheckbox.isSelected()) {
-            cmd.append(" /ClearCache");
-        }
-        if (isUpdate) {
-            cmd.append(" /UpdateDBCfg -v2 -Server");
-        }
-
-        if (executeProcessingCheckbox.isSelected()) {
-            String processingPath = executeProcessingField.getText();
-            if (processingPath != null && !processingPath.trim().isEmpty()) {
-                cmd.append(" /Execute \"").append(processingPath.trim()).append("\"");
-            }
-        }
-
-        return cmd.toString();
+        return new CommandBuilder()
+                .runMode(runMode)
+                .appArchPriority(priorityPlatformCheckbox.isSelected())
+                .debug(debugModeCheckbox.isSelected(), debugProtocolCombo.getValue())
+                .clearCache(clearCacheCheckbox.isSelected())
+                .executeProcessing(processingPath);
     }
 
     private void handleGenerateCommand() {
@@ -1662,37 +1552,16 @@ public class RunYBase extends Application {
 
         addToHistory(text);
 
-        String commandPart = getCommandPart();
         outputArea86.setText("");
         outputArea.setText("");
 
-        String escaped = text.replace("\"", "\"\"");
+        CommandBuilder builder = newCommandBuilder(getRunMode())
+                .connectionString(text)
+                .credentials(cred)
+                .unlockCode(unlockCode);
 
-        boolean isDesigner = designerRadio.isSelected();
-        boolean isUpdate = updateConfigRadio.isSelected();
-
-        String cmd86 = buildCommand(
-                "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
-                "x86",
-                escaped,
-                commandPart,
-                cred,
-                isDesigner,
-                isUpdate);
-
-        String cmd64 = buildCommand(
-                "C:\\Program Files\\1cv8\\common\\1cestart.exe",
-                "x86_64",
-                escaped,
-                commandPart,
-                cred,
-                isDesigner,
-                isUpdate);
-
-        if (unlockCode != null && !unlockCode.isEmpty()) {
-            cmd86 += " /UC \"" + unlockCode + "\"";
-            cmd64 += " /UC \"" + unlockCode + "\"";
-        }
+        String cmd86 = builder.platform(CommandBuilder.PATH_1CESTART_X86, CommandBuilder.ARCH_X86).build();
+        String cmd64 = builder.platform(CommandBuilder.PATH_1CESTART_X64, CommandBuilder.ARCH_X64).build();
 
         outputArea86.setText(cmd86);
         outputArea.setText(cmd64);
@@ -1764,35 +1633,17 @@ public class RunYBase extends Application {
         }
             // Имя базы найдено — формируем команду с /IBName
             BaseEntry base = matches.get(0);
-            String escapedName = base.name.replace("\"", "\"\"");
-            String ibNameParam = "\"" + escapedName + "\"";
-
-            String commandPart = getCommandPart();
             outputArea86.setText("");
             outputArea.setText("");
 
             UserCredentials cred = credentialsManager.get(base.connect);
 
-            boolean isDesigner = designerRadio.isSelected();
-            boolean isUpdate = updateConfigRadio.isSelected();
+            CommandBuilder builder = newCommandBuilder(getRunMode())
+                    .ibName(base.name)
+                    .credentials(cred);
 
-            String cmd86 = buildCommandWithIBName(
-                    "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
-                    "x86",
-                    ibNameParam,
-                    commandPart,
-                    cred,
-                    isDesigner,
-                    isUpdate);
-
-            String cmd64 = buildCommandWithIBName(
-                    "C:\\Program Files\\1cv8\\common\\1cestart.exe",
-                    "x86_64",
-                    ibNameParam,
-                    commandPart,
-                    cred,
-                    isDesigner,
-                    isUpdate);
+            String cmd86 = builder.platform(CommandBuilder.PATH_1CESTART_X86, CommandBuilder.ARCH_X86).build();
+            String cmd64 = builder.platform(CommandBuilder.PATH_1CESTART_X64, CommandBuilder.ARCH_X64).build();
 
             outputArea86.setText(cmd86);
             outputArea.setText(cmd64);
@@ -1817,7 +1668,7 @@ public class RunYBase extends Application {
             return;
         }
 
-        String addressParam = buildShortAddressParam(text);
+        String addressParam = CommandBuilder.shortAddressParam(text);
         if (addressParam == null) {
             showAlert(Alert.AlertType.WARNING, "Предупреждение",
                     AppConstants.SHORT_ADDRESS_NOT_RECOGNIZED_WARNING);
@@ -1829,118 +1680,20 @@ public class RunYBase extends Application {
 
         addToHistory(text);
 
-        String commandPart = getCommandPart();
         outputArea86.setText("");
         outputArea.setText("");
 
-        boolean isDesigner = designerRadio.isSelected();
-        boolean isUpdate = updateConfigRadio.isSelected();
+        CommandBuilder builder = newCommandBuilder(getRunMode())
+                .address(addressParam)
+                .credentials(cred);
 
-        String cmd86 = buildCommandWithAddressParam(
-                "C:\\Program Files (x86)\\1cv8\\common\\1cestart.exe",
-                "x86",
-                addressParam,
-                commandPart,
-                cred,
-                isDesigner,
-                isUpdate);
-
-        String cmd64 = buildCommandWithAddressParam(
-                "C:\\Program Files\\1cv8\\common\\1cestart.exe",
-                "x86_64",
-                addressParam,
-                commandPart,
-                cred,
-                isDesigner,
-                isUpdate);
+        String cmd86 = builder.platform(CommandBuilder.PATH_1CESTART_X86, CommandBuilder.ARCH_X86).build();
+        String cmd64 = builder.platform(CommandBuilder.PATH_1CESTART_X64, CommandBuilder.ARCH_X64).build();
 
         outputArea86.setText(cmd86);
         outputArea.setText(cmd64);
 
         showAutoClosingAlert("Адрес указан как «" + addressParam + "»", "Готово", 2);
-    }
-
-    /**
-     * Формирует краткий параметр адреса базы:
-     * - /S "сервер\база" — для серверной базы;
-     * - /F "каталог"     — для файловой базы.
-     *
-     * Поддерживаемые форматы адреса:
-     * - серверная: Srvr="сервер";Ref="база", сервер\база (в том числе с префиксом /S);
-     * - файловая:  File="каталог", путь к каталогу (локальный или UNC).
-     *
-     * @return готовый параметр адреса или null, если формат не распознан
-     */
-    private String buildShortAddressParam(String text) {
-        String t = text == null ? "" : text.trim();
-        if (t.isEmpty())
-            return null;
-
-        // Файловая база, заданная строкой подключения File="..."
-        java.util.regex.Matcher fileM = java.util.regex.Pattern
-                .compile("File\\s*=\\s*\"([^\"]*)\"").matcher(t);
-        if (fileM.find()) {
-            String dir = fileM.group(1).trim().replace('/', '\\');
-            // Если указан файл базы 1Cv8.1CD — оставляем только каталог
-            if (dir.toLowerCase(java.util.Locale.ROOT).endsWith("\\1cv8.1cd")) {
-                dir = dir.substring(0, dir.length() - "\\1cv8.1cd".length());
-            }
-            if (dir.isEmpty())
-                return null;
-            return "/F \"" + dir.replace("\"", "\"\"") + "\"";
-        }
-
-        // Файловая база — путь к каталогу (локальный C:\... или UNC \\сервер\папка)
-        String dir = StringExtractor.extractDirectoryPath(t);
-        if (dir != null && !dir.isEmpty())
-            return "/F \"" + dir.replace("\"", "\"\"") + "\"";
-
-        // Серверная база — Srvr="...";Ref="..." или сервер\база
-        String[] serverBase = extractServerAndBase(t);
-        if (serverBase != null && !serverBase[0].isEmpty() && !serverBase[1].isEmpty()) {
-            String serverAddress = serverBase[0] + "\\" + serverBase[1];
-            return "/S \"" + serverAddress.replace("\"", "\"\"") + "\"";
-        }
-
-        return null;
-    }
-
-    /**
-     * Извлекает сервер и имя базы из адреса.
-     * Поддерживаемые форматы:
-     * - строка подключения: Srvr="сервер";Ref="база";
-     * - адрес вида сервер\база (в том числе с префиксом /S).
-     *
-     * @return массив {сервер, база} или null, если формат не распознан
-     */
-    private String[] extractServerAndBase(String text) {
-        String t = text == null ? "" : text.trim();
-        if (t.isEmpty())
-            return null;
-
-        // Убираем возможный префикс /S
-        if (t.length() > 2 && t.charAt(0) == '/' && (t.charAt(1) == 'S' || t.charAt(1) == 's')) {
-            t = t.substring(2).trim();
-        }
-        // Убираем обрамляющие кавычки
-        if (t.length() >= 2 && t.startsWith("\"") && t.endsWith("\"")) {
-            t = t.substring(1, t.length() - 1).trim();
-        }
-
-        // Строка подключения: Srvr="сервер";Ref="база";
-        java.util.regex.Matcher m = java.util.regex.Pattern
-                .compile("Srvr\\s*=\\s*\"([^\"]*)\"\\s*;\\s*Ref\\s*=\\s*\"([^\"]*)\"")
-                .matcher(t);
-        if (m.find())
-            return new String[] { m.group(1).trim(), m.group(2).trim() };
-
-        // Адрес вида сервер\база (UNC-пути \\сервер\папка — это файловые базы, не подходит)
-        int slashIdx = t.indexOf('\\');
-        if (slashIdx > 0 && !t.startsWith("\\\\")) {
-            return new String[] { t.substring(0, slashIdx).trim(), t.substring(slashIdx + 1).trim() };
-        }
-
-        return null;
     }
 
     /**
