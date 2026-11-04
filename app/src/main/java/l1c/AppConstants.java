@@ -6,7 +6,7 @@ public class AppConstants {
     
     // Версия приложения
     // Формат: год.месяц.день.порядковый номер
-    public static final String VERSION = "2026.11.4.21";
+    public static final String VERSION = "2026.11.4.22";
     
     // @formatter:off
     public static final String APP_DATA_DIR        = ".1c_launcher";
@@ -55,6 +55,9 @@ public class AppConstants {
     public static final String WINDOW_TITLE =
             "Построитель команды запуска 1С (вер. %s) - Примеры: "
             + "File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";";
+
+    // Режим запуска не найден в строке команды
+    public static final String MODE_NOT_SPECIFIED = "не указан";
 
     // Текст окна "О программе" (%s - версия приложения)
     public static final String ABOUT_TITLE = "О программе";

@@ -77,6 +77,13 @@ public class RunYBase extends Application {
     private Label baseNameLabel;
     private TextArea baseNoteLabel;
 
+    // Метки заголовков блоков команд (x86 и x64) — в них же выводим базу и режим
+    private Label platformLabel86;
+    private Label platformLabel64;
+    private String platformLabelBase86 = "";
+    private String platformLabelBase64 = "";
+
+
     // Для проверки есть адрес в списке зарегистрированных баз
     private Map<String, String> registeredAddressMap = new HashMap<>();
 
@@ -762,11 +769,21 @@ public class RunYBase extends Application {
      * @param bits         разрядность (32 или 64)
      */
     private void createPlatformPanel(String platformName, int bits) {
-        // Метка с названием платформы
+        // Метка с названием платформы и базой/режимом
         String label = String.format("Команда для %d-битной платформы (%s):", bits, platformName);
         Label platformLabel = new Label(label);
         platformLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
         contentBox.getChildren().add(platformLabel);
+
+        // Сохраняем ссылку на label для обновления
+        if (bits == 32) {
+            platformLabel86 = platformLabel;
+            platformLabelBase86 = label;
+        } else {
+            platformLabel64 = platformLabel;
+            platformLabelBase64 = label;
+        }
+
 
         // HBox с TextArea, кнопкой истории и кнопками Run/Copy
         HBox platformRow = new HBox(5);
@@ -805,7 +822,13 @@ public class RunYBase extends Application {
             outputArea = textArea;
         }
 
+        // Слушатель изменения текста команды — обновляет базу и режим в заголовке
+        textArea.textProperty().addListener((obs, oldText, newText) -> {
+            updatePlatformCommandLabel(platformName, newText);
+        });
+
         // Создаём панель с кнопками
+
         VBox buttonPanel = createRunCopyButtons(textArea, platformName);
         platformRow.getChildren().addAll(textArea, historyButton, buttonPanel);
         contentBox.getChildren().add(platformRow);
@@ -1979,6 +2002,109 @@ public class RunYBase extends Application {
             return "Тонкий клиент";
         }
         return "";
+    }
+
+    /**
+     * Извлекает адрес базы из строки команды запуска.
+     * Ищет параметры /IBConnectionString, /F, /S, /IBName.
+     */
+    private String extractBaseFromCommand(String command) {
+        if (command == null || command.trim().isEmpty())
+            return "";
+
+        // /IBConnectionString "Srvr=""server"";Ref=""base"""
+        String conn = extractQuotedAfter(command, "/IBConnectionString");
+        if (conn != null)
+            return conn;
+
+        // /F "каталог"
+        String f = extractQuotedAfter(command, "/F");
+        if (f != null)
+            return "/F \"" + f + "\"";
+
+        // /S "сервер\база"
+        String s = extractQuotedAfter(command, "/S");
+        if (s != null)
+            return "/S \"" + s + "\"";
+
+        // /IBName "ИмяБазы"
+        String ibName = extractQuotedAfter(command, "/IBName");
+        if (ibName != null)
+            return ibName;
+
+        return "";
+    }
+
+    /**
+     * Извлекает значение параметра в кавычках из строки команды.
+     * Поддерживает экранирование кавычек через "" (двойная кавычка внутри строки).
+     *
+     * @return значение без внешних кавычек (с восстановленными ""), или null если параметр не найден
+     */
+    private String extractQuotedAfter(String command, String param) {
+        String lower = command.toLowerCase(Locale.ROOT);
+        String paramLower = param.toLowerCase(Locale.ROOT);
+        int idx = 0;
+        while (true) {
+            int pos = lower.indexOf(paramLower, idx);
+            if (pos < 0)
+                return null;
+            // Проверяем, что это целый параметр (перед ним пробел или начало строки)
+            if (pos == 0 || Character.isWhitespace(command.charAt(pos - 1))) {
+                int after = pos + param.length();
+                // Пропускаем пробелы
+                while (after < command.length() && Character.isWhitespace(command.charAt(after)))
+                    after++;
+                if (after < command.length() && command.charAt(after) == '"') {
+                    int i = after + 1;
+                    StringBuilder val = new StringBuilder();
+                    while (i < command.length()) {
+                        char c = command.charAt(i);
+                        if (c == '"') {
+                            if (i + 1 < command.length() && command.charAt(i + 1) == '"') {
+                                val.append('"');
+                                i += 2;
+                            } else {
+                                return val.toString();
+                            }
+                        } else {
+                            val.append(c);
+                            i++;
+                        }
+                    }
+                    return val.toString();
+                }
+            }
+            idx = pos + 1;
+        }
+    }
+
+    /**
+     * Обновляет заголовок блока команд — извлекает базу и режим из строки команды.
+     * Если команда пуста — возвращается исходный заголовок без сведений о базе и режиме.
+     */
+    private void updatePlatformCommandLabel(String platform, String command) {
+        Label targetLabel = "x86".equals(platform) ? platformLabel86 : platformLabel64;
+        if (targetLabel == null)
+            return;
+
+        String baseKey = "x86".equals(platform) ? platformLabelBase86 : platformLabelBase64;
+        String newFullText = baseKey;
+
+        if (command != null && !command.trim().isEmpty()) {
+            String base = extractBaseFromCommand(command);
+            if (base.isEmpty())
+                base = getCurrentAddress();
+            String mode = getRunModeFromCommand(command);
+            if (mode.isEmpty())
+                mode = AppConstants.MODE_NOT_SPECIFIED;
+            newFullText = baseKey + " | База: " + base + " | Режим: " + mode;
+        }
+
+        // Обновляем только если текст изменился
+        if (!newFullText.equals(targetLabel.getText())) {
+            targetLabel.setText(newFullText);
+        }
     }
 
     private void runCommand(String command, String platform) {
