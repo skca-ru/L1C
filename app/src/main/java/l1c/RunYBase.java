@@ -594,11 +594,15 @@ public class RunYBase extends Application {
         MenuItem open1CStartItem = new MenuItem("О_ткрыть стандартный запуск 1С");
         open1CStartItem.setOnAction(e -> launchStandard1CStart());
 
+        MenuItem msSqlAdminItem = new MenuItem("_Утилита администрирования MS SQL");
+        msSqlAdminItem.setOnAction(e -> launchMsSqlAdminTool());
+
         MenuItem exitItem = new MenuItem("Вы_ход");
         exitItem.setAccelerator(KeyCombination.valueOf("Shortcut+Q"));
         exitItem.setOnAction(e -> Platform.exit());
 
-        fileMenu.getItems().addAll(open1CStartItem, new javafx.scene.control.SeparatorMenuItem(), exitItem);
+        fileMenu.getItems().addAll(open1CStartItem, msSqlAdminItem,
+                new javafx.scene.control.SeparatorMenuItem(), exitItem);
         menuBar.getMenus().add(fileMenu);
 
         // Меню Помощь
@@ -1241,6 +1245,113 @@ public class RunYBase extends Application {
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Ошибка",
                     "Ошибка запуска стандартного 1cestart.exe:\n" + e.getMessage());
+        }
+    }
+
+    /**
+     * Запускает утилиту администрирования MS SQL: SQL Server Management Studio
+     * (Ssms.exe)
+     */
+    private void launchMsSqlAdminTool() {
+        try {
+            String ssmsPath = findSsmsPath();
+            if (ssmsPath != null) {
+                List<String> command = new ArrayList<>();
+                command.add(ssmsPath);
+                new ProcessBuilder(command).start();
+                showAutoClosingAlert("SQL Server Management Studio запущен!\nПуть: " + ssmsPath + "\n",
+                        "Запуск SSMS", 3);
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Запуск SSMS", "Не найден путь!");
+            }
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Ошибка",
+                    "Ошибка запуска утилиты администрирования MS SQL:\n" + e.getMessage());
+        }
+    }
+
+    /**
+     * Ищет Ssms.exe в типовых местах установки SSMS. Обходятся оба каталога
+     * Program Files; внутри каталога сначала берутся версии с большим номером.
+     * Возвращает путь к первой найденной программе или null.
+     */
+    private String findSsmsPath() {
+        for (String root : new String[] { "C:\\Program Files", "C:\\Program Files (x86)" }) {
+            List<File> sqlDirs = new ArrayList<>();
+            File[] dirs = new File(root).listFiles(File::isDirectory);
+            if (dirs != null) {
+                for (File dir : dirs) {
+                    if (dir.getName().toLowerCase(Locale.ROOT).startsWith("microsoft sql server")) {
+                        sqlDirs.add(dir);
+                    }
+                }
+            }
+            sqlDirs.sort(Comparator.comparingInt((File f) -> versionNumberFromName(f.getName())).reversed());
+            for (File dir : sqlDirs) {
+                String path = ssmsInDirectory(dir);
+                if (path != null) {
+                    return path;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Возвращает путь к Ssms.exe внутри каталога установки или null.
+     * Поддержаны две раскладки: современная
+     * &lt;каталог&gt;\Common7\IDE\Ssms.exe (SSMS 19 и новее) и старая
+     * &lt;каталог&gt;\&lt;версия&gt;\Tools\Binn\[ManagementStudio]Ssms.exe.
+     */
+    private String ssmsInDirectory(File installDir) {
+        File modern = new File(installDir, "Common7\\IDE\\Ssms.exe");
+        if (modern.isFile()) {
+            return modern.getAbsolutePath();
+        }
+
+        File[] versionDirs = installDir.listFiles(File::isDirectory);
+        if (versionDirs == null) {
+            return null;
+        }
+        Arrays.sort(versionDirs, Comparator.comparingInt((File f) -> versionNumberFromName(f.getName())).reversed());
+        for (File versionDir : versionDirs) {
+            File managementStudio = new File(versionDir, "Tools\\Binn\\ManagementStudio\\Ssms.exe");
+            if (managementStudio.isFile()) {
+                return managementStudio.getAbsolutePath();
+            }
+            File classic = new File(versionDir, "Tools\\Binn\\Ssms.exe");
+            if (classic.isFile()) {
+                return classic.getAbsolutePath();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Первое число в имени каталога или файла (например,
+     * «Microsoft SQL Server Management Studio 22» → 22, «150» → 150,
+     * «SQLServerManager17.msc» → 17). Нужно, чтобы из нескольких установок
+     * выбрать самую новую. Если цифр нет — 0.
+     */
+    private int versionNumberFromName(String name) {
+        int start = -1;
+        for (int i = 0; i < name.length(); i++) {
+            if (Character.isDigit(name.charAt(i))) {
+                start = i;
+                break;
+            }
+        }
+        if (start < 0) {
+            return 0;
+        }
+        int end = start;
+        while (end < name.length() && Character.isDigit(name.charAt(end))) {
+            end++;
+        }
+        try {
+            return Integer.parseInt(name.substring(start, Math.min(end, start + 9)));
+        } catch (NumberFormatException e) {
+            return 0;
         }
     }
 
