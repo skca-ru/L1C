@@ -25,6 +25,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
+
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -317,13 +318,11 @@ public final class UserCredentialsDialog {
         content.setPadding(new Insets(10));
 
         Label nameLabel = new Label("Имя пользователя:");
-        TextField nameField = new TextField();
+        ComboBox<String> nameBox = createUserNameField(existing != null ? existing.getUsername() : null);
+        nameBox.setPrefWidth(300);
         if (existing != null) {
-            nameField.setText(existing.getUsername());
-            nameField.setEditable(false); // имя нельзя менять
+            nameBox.setDisable(true); // имя нельзя менять
         }
-        nameField.setPromptText("Имя пользователя");
-        nameField.setPrefWidth(300);
 
         Label passLabel = new Label("Пароль:");
         PasswordField passField = new PasswordField();
@@ -338,12 +337,14 @@ public final class UserCredentialsDialog {
             mainCheck.setSelected(existing.isMain());
         }
 
-        content.getChildren().addAll(nameLabel, nameField, passLabel, passField, mainCheck);
+        content.getChildren().addAll(nameLabel, nameBox, passLabel, passField, mainCheck);
         editDialog.getDialogPane().setContent(content);
 
         editDialog.showAndWait().ifPresent(result -> {
             if (result == okType) {
-                String username = nameField.getText().trim();
+                // При редактировании имя неизменно, поле отключено
+                String username = existing != null ? existing.getUsername() : getUserName(nameBox);
+
                 if (username.isEmpty()) {
                     RunYBase.showAlert(Alert.AlertType.WARNING, "Предупреждение", "Введите имя пользователя!");
                     return;

@@ -20,7 +20,6 @@ public class AppConstants {
     // Часто используемые имена пользователей 1С — предлагаются к выбору в диалогах учётных данных
     public static final List<String> COMMON_USER_NAMES = List.of("Администратор", "Админ", "admin");
 
-
     // Цвета для рамки при фокусе
     public static final String FOCUS_BORDER_COLOR  = "#0078D7";
     public static final String NORMAL_BORDER_COLOR = "#a0a0a0";

@@ -115,7 +115,7 @@ public final class RunYBaseHelpTexts {
             """;
 
     public static final String BASE_CONNECTION_PROMPT = """
-            для файловой 'File="C:\1C\Base";' для серверной 'Srvr="127.0.0.1";Ref="Base";'
+            для файловой 'File="C:\\1C\\Base";' для серверной 'Srvr="127.0.0.1";Ref="Base";'
             """;
 
     public static final String WARNING_NO_ADDRESS = """
@@ -190,6 +190,12 @@ public final class RunYBaseHelpTexts {
 
     // --- Заголовок блока пользователей в попапе кнопки «Сформировать» ---
     public static final String GENERATE_WITH_USER_HEADER = "Сформировать с пользователем:";
+
+    // --- Подсказка к полю имени пользователя (%s — список часто используемых имён) ---
+    public static final String USER_NAME_COMMON_TOOLTIP = """
+            Можно выбрать имя из списка часто используемых или ввести своё.
+            Часто используемые: %s
+            """;
 
     private RunYBaseHelpTexts() {
         // Конструктор для предотвращения создания экземпляров
