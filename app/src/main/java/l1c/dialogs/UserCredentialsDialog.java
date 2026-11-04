@@ -1,34 +1,66 @@
 package l1c.dialogs;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import l1c.AppConstants;
 import l1c.RunYBase;
 import l1c.RunYBaseHelpTexts;
+import l1c.UiFactory;
 import l1c.UserCredentials;
 
 
 /**
- * Диалог ввода и сохранения учётных данных пользователя для текущей базы.
+ * Диалог управления пользователями для текущего адреса.
+ *
+ * <p><b>{@link #show(RunYBase)}</b> — простой диалог редактирования
+ * главного (основного) пользователя: имя и пароль. Открывается по кнопке
+ * «Пользователь» и работает с основным пользователем так же, как раньше.</p>
+ *
+ * <p><b>{@link #showManager(RunYBase)}</b> — менеджер списка пользователей
+ * (добавить/редактировать/удалить/сделать главным).
+ * Открывается через контекстное меню поля адреса.</p>
  */
 public final class UserCredentialsDialog {
 
     private UserCredentialsDialog() {
     }
 
+    // ========================================================================
+    // Публичный API
+    // ========================================================================
+
+    /**
+     * Открывает простой диалог редактирования главного пользователя.
+     * Используется кнопкой «Пользователь».
+     */
     public static void show(RunYBase owner) {
         String address = owner.getCurrentAddress();
         if (address.isEmpty()) {
@@ -36,9 +68,9 @@ public final class UserCredentialsDialog {
             return;
         }
 
-        UserCredentials existing = owner.getCredentialsManager().get(address);
-        String currentUsername = existing != null ? existing.getUsername() : "";
-        String currentPassword = existing != null ? existing.getPassword() : "";
+        UserCredentials mainUser = owner.getCredentialsManager().getMain(address);
+        String currentUsername = mainUser != null ? mainUser.getUsername() : "";
+        String currentPassword = mainUser != null ? mainUser.getPassword() : "";
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Учётные данные для базы");
@@ -72,13 +104,20 @@ public final class UserCredentialsDialog {
                 String password = passwordField.getText();
 
                 if (!username.isEmpty()) {
-                    owner.getCredentialsManager().put(address, new UserCredentials(username, password));
+                    owner.getCredentialsManager().putMainUser(address, new UserCredentials(username, password, true));
                     owner.showAutoClosingAlert("Учётные данные сохранены для адреса:\n" + address,
                             "Пользователь: " + username, 3);
-                } else if (existing != null) {
-                    owner.getCredentialsManager().remove(address);
-                    RunYBase.showAlert(Alert.AlertType.INFORMATION, "Удалено",
-                            "Учётные данные удалены для адреса:\n" + address);
+                } else if (mainUser != null) {
+                    // Пустое имя — удаляем главного пользователя. Пока у базы есть другие
+                    // пользователи, главный не удаляется: нужно сначала сделать главным другого.
+                    boolean removed = owner.getCredentialsManager().removeUser(address, mainUser.getUsername());
+                    if (removed) {
+                        RunYBase.showAlert(Alert.AlertType.INFORMATION, "Удалено",
+                                "Учётные данные удалены для адреса:\n" + address);
+                    } else {
+                        RunYBase.showAlert(Alert.AlertType.WARNING, "Удаление запрещено",
+                                String.format(RunYBaseHelpTexts.WARNING_MAIN_USER_IN_USE, mainUser.getUsername()));
+                    }
                 }
                 owner.updateUserButtonState();
             }
@@ -86,6 +125,7 @@ public final class UserCredentialsDialog {
     }
 
     /**
+<<<<<<< HEAD
      * Создаёт поле имени пользователя со списком часто используемых имён.
      * Значение можно выбрать из раскрытого списка или ввести с клавиатуры.
      */
@@ -129,5 +169,220 @@ public final class UserCredentialsDialog {
             typed = box.getValue();
         }
         return typed == null ? "" : typed.trim();
+    }
+
+    /**
+     * Открывает менеджер списка пользователей.
+     * Используется через контекстное меню поля адреса.
+     */
+    public static void showManager(RunYBase owner) {
+        String address = owner.getCurrentAddress();
+        if (address.isEmpty()) {
+            RunYBase.showAlert(Alert.AlertType.WARNING, "Предупреждение", "Сначала введите адрес базы данных!");
+            return;
+        }
+
+        List<UserCredentials> users = owner.getCredentialsManager().getUsers(address);
+        if (users == null) {
+            users = new ArrayList<>();
+        }
+        ObservableList<UserCredentials> list = FXCollections.observableArrayList(users);
+
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(owner.getMainStage());
+        dialog.setTitle("Пользователи для базы — " + address);
+
+        // Список пользователей
+        ListView<UserCredentials> listView = new ListView<>(list);
+        listView.setCellFactory(lv -> new ListCell<UserCredentials>() {
+            @Override
+            protected void updateItem(UserCredentials item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
+                String mark = item.isMain() ? "★ " : "  ";
+                String pass = item.getPassword().isEmpty() ? RunYBaseHelpTexts.USER_NO_PASS_LABEL
+                        : RunYBaseHelpTexts.USER_HAS_PASS_LABEL;
+                setText(mark + item.getUsername() + pass);
+            }
+        });
+        listView.setMaxWidth(Double.MAX_VALUE);
+        listView.setPrefHeight(150);
+
+        // Кнопки управления
+        Button mainButton = UiFactory.createDialogConfirmButton(RunYBaseHelpTexts.USER_LIST_SET_MAIN);
+        Button removeButton = UiFactory.createDialogConfirmButton(RunYBaseHelpTexts.USER_LIST_DELETE);
+        // Кнопка «Сделать главным» не нужна, если выбора нет или выбран уже главный.
+        // Кнопка «Удалить» не нужна, если выбора нет, а также если выбран главный
+        // при наличии других пользователей: сначала нужно сделать главным другого.
+        Runnable refreshButtons = () -> {
+            UserCredentials sel = listView.getSelectionModel().getSelectedItem();
+            mainButton.setDisable(sel == null || sel.isMain());
+            removeButton.setDisable(sel == null || (sel.isMain() && list.size() > 1));
+        };
+        listView.getSelectionModel().selectedItemProperty()
+                .addListener((obs, oldSel, newSel) -> refreshButtons.run());
+        refreshButtons.run();
+
+        mainButton.setOnAction(e -> {
+            UserCredentials sel = listView.getSelectionModel().getSelectedItem();
+            if (sel == null || sel.isMain()) {
+                return;
+            }
+            // Меняем только флаг: порядок списка и выделение остаются прежними
+            sel.setMain(true);
+            for (UserCredentials u : list) {
+                if (u != sel) {
+                    u.setMain(false);
+                }
+            }
+            listView.refresh();
+            refreshButtons.run();
+        });
+
+        Button addButton = UiFactory.createDialogConfirmButton(RunYBaseHelpTexts.USER_LIST_ADD);
+        addButton.setOnAction(e -> {
+            openEditDialog(owner, listView, null, dialog);
+            refreshButtons.run();
+        });
+
+        Button editButton = UiFactory.createDialogConfirmButton(RunYBaseHelpTexts.USER_LIST_EDIT);
+        editButton.setOnAction(e -> {
+            UserCredentials sel = listView.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                RunYBase.showAlert(Alert.AlertType.WARNING, "Предупреждение", "Выберите пользователя для редактирования!");
+                return;
+            }
+            openEditDialog(owner, listView, sel, dialog);
+            refreshButtons.run();
+        });
+
+        removeButton.setOnAction(e -> {
+            UserCredentials sel = listView.getSelectionModel().getSelectedItem();
+            // Главный удаляется только когда других пользователей нет —
+            // то же правило, что в CredentialsManager.removeUser
+            if (sel == null || (sel.isMain() && list.size() > 1)) {
+                return;
+            }
+            list.remove(sel);
+            listView.refresh();
+            refreshButtons.run();
+        });
+
+        Button closeBtn = UiFactory.createDialogCancelButton(RunYBaseHelpTexts.USER_LIST_CLOSE);
+        closeBtn.setOnAction(e -> {
+            owner.getCredentialsManager().putUsers(address, new ArrayList<>(list));
+            owner.updateUserButtonState();
+            dialog.close();
+        });
+
+        HBox buttonPanel = new HBox(10, addButton, editButton, removeButton, mainButton, closeBtn);
+        buttonPanel.setAlignment(Pos.CENTER);
+        buttonPanel.setPadding(new Insets(10, 0, 0, 0));
+
+        // Для адаптации к ширине окна
+        HBox.setHgrow(listView, Priority.ALWAYS);
+
+        VBox pane = new VBox(10, listView, buttonPanel);
+        pane.setPadding(new Insets(10));
+        pane.setStyle("-fx-background-color: " + AppConstants.COLOR_BG + ";");
+
+        Scene scene = new Scene(pane, 550, 380);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    // ========================================================================
+    // Внутренние методы менеджера
+    // ========================================================================
+
+    /**
+     * Открывает диалог редактирования/добавления пользователя (для менеджера).
+     */
+    private static void openEditDialog(RunYBase owner, ListView<UserCredentials> listView,
+            UserCredentials existing, Stage parent) {
+        Dialog<ButtonType> editDialog = new Dialog<>();
+        editDialog.initOwner(parent);
+        editDialog.initModality(Modality.APPLICATION_MODAL);
+        editDialog.setTitle(existing == null ? "Добавить пользователя" : "Редактировать пользователя");
+
+        ButtonType okType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+        editDialog.getDialogPane().getButtonTypes().addAll(okType, cancelType);
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(10));
+
+        Label nameLabel = new Label("Имя пользователя:");
+        TextField nameField = new TextField();
+        if (existing != null) {
+            nameField.setText(existing.getUsername());
+            nameField.setEditable(false); // имя нельзя менять
+        }
+        nameField.setPromptText("Имя пользователя");
+        nameField.setPrefWidth(300);
+
+        Label passLabel = new Label("Пароль:");
+        PasswordField passField = new PasswordField();
+        if (existing != null) {
+            passField.setText(existing.getPassword());
+        }
+        passField.setPromptText("Пароль");
+        passField.setPrefWidth(300);
+
+        CheckBox mainCheck = new CheckBox("Главный (по умолчанию)");
+        if (existing != null) {
+            mainCheck.setSelected(existing.isMain());
+        }
+
+        content.getChildren().addAll(nameLabel, nameField, passLabel, passField, mainCheck);
+        editDialog.getDialogPane().setContent(content);
+
+        editDialog.showAndWait().ifPresent(result -> {
+            if (result == okType) {
+                String username = nameField.getText().trim();
+                if (username.isEmpty()) {
+                    RunYBase.showAlert(Alert.AlertType.WARNING, "Предупреждение", "Введите имя пользователя!");
+                    return;
+                }
+
+                ObservableList<UserCredentials> list = listView.getItems();
+
+                if (existing != null) {
+                    // Обновляем существующего пользователя (заменяем объект)
+                    UserCredentials updated = new UserCredentials(
+                            existing.getUsername(), passField.getText(), mainCheck.isSelected());
+                    int idx = list.indexOf(existing);
+                    if (idx >= 0) {
+                        list.set(idx, updated);
+                    }
+                    // Снять флаг главного у остальных
+                    if (mainCheck.isSelected()) {
+                        for (UserCredentials u : list) {
+                            if (u != updated) {
+                                u.setMain(false);
+                            }
+                        }
+                        // Порядок списка не меняем — выделение остаётся на этом пользователе
+                    }
+                } else {
+                    // Добавляем нового
+                    UserCredentials newUser = new UserCredentials(
+                            username, passField.getText(), mainCheck.isSelected());
+                    if (mainCheck.isSelected()) {
+                        for (UserCredentials u : list) {
+                            u.setMain(false);
+                        }
+                    }
+                    list.add(newUser);
+                    // Порядок списка не меняем — выделение остаётся на этом пользователе
+                }
+
+                listView.refresh();
+            }
+        });
     }
 }

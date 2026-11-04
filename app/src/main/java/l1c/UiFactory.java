@@ -143,6 +143,31 @@ public final class UiFactory {
     }
 
     /**
+     * Кнопка отмены/закрытия в диалогах.
+     * Нейтральный серый стиль для отличия от кнопки подтверждения.
+     *
+     * @param text текст кнопки
+     * @return стилизованная кнопка
+     */
+    public static Button createDialogCancelButton(String text) {
+        Button button = createDialogButton(text);
+        button.setStyle(String.format("""
+                -fx-background-color: %s;
+                -fx-text-fill: %s;
+                -fx-font-size: 12px;
+                -fx-border-color: %s;
+                -fx-border-width: 1px;
+                -fx-border-radius: %dpx;
+                -fx-background-radius: %dpx;
+                -fx-min-width: %dpx;
+                -fx-min-height: %dpx;""",
+                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_TEXT_FG,
+                AppConstants.COLOR_BUTTON_BORDER, DIALOG_CORNER_RADIUS, DIALOG_CORNER_RADIUS,
+                DIALOG_BUTTON_WIDTH, MIN_DIALOG_BUTTON_HEIGHT));
+        return button;
+    }
+
+    /**
      * Создаёт плоскую кнопку (белый фон, серая рамка) — стиль полей ввода.
      *
      * @param text текст кнопки

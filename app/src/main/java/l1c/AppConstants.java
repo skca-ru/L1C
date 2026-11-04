@@ -38,6 +38,7 @@ public class AppConstants {
     public static final String COLOR_PANEL_BG        = "#FFFFFF";
     public static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
     public static final String COLOR_USER_NO_CRED    = "#F3E4BC";
+    public static final String COLOR_USER_MULTI_CRED = "#A8C8E8";
 
     // Форматирование краткого адреса базы в команде запуска
     public static final String GENERATE_SHORT_ADDRESS_MENU_TEXT = "Адрес в виде /SСервер\\База или /FКаталог";
