@@ -1718,7 +1718,7 @@ public class RunYBase extends Application {
         if (command == null || command.trim().isEmpty())
             return "";
 
-        List<String> args = parseCommand(command);
+        List<String> args = CommandBuilder.parse(command);
         String mode = "";
         boolean runOrdinary = false;
         boolean runManaged = false;
@@ -1773,12 +1773,12 @@ public class RunYBase extends Application {
         // /F "каталог"
         String f = extractQuotedAfter(command, "/F");
         if (f != null)
-            return "/F \"" + f + "\"";
+            return "/F " + CommandBuilder.quoted(f);
 
         // /S "сервер\база"
         String s = extractQuotedAfter(command, "/S");
         if (s != null)
-            return "/S \"" + s + "\"";
+            return "/S " + CommandBuilder.quoted(s);
 
         // /IBName "ИмяБазы"
         String ibName = extractQuotedAfter(command, "/IBName");
@@ -1873,7 +1873,10 @@ public class RunYBase extends Application {
             debugArea.appendText("=== Запуск (" + platform + ") ===\nКоманда: " + command + "\n");
         }
         try {
-            List<String> args = parseCommand(command);
+            // Команда отдаётся целиком в cmd.exe, а не списком разобранных аргументов:
+            // JDK не экранирует кавычки внутри аргумента, поэтому адрес базы
+            // дошёл бы до 1С без вложенных кавычек (см. CommandBuilder.toProcessCommand).
+            List<String> args = CommandBuilder.toProcessCommand(command);
             ProcessBuilder pb = new ProcessBuilder(args);
             pb.redirectErrorStream(true);
             Process process = pb.start();
@@ -1895,7 +1898,11 @@ public class RunYBase extends Application {
                                 "Запуск 1С", 5);
                     }
                 } else {
-                    showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка запуска " + mode + "!\nКод: " + code);
+                    // Вывод процесса полезен: cmd.exe пишет в него текст ошибки,
+                    // например когда путь к платформе указан неверно.
+                    String processOutput = output.toString().trim();
+                    showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка запуска " + mode + "!\nКод: " + code
+                            + (processOutput.isEmpty() ? "" : "\n\nВывод процесса:\n" + processOutput));
                 }
             } else {
                 if (SHOW_RUN_MESSAGE) {
@@ -2005,35 +2012,6 @@ public class RunYBase extends Application {
         double y = anchorBottom - content.getHeight() - 20;
         popup.show(anchor, x, y);
         countdown.play();
-    }
-
-    private static List<String> parseCommand(String command) {
-        List<String> args = new ArrayList<>();
-        StringBuilder cur = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < command.length(); i++) {
-            char c = command.charAt(i);
-            if (c == '"') {
-                inQuotes = !inQuotes;
-                continue;
-            }
-            if (c == ' ' && !inQuotes) {
-                if (cur.length() > 0) {
-                    args.add(cur.toString());
-                    cur.setLength(0);
-                }
-                continue;
-            }
-            cur.append(c);
-        }
-        if (cur.length() > 0)
-            args.add(cur.toString());
-        for (int i = 0; i < args.size(); i++) {
-            String a = args.get(i);
-            if (a.startsWith("\"") && a.endsWith("\"") && a.length() > 1)
-                args.set(i, a.substring(1, a.length() - 1));
-        }
-        return args;
     }
 
     /**
