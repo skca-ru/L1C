@@ -33,6 +33,7 @@ import javafx.animation.Timeline;
 
 import l1c.dialogs.CommandHistoryDialog;
 import l1c.dialogs.DatabaseSelectionDialog;
+import l1c.dialogs.IdentifierDialog;
 import l1c.dialogs.NoteDialog;
 import l1c.dialogs.SavedUsersDialog;
 import l1c.dialogs.UserCredentialsDialog;
@@ -611,6 +612,16 @@ public class RunYBase extends Application {
         fileMenu.getItems().addAll(open1CStartItem, msSqlAdminItem,
                 new javafx.scene.control.SeparatorMenuItem(), exitItem);
         menuBar.getMenus().add(fileMenu);
+
+        // Меню Инструменты
+        Menu toolsMenu = new Menu("_Инструменты");
+        toolsMenu.setStyle("-fx-padding: 5 10 5 10;");
+
+        MenuItem identifierItem = new MenuItem("Сформировать _идентификатор...");
+        identifierItem.setOnAction(e -> IdentifierDialog.show(this));
+        toolsMenu.getItems().add(identifierItem);
+
+        menuBar.getMenus().add(toolsMenu);
 
         // Меню Помощь
         Menu helpMenu = new Menu("_Помощь");
