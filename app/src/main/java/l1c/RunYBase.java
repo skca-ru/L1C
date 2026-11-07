@@ -44,8 +44,6 @@ public class RunYBase extends Application {
     private static final boolean SHOW_DEBUG_PANEL    = false;
     private static final boolean SHOW_RUN_MESSAGE    = true;
 
-    // Единая минимальная ширина кнопок в диалогах
-    private static final double DIALOG_BUTTON_WIDTH   = 100;
     // #endregion ==================================
     // @formatter:on
 
@@ -337,148 +335,8 @@ public class RunYBase extends Application {
         }
     }
 
-    private Button createButton(String text) {
-        return createButton(text, AppConstants.COLOR_BUTTON_BG);
-    }
-
-    private Button createButton(String text, String bgColor) {
-
-        Button button = new Button(text);
-        // Что бы ускорители на кнопке работали
-        button.setMnemonicParsing(true);
-
-        button.setUserData(bgColor); // Сохраняем базовый цвет
-
-        // Устанавливаем минимальную высоту для всех кнопок
-        button.setMinHeight(30);
-
-        button.setStyle(String.format("""
-                -fx-background-color: %s;
-                -fx-text-fill: %s;
-                -fx-font-weight: bold;
-                -fx-font-size: 11px;
-                -fx-border-color: %s;
-                -fx-border-width: 1px;
-                -fx-border-radius: 3px;
-                -fx-background-radius: 3px""",
-                bgColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
-
-        // Эффект наведения курсора
-        button.setOnMouseEntered(e -> {
-            String baseColor = (String) button.getUserData();
-            button.setStyle(String.format("""
-                    -fx-background-color: %s;
-                    -fx-text-fill: %s;
-                    -fx-font-weight: bold;
-                    -fx-font-size: 11px;
-                    -fx-border-color: %s;
-                    -fx-border-width: 1px;
-                    -fx-border-radius: 3px;
-                    -fx-background-radius: 3px""",
-                    adjustColorBrightness(baseColor, 1.1), AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
-        });
-
-        button.setOnMouseExited(e -> {
-            String baseColor = (String) button.getUserData();
-            button.setStyle(String.format("""
-                    -fx-background-color: %s;
-                    -fx-text-fill: %s;
-                    -fx-font-weight: bold;
-                    -fx-font-size: 11px;
-                    -fx-border-color: %s;
-                    -fx-border-width: 1px;
-                    -fx-border-radius: 3px;
-                    -fx-background-radius: 3px""",
-                    baseColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
-            button.setTranslateY(0);
-            button.setTranslateX(0);
-        });
-
-        // Эффект нажатия - сдвигаем кнопку на 1px вниз-вправо
-        button.setOnMousePressed(e -> {
-            button.setTranslateY(1);
-            button.setTranslateX(1);
-        });
-
-        button.setOnMouseReleased(e -> {
-            button.setTranslateY(0);
-            button.setTranslateX(0);
-        });
-
-        return button;
-    }
-
-    /**
-     * Кнопка подтверждения в диалогах (OK в выборе базы, Выбрать в истории).
-     * Фон задаётся сразу, а не дописывается в style: иначе обработчики
-     * наведения из createButton возвращают базовый цвет и кнопка «прыгает».
-     */
-    public Button createDialogConfirmButton(String text) {
-        Button button = createButton(text, AppConstants.COLOR_BUTTON_SMALL_BG);
-        button.setMinWidth(DIALOG_BUTTON_WIDTH);
-        return button;
-    }
-
-    /**
-     * Второстепенная кнопка диалога (Отмена, Копировать, Закрыть) —
-     * имитирует стандартную кнопку Windows: белое поле, тонкая серая рамка
-     * с более тёмным нижним краем, скругление 4 px, при наведении и
-     * нажатии фон затемняется.
-     */
-    public Button createDialogCancelButton(String text) {
-        Button button = new Button(text);
-        button.setMnemonicParsing(true);
-        button.setMinWidth(DIALOG_BUTTON_WIDTH);
-        button.setMinHeight(30);
-
-        // Состояние берём из свойств кнопки, а не из обработчиков мыши:
-        // иначе при уходе курсора во время нажатия кнопка останется тёмной
-        Runnable repaint = () -> applyNativeButtonStyle(button);
-        button.hoverProperty().addListener((obs, was, now) -> repaint.run());
-        button.pressedProperty().addListener((obs, was, now) -> repaint.run());
-        repaint.run();
-
-        return button;
-    }
-
-    /**
-     * Палитра кнопки Windows 11 (светлая тема). Инлайновый CSS не умеет
-     * селекторы :hover/:pressed, поэтому состояния раскрашиваются вручную.
-     */
-    private static void applyNativeButtonStyle(Button button) {
-        // @formatter:off
-        String bg, side, bottom, text;
-        if (button.isPressed()) {
-            bg = "#F5F5F5"; side = "#C4C4C4"; bottom = "#7A7A7A"; text = "#5F5F5F";
-        } else if (button.isHover()) {
-            bg = "#F9F9F9"; side = "#C9C9C9"; bottom = "#8C8C8C"; text = "#1A1A1A";
-        } else {
-            bg = "#FDFDFD"; side = "#D8D8D8"; bottom = "#9A9A9A"; text = "#1A1A1A";
-        }
-        // @formatter:on
-        button.setStyle(String.format("""
-                -fx-background-color: %s;
-                -fx-background-radius: 4;
-                -fx-border-color: %s %s %s %s;
-                -fx-border-width: 1;
-                -fx-border-radius: 4;
-                -fx-text-fill: %s;
-                -fx-font-size: 12px;""",
-                bg, side, side, bottom, side, text));
-    }
-
     private Button createFlatButton(String text) {
-        Button button = new Button(text);
-
-        button.setStyle(String.format("""
-                -fx-background-color: %s;
-                -fx-text-fill: %s;
-                -fx-font-size: 12px;
-                -fx-border-color: gray;
-                -fx-border-radius: 3px;
-                -fx-background-radius: 3px""",
-                AppConstants.COLOR_INPUT_BG, AppConstants.COLOR_TEXT_FG));
-        return button;
+        return ButtonFactory.createFlat(text);
     }
 
      private HBox createHelpOption(ComboBoxWithMenuButton option, TextField field, Button helpButton) {
@@ -522,7 +380,7 @@ public class RunYBase extends Application {
         VBox buttonPanel = new VBox(5);
         buttonPanel.setAlignment(Pos.CENTER);
 
-        Button copyButton = createButton("Copy");
+        Button copyButton = ButtonFactory.create("Copy");
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
@@ -530,7 +388,7 @@ public class RunYBase extends Application {
         copyButton.setOnAction(e -> copyToClipboard(textArea.getText(),
                 textArea.getScene() != null ? textArea.getScene().getWindow() : null));
 
-        Button runButton = createButton("Run");
+        Button runButton = ButtonFactory.create("Run");
         runButton.setMinWidth(80);
         runButton.setPrefWidth(80);
         runButton.setMaxWidth(80);
@@ -679,7 +537,7 @@ public class RunYBase extends Application {
         updateConfigRadio = new RadioButton("Обновление конфигурации (версия 2, сервер)");
         updateConfigRadio.setToggleGroup(modeGroup);
 
-        Button modeHelpButton = createHelpButton();
+        Button modeHelpButton = ButtonFactory.createHelp();
         modeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.APP_MODE_INFO));
         modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска",
                 RunYBaseHelpTexts.APP_MODE_INFO));
@@ -695,7 +553,7 @@ public class RunYBase extends Application {
         debugProtocolCombo.setValue("по умолчанию");
         debugProtocolCombo.setTooltip(createTooltip(RunYBaseHelpTexts.DEBUG_PROTOCOL_INFO));
 
-        Button debugHelpButton = createHelpButton();
+        Button debugHelpButton = ButtonFactory.createHelp();
         debugHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.DEBUG_INFO));
         debugHelpButton.setOnAction(
                 e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", RunYBaseHelpTexts.DEBUG_INFO));
@@ -703,7 +561,7 @@ public class RunYBase extends Application {
         priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
         priorityPlatformCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.APP_ARCH_TOOLTIP));
 
-        Button helpButton = createHelpButton();
+        Button helpButton = ButtonFactory.createHelp();
         helpButton.setTooltip(createTooltip(RunYBaseHelpTexts.APP_ARCH_INFO));
         helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch",
                 RunYBaseHelpTexts.APP_ARCH_INFO));
@@ -711,7 +569,7 @@ public class RunYBase extends Application {
         clearCacheCheckbox = new CheckBox("Очистка кэша (/ClearCache)");
         clearCacheCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.CLEAR_CACHE_TOOLTIP));
 
-        Button clearCacheHelpButton = createHelpButton();
+        Button clearCacheHelpButton = ButtonFactory.createHelp();
         clearCacheHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.CLEAR_CACHE_INFO));
         clearCacheHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /ClearCache",
                 RunYBaseHelpTexts.CLEAR_CACHE_INFO));
@@ -744,7 +602,7 @@ public class RunYBase extends Application {
             executeProcessingField.setVisible(newVal);
         });
 
-        Button executeHelpButton = createHelpButton();
+        Button executeHelpButton = ButtonFactory.createHelp();
         executeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_INFO));
         executeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Execute",
                 RunYBaseHelpTexts.EXECUTE_PROCESSING_INFO));
@@ -832,20 +690,7 @@ public class RunYBase extends Application {
         HBox.setHgrow(textArea, Priority.ALWAYS);
 
         // Кнопка истории команд (компактная)
-        Button historyButton = new Button("И...");
-        historyButton.setStyle(String.format("""
-                -fx-background-color: %s;
-                -fx-text-fill: %s;
-                -fx-font-weight: bold;
-                -fx-font-size: 11px;
-                -fx-border-color: %s;
-                -fx-border-width: 1px;
-                -fx-border-radius: 3px;
-                -fx-background-radius: 3px;
-                -fx-padding: 1 4 1 4;
-                -fx-min-width: 30; -fx-max-width: 30;
-                -fx-min-height: 22; -fx-max-height: 22;""",
-                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));
+        Button historyButton = ButtonFactory.createSmall("И...");
         historyButton.setTooltip(createTooltip("История команд для этой платформы (открыть окно)"));
         historyButton.setOnAction(e -> CommandHistoryDialog.show(this, platformName, textArea));
 
@@ -899,7 +744,7 @@ public class RunYBase extends Application {
 
         setupAddressContextMenu();
 
-        userCredentialsButton = createButton("П_ользователь");
+        userCredentialsButton = ButtonFactory.create("П_ользователь");
         userCredentialsButton.setOnAction(e -> UserCredentialsDialog.show(this));
 
         // Создаём сплит-кнопку Сформировать (у кнопки будет меню)
@@ -1149,32 +994,6 @@ public class RunYBase extends Application {
                 String.format(AppConstants.ABOUT_TEXT, AppConstants.VERSION));
     }
 
-    private Button createHelpButton() {
-        Button button = new Button("?");
-        String linkColor = "#0563C1";
-
-        button.setStyle(String.format("""
-                -fx-background-color: transparent;
-                -fx-text-fill: %s;
-                -fx-font-size: 10px;
-                -fx-font-weight: bold;
-                -fx-border-color: %s;
-                -fx-border-width: 1px;
-                -fx-border-radius: 50%%;
-                -fx-background-radius: 50%%;
-                -fx-padding: 0""",
-                linkColor, linkColor));
-
-        button.setMinSize(16, 16);
-        button.setPrefSize(16, 16);
-        button.setMaxSize(16, 16);
-        button.setFocusTraversable(false);
-
-        button.setCursor(javafx.scene.Cursor.HAND);
-
-        return button;
-    }
-
     /**
      * Создаёт Tooltip со стандартным стилем
      */
@@ -1217,32 +1036,6 @@ public class RunYBase extends Application {
     // -----------------------------------------------------------------
     // Работа с цветами
     // -----------------------------------------------------------------
-
-    /**
-     * Увеличивает яркость цвета на заданный коэффициент
-     * 
-     * @param hexColor HEX цвет (например "#E6C878")
-     * @param factor   коэффициент яркости (1.0 - без изменения, >1.0 - светлее,
-     *                 <1.0 - темнее)
-     * @return новый HEX цвет
-     */
-    private String adjustColorBrightness(String hexColor, double factor) {
-        try {
-            String hex = hexColor.replace("#", "");
-            int r = Integer.parseInt(hex.substring(0, 2), 16);
-            int g = Integer.parseInt(hex.substring(2, 4), 16);
-            int b = Integer.parseInt(hex.substring(4, 6), 16);
-
-            r = Math.min(255, (int) (r * factor));
-            g = Math.min(255, (int) (g * factor));
-            b = Math.min(255, (int) (b * factor));
-
-            return String.format("#%02X%02X%02X", r, g, b);
-        } catch (Exception e) {
-            return hexColor;
-        }
-    }
-
 
     private void askAndRunWithCredentials(String address, String baseCommand) {
         UserCredentials cred = credentialsManager.get(address);

@@ -19,6 +19,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import l1c.AppConstants;
+import l1c.ButtonFactory;
 import l1c.HistoryListCell;
 import l1c.HistoryManager;
 import l1c.RunYBase;
@@ -60,7 +61,7 @@ public final class CommandHistoryDialog {
         historyListView.setPrefHeight(250);
 
         // Кнопка копирования — второстепенная
-        Button copyButton = owner.createDialogCancelButton("Копировать");
+        Button copyButton = ButtonFactory.createDialogButton("Копировать");
         copyButton.setTooltip(owner.createTooltip("Скопировать выбранную команду в буфер обмена"));
         copyButton.setOnAction(e -> {
             HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
@@ -72,7 +73,7 @@ public final class CommandHistoryDialog {
         });
 
         // Кнопка выбора (вставка в поле вывода) — подтверждающая, как OK в окне выбора базы
-        Button selectButton = owner.createDialogConfirmButton("В_ыбрать");
+        Button selectButton = ButtonFactory.createDialogConfirmButton("В_ыбрать");
         selectButton.setTooltip(owner.createTooltip("Вставить выбранную команду в поле вывода и закрыть окно (Ctrl+Enter)"));
         selectButton.setOnAction(e -> {
             HistoryManager.CommandEntry selected = historyListView.getSelectionModel().getSelectedItem();
@@ -85,7 +86,7 @@ public final class CommandHistoryDialog {
         });
 
         // Кнопка закрытия — второстепенная, как Отмена в окне выбора базы
-        Button closeButton = owner.createDialogCancelButton("Закрыть");
+        Button closeButton = ButtonFactory.createDialogButton("Закрыть");
         closeButton.setOnAction(e -> historyStage.close());
 
         // Панель кнопок
