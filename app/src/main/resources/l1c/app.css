@@ -8,6 +8,37 @@
  * частей, поэтому правила вынесены в этот стилевой файл.
  */
 
+/*
+ * Основная кнопка приложения (ButtonFactory.create).
+ *
+ * Базовый цвет фона задаётся на экземпляре кнопки инлайн-стилем
+ * как looked-up цвет, например: -btn-base-color: #E6C878;
+ * Все состояния (:hover, :armed) расписаны здесь, т.к. инлайн-стиль
+ * не поддерживает селекторы состояния.
+ */
+.main-button {
+    -btn-base-color: #E6C878;
+    -fx-background-color: -btn-base-color;
+    -fx-text-fill: #000000;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-border-color: #C0A050;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+}
+
+/* Наведение — фон светлеет (аналог adjustColorBrightness x 1.1) */
+.main-button:hover {
+    -fx-background-color: derive(-btn-base-color, 20%);
+}
+
+/* Нажатие (мышь или клавиатура) — сдвиг кнопки на 1 px вниз-вправо */
+.main-button:armed {
+    -fx-translate-x: 1;
+    -fx-translate-y: 1;
+}
+
 /* "Плоская" кнопка: внутренние части всегда прозрачны при любом состоянии */
 .flat-split-button > .label,
 .flat-split-button > .arrow-button,
