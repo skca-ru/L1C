@@ -776,28 +776,12 @@ public class RunYBase extends Application {
         generateMenuButton.getItems().add(generateWithUnlockCodeItem);
 
         String bgColor = AppConstants.COLOR_BUTTON_BG;
+        // Базовые цвета передаются как looked-up цвета; вся геометрия и состояния
+        // (:hover, :armed) расписаны в l1c/app.css, т.к. инлайн-стиль перекрыл бы
+        // их селекторы и кнопка не реагировала бы на наведение мыши
         generateMenuButton.setStyle(String.format("""
-            /* 1. Основной фон и рамка всей кнопки */
-            -fx-background-color: %1$s;
-            -fx-border-color: %3$s;
-            -fx-border-width: 1px;
-            -fx-border-radius: 3px;
-            -fx-background-radius: 3px;
-            
-            /* 2. Настройки шрифта и геометрии */
-            -fx-text-fill: %2$s;
-            -fx-font-weight: bold;
-            -fx-font-size: 11px;
-            -fx-padding: 0 6 0 8;
-            -fx-min-height: 30;
-            
-            /* 3. Делаем внутренние части прозрачными */
-            -fx-color: transparent;
-            -fx-body-color: transparent;
-            -fx-inner-border: transparent;
-            -fx-shadow-highlight-color: transparent;
-            
-            /* 4. Принудительно возвращаем нужный цвет для текста и стрелочки */
+            -btn-base-color: %1$s;     /* Цвет фона кнопки */
+            -btn-border-color: %3$s;   /* Цвет рамки */
             -fx-text-base-color: %2$s; /* Цвет основного текста кнопки */
             -fx-mark-color: %2$s;      /* Цвет иконки-стрелочки */
             """, bgColor, AppConstants.COLOR_BUTTON_FG, AppConstants.COLOR_BUTTON_BORDER));

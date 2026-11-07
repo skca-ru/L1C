@@ -39,6 +39,43 @@
     -fx-translate-y: 1;
 }
 
+/*
+ * Сплит-кнопка "Сформировать" (RunYBase.createAddressPanel).
+ *
+ * Базовые цвета задаются на экземпляре кнопки инлайн-стилем как looked-up
+ * цвета: -btn-base-color (фон), -btn-border-color (рамка),
+ * -fx-text-base-color (текст), -fx-mark-color (стрелочка).
+ * Геометрия и состояния расписаны здесь, т.к. инлайн-стиль не поддерживает
+ * селекторы состояния и перекрыл бы правила :hover/:armed.
+ */
+.flat-split-button {
+    -fx-background-color: -btn-base-color;
+    -fx-border-color: -btn-border-color;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 0 6 0 8;
+
+    /* Делаем внутренние части прозрачными при любом состоянии */
+    -fx-color: transparent;
+    -fx-body-color: transparent;
+    -fx-inner-border: transparent;
+    -fx-shadow-highlight-color: transparent;
+}
+
+/* Наведение — фон светлеет (аналог adjustColorBrightness x 1.1, как у .main-button) */
+.flat-split-button:hover {
+    -fx-background-color: derive(-btn-base-color, 20%);
+}
+
+/* Нажатие (мышь или клавиатура) — сдвиг кнопки на 1 px вниз-вправо */
+.flat-split-button:armed {
+    -fx-translate-x: 1;
+    -fx-translate-y: 1;
+}
+
 /* "Плоская" кнопка: внутренние части всегда прозрачны при любом состоянии */
 .flat-split-button > .label,
 .flat-split-button > .arrow-button,
