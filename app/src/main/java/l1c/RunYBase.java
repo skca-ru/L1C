@@ -78,11 +78,14 @@ public class RunYBase extends Application {
     private Label baseNameLabel;
     private TextArea baseNoteLabel;
 
-    // Метки заголовков блоков команд (x86 и x64) — в них же выводим базу и режим
+    // Метки заголовков блоков команд (x86 и x64)
     private Label platformLabel86;
     private Label platformLabel64;
-    private String platformLabelBase86 = "";
-    private String platformLabelBase64 = "";
+    // Цветные бейджи базы и режима в заголовках блоков команд (x86 и x64)
+    private Label baseBadge86;
+    private Label baseBadge64;
+    private Label modeBadge86;
+    private Label modeBadge64;
 
 
     // Для проверки есть адрес в списке зарегистрированных баз
@@ -521,7 +524,6 @@ public class RunYBase extends Application {
         buttonPanel.setAlignment(Pos.CENTER);
 
         Button copyButton = createButton("Copy");
-        copyButton.setStyle(copyButton.getStyle() + "; -fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
@@ -530,7 +532,6 @@ public class RunYBase extends Application {
                 textArea.getScene() != null ? textArea.getScene().getWindow() : null));
 
         Button runButton = createButton("Run");
-        runButton.setStyle(runButton.getStyle() + "; -fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + ";");
         runButton.setMinWidth(80);
         runButton.setPrefWidth(80);
         runButton.setMaxWidth(80);
@@ -780,19 +781,52 @@ public class RunYBase extends Application {
      * @param bits         разрядность (32 или 64)
      */
     private void createPlatformPanel(String platformName, int bits) {
-        // Метка с названием платформы и базой/режимом
+        // Метка с названием платформы — база и режим выводятся рядом отдельными бейджами
         String label = String.format("Команда для %d-битной платформы (%s):", bits, platformName);
         Label platformLabel = new Label(label);
         platformLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
-        contentBox.getChildren().add(platformLabel);
 
-        // Сохраняем ссылку на label для обновления
+        // Бейджи базы и режима — выделены цветом и рамкой, чтобы
+        // не сливаться с остальным текстом заголовка
+        Label baseBadge = new Label();
+        baseBadge.setStyle(String.format("""
+                -fx-background-color: %s;
+                -fx-text-fill: #000000;
+                -fx-font-weight: bold;
+                -fx-font-size: 11px;
+                -fx-border-color: %s;
+                -fx-border-width: 1px;
+                -fx-border-radius: 10px;
+                -fx-background-radius: 10px;
+                -fx-padding: 2 8 2 8;""",
+                AppConstants.COLOR_USER_HAS_CRED, "#6FA96F"));
+
+        Label modeBadge = new Label();
+        modeBadge.setStyle(String.format("""
+                -fx-background-color: %s;
+                -fx-text-fill: #000000;
+                -fx-font-weight: bold;
+                -fx-font-size: 11px;
+                -fx-border-color: %s;
+                -fx-border-width: 1px;
+                -fx-border-radius: 10px;
+                -fx-background-radius: 10px;
+                -fx-padding: 2 8 2 8;""",
+                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_BORDER));
+
+        HBox headerRow = new HBox(8, platformLabel, baseBadge, modeBadge);
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+        contentBox.getChildren().add(headerRow);
+
+        // Сохраняем ссылки для обновления
         if (bits == 32) {
             platformLabel86 = platformLabel;
-            platformLabelBase86 = label;
+            baseBadge86 = baseBadge;
+            modeBadge86 = modeBadge;
         } else {
             platformLabel64 = platformLabel;
-            platformLabelBase64 = label;
+            baseBadge64 = baseBadge;
+            modeBadge64 = modeBadge;
         }
 
 
@@ -1729,7 +1763,7 @@ public class RunYBase extends Application {
         if (command == null || command.trim().isEmpty())
             return "";
 
-        List<String> args = parseCommand(command);
+        List<String> args = CommandBuilder.parse(command);
         String mode = "";
         boolean runOrdinary = false;
         boolean runManaged = false;
@@ -1784,12 +1818,12 @@ public class RunYBase extends Application {
         // /F "каталог"
         String f = extractQuotedAfter(command, "/F");
         if (f != null)
-            return "/F \"" + f + "\"";
+            return "/F " + CommandBuilder.quoted(f);
 
         // /S "сервер\база"
         String s = extractQuotedAfter(command, "/S");
         if (s != null)
-            return "/S \"" + s + "\"";
+            return "/S " + CommandBuilder.quoted(s);
 
         // /IBName "ИмяБазы"
         String ibName = extractQuotedAfter(command, "/IBName");
@@ -1848,26 +1882,36 @@ public class RunYBase extends Application {
      * Если команда пуста — возвращается исходный заголовок без сведений о базе и режиме.
      */
     private void updatePlatformCommandLabel(String platform, String command) {
-        Label targetLabel = "x86".equals(platform) ? platformLabel86 : platformLabel64;
-        if (targetLabel == null)
+        boolean is86 = "x86".equals(platform);
+        Label targetBaseBadge = is86 ? baseBadge86 : baseBadge64;
+        Label targetModeBadge = is86 ? modeBadge86 : modeBadge64;
+        if (targetBaseBadge == null || targetModeBadge == null)
             return;
 
-        String baseKey = "x86".equals(platform) ? platformLabelBase86 : platformLabelBase64;
-        String newFullText = baseKey;
-
+        String base = "";
+        String mode = "";
         if (command != null && !command.trim().isEmpty()) {
-            String base = extractBaseFromCommand(command);
+            base = extractBaseFromCommand(command);
             if (base.isEmpty())
                 base = getCurrentAddress();
-            String mode = getRunModeFromCommand(command);
+            mode = getRunModeFromCommand(command);
             if (mode.isEmpty())
                 mode = AppConstants.MODE_NOT_SPECIFIED;
-            newFullText = baseKey + " | База: " + base + " | Режим: " + mode;
         }
 
-        // Обновляем только если текст изменился
-        if (!newFullText.equals(targetLabel.getText())) {
-            targetLabel.setText(newFullText);
+        // Обновляем бейджи только если текст изменился
+        String newBaseText = base.isEmpty() ? "" : "База: " + base;
+        if (!newBaseText.equals(targetBaseBadge.getText())) {
+            targetBaseBadge.setText(newBaseText);
+            targetBaseBadge.setVisible(!base.isEmpty());
+            targetBaseBadge.setManaged(!base.isEmpty());
+        }
+
+        String newModeText = mode.isEmpty() ? "" : "Режим: " + mode;
+        if (!newModeText.equals(targetModeBadge.getText())) {
+            targetModeBadge.setText(newModeText);
+            targetModeBadge.setVisible(!mode.isEmpty());
+            targetModeBadge.setManaged(!mode.isEmpty());
         }
     }
 
@@ -1884,7 +1928,10 @@ public class RunYBase extends Application {
             debugArea.appendText("=== Запуск (" + platform + ") ===\nКоманда: " + command + "\n");
         }
         try {
-            List<String> args = parseCommand(command);
+            // Команда отдаётся целиком в cmd.exe, а не списком разобранных аргументов:
+            // JDK не экранирует кавычки внутри аргумента, поэтому адрес базы
+            // дошёл бы до 1С без вложенных кавычек (см. CommandBuilder.toProcessCommand).
+            List<String> args = CommandBuilder.toProcessCommand(command);
             ProcessBuilder pb = new ProcessBuilder(args);
             pb.redirectErrorStream(true);
             Process process = pb.start();
@@ -1906,7 +1953,11 @@ public class RunYBase extends Application {
                                 "Запуск 1С", 5);
                     }
                 } else {
-                    showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка запуска " + mode + "!\nКод: " + code);
+                    // Вывод процесса полезен: cmd.exe пишет в него текст ошибки,
+                    // например когда путь к платформе указан неверно.
+                    String processOutput = output.toString().trim();
+                    showAlert(Alert.AlertType.ERROR, "Ошибка", "Ошибка запуска " + mode + "!\nКод: " + code
+                            + (processOutput.isEmpty() ? "" : "\n\nВывод процесса:\n" + processOutput));
                 }
             } else {
                 if (SHOW_RUN_MESSAGE) {
@@ -2016,35 +2067,6 @@ public class RunYBase extends Application {
         double y = anchorBottom - content.getHeight() - 20;
         popup.show(anchor, x, y);
         countdown.play();
-    }
-
-    private static List<String> parseCommand(String command) {
-        List<String> args = new ArrayList<>();
-        StringBuilder cur = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < command.length(); i++) {
-            char c = command.charAt(i);
-            if (c == '"') {
-                inQuotes = !inQuotes;
-                continue;
-            }
-            if (c == ' ' && !inQuotes) {
-                if (cur.length() > 0) {
-                    args.add(cur.toString());
-                    cur.setLength(0);
-                }
-                continue;
-            }
-            cur.append(c);
-        }
-        if (cur.length() > 0)
-            args.add(cur.toString());
-        for (int i = 0; i < args.size(); i++) {
-            String a = args.get(i);
-            if (a.startsWith("\"") && a.endsWith("\"") && a.length() > 1)
-                args.set(i, a.substring(1, a.length() - 1));
-        }
-        return args;
     }
 
     /**

@@ -1,5 +1,9 @@
 package l1c;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +29,17 @@ import java.util.regex.Pattern;
  * </pre>
  */
 public final class CommandBuilder {
+
+    /** true, если ОС Windows — определяет способ запуска собранной команды. */
+    public static final boolean IS_WINDOWS = System.getProperty("os.name", "")
+            .toLowerCase(Locale.ROOT).contains("win");
+
+    /** Кавычка как символ токена командной строки. */
+    private static final char QUOTE_CHAR = '"';
+    /** Кавычка как текст: используется для сборки и разбора значений параметров. */
+    private static final String QUOTE = String.valueOf(QUOTE_CHAR);
+    /** Удвоенная кавычка — экранированная кавычка внутри значения параметра. */
+    private static final String ESCAPED_QUOTE = QUOTE + QUOTE;
 
     // @formatter:off
     // Типовые пути программы запуска 1С и соответствующие значения /AppArch
@@ -191,9 +206,9 @@ public final class CommandBuilder {
         }
 
         if (username != null && !username.isEmpty()) {
-            cmd.append(" /N \"").append(username).append('"');
+            cmd.append(" /N ").append(quoted(username));
             if (password != null && !password.isEmpty()) {
-                cmd.append(" /P \"").append(password).append('"');
+                cmd.append(" /P ").append(quoted(password));
             }
         }
 
@@ -218,11 +233,11 @@ public final class CommandBuilder {
         }
 
         if (processingPath != null && !processingPath.trim().isEmpty()) {
-            cmd.append(" /Execute \"").append(processingPath.trim()).append('"');
+            cmd.append(" /Execute ").append(quoted(processingPath.trim()));
         }
 
         if (unlockCode != null && !unlockCode.isEmpty()) {
-            cmd.append(" /UC \"").append(unlockCode).append('"');
+            cmd.append(" /UC ").append(quoted(unlockCode));
         }
 
         return cmd.toString();
@@ -234,14 +249,14 @@ public final class CommandBuilder {
      * Формирует параметр {@code /IBConnectionString "..."}; кавычки внутри адреса удваиваются.
      */
     public static String connectionStringParam(String rawAddress) {
-        return "/IBConnectionString \"" + escapeQuotes(rawAddress) + "\"";
+        return "/IBConnectionString " + quoted(rawAddress);
     }
 
     /**
      * Формирует параметр {@code /IBName "..."}; кавычки внутри имени удваиваются.
      */
     public static String ibNameParam(String baseName) {
-        return "/IBName \"" + escapeQuotes(baseName) + "\"";
+        return "/IBName " + quoted(baseName);
     }
 
     /**
@@ -273,19 +288,19 @@ public final class CommandBuilder {
             }
             if (dir.isEmpty())
                 return null;
-            return "/F \"" + escapeQuotes(dir) + "\"";
+            return "/F " + quoted(dir);
         }
 
         // Файловая база — путь к каталогу (локальный C:\... или UNC \\сервер\папка)
         String dir = StringExtractor.extractDirectoryPath(t);
         if (dir != null && !dir.isEmpty())
-            return "/F \"" + escapeQuotes(dir) + "\"";
+            return "/F " + quoted(dir);
 
         // Серверная база — Srvr="...";Ref="..." или сервер\база
         String[] serverBase = extractServerAndBase(t);
         if (serverBase != null && !serverBase[0].isEmpty() && !serverBase[1].isEmpty()) {
             String serverAddress = serverBase[0] + "\\" + serverBase[1];
-            return "/S \"" + escapeQuotes(serverAddress) + "\"";
+            return "/S " + quoted(serverAddress);
         }
 
         return null;
@@ -331,7 +346,88 @@ public final class CommandBuilder {
 
     /** Удваивает кавычки — экранирование значения внутри строки подключения. */
     public static String escapeQuotes(String value) {
-        return value == null ? "" : value.replace("\"", "\"\"");
+        return value == null ? "" : value.replace(QUOTE, ESCAPED_QUOTE);
+    }
+
+    /** Обратная к {@link #escapeQuotes(String)} операция: удвоенная кавычка сворачивается в одинарную. */
+    public static String unescapeQuotes(String value) {
+        return value == null ? "" : value.replace(ESCAPED_QUOTE, QUOTE);
+    }
+
+    /**
+     * Значение параметра в кавычках: обрамляет кавычками и удваивает внутренние —
+     * именно в таком виде кавычки внутри значения понимает командная строка Windows.
+     */
+    public static String quoted(String value) {
+        return QUOTE + escapeQuotes(value) + QUOTE;
+    }
+
+    // #endregion
+
+    // #region ========== Разбор команды (обратная операция к build()) ==========
+
+    /**
+     * Разбирает строку команды запуска на аргументы — обратная операция к
+     * {@link #build()}: внешние кавычки токена снимаются, а удвоенные кавычки
+     * внутри значения сворачиваются в одинарные. Поэтому разбор собранной команды
+     * возвращает исходные значения параметров, включая кавычки внутри адреса базы.
+     *
+     * @param command строка команды запуска
+     * @return список аргументов; пустой список для null или пустой строки
+     */
+    public static List<String> parse(String command) {
+        List<String> args = new ArrayList<>();
+        if (command == null)
+            return args;
+
+        StringBuilder token = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < command.length(); i++) {
+            char c = command.charAt(i);
+            if (c == QUOTE_CHAR) {
+                // Удвоенная кавычка внутри значения — это одна кавычка текста
+                if (inQuotes && i + 1 < command.length() && command.charAt(i + 1) == QUOTE_CHAR) {
+                    token.append(QUOTE_CHAR);
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (inQuotes) {
+                token.append(c);
+            } else if (Character.isWhitespace(c)) {
+                if (token.length() > 0) {
+                    args.add(token.toString());
+                    token.setLength(0);
+                }
+            } else {
+                token.append(c);
+            }
+        }
+        if (token.length() > 0)
+            args.add(token.toString());
+        return args;
+    }
+
+    /**
+     * Аргументы для {@link ProcessBuilder}, которые запускают команду ровно так же,
+     * как её запуск из окна командной строки.
+     * <p>
+     * На Windows нельзя передавать разобранную команду списком аргументов: JDK
+     * оборачивает в кавычки только аргументы с пробелами и не экранирует кавычки
+     * внутри аргумента. Из-за этого адрес базы дошёл бы до 1С без кавычек внутри,
+     * а значение с пробелом распалось бы на два аргумента. Поэтому команда целиком
+     * передаётся cmd.exe — дочерний процесс получает ту же командную строку,
+     * которую видит пользователь в окне вывода.
+     * <p>
+     * Вне Windows командный интерпретатор не участвует, поэтому используются
+     * разобранные аргументы (см. {@link #parse(String)}).
+     */
+    public static List<String> toProcessCommand(String command) {
+        if (command == null || command.trim().isEmpty())
+            return Collections.emptyList();
+        if (IS_WINDOWS)
+            return Arrays.asList("cmd.exe", "/c", QUOTE + command + QUOTE);
+        return parse(command);
     }
 
     // #endregion
