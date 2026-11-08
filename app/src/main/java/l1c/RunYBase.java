@@ -677,22 +677,50 @@ public class RunYBase extends Application {
         }
 
 
-        // HBox с TextArea, кнопкой истории и кнопками Run/Copy
+        // HBox с полем команды (TextArea + кнопка истории) и кнопками Run/Copy
         HBox platformRow = new HBox(5);
         platformRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Поле вывода команды и кнопка истории образуют единый контрол:
+        // общая рамка контейнера, кнопка «…» пристыкована к правому краю
+        BorderPane commandField = new BorderPane();
+        HBox.setHgrow(commandField, Priority.ALWAYS);
+        commandField.setStyle(String.format("""
+                -fx-background-color: %s;
+                -fx-border-color: %s;
+                -fx-border-width: 1px;
+                -fx-border-radius: 3px;
+                -fx-background-radius: 3px;
+                -fx-padding: 0;""",
+                AppConstants.COLOR_INPUT_BG, AppConstants.NORMAL_BORDER_COLOR));
 
         // Создаём TextArea
         TextArea textArea = new TextArea();
         textArea.setWrapText(true);
         textArea.setPrefRowCount(4);
-        textArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: " + AppConstants.COLOR_INPUT_BG
-                + "; -fx-border-color: gray; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
-        HBox.setHgrow(textArea, Priority.ALWAYS);
+        textArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 11px; -fx-background-color: transparent;");
+        textArea.setPadding(new Insets(3, 4, 3, 5));
+        commandField.setCenter(textArea);
 
-        // Кнопка истории команд (компактная)
-        Button historyButton = ButtonFactory.createSmall("И...");
+        // В JavaFX рамка TextArea рисуется на внутреннем ScrollPane,
+        // а не на самом TextArea — поэтому применяем стиль через lookup.
+        // applyCss + layout гарантируют, что Skin уже создан до lookup.
+        textArea.applyCss();
+        textArea.layout();
+        javafx.scene.control.ScrollPane scrollPane = (javafx.scene.control.ScrollPane) textArea.lookup(".scroll-pane");
+        if (scrollPane != null) {
+            scrollPane.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-background-radius: 0; -fx-padding: 0;");
+        }
+        javafx.scene.Node content = textArea.lookup(".content");
+        if (content != null) {
+            content.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-background-radius: 0;");
+        }
+
+        // Кнопка истории команд — пристыкована к правому краю, тянется по высоте поля
+        Button historyButton = ButtonFactory.createEllipsis(true);
         historyButton.setTooltip(createTooltip("История команд для этой платформы (открыть окно)"));
         historyButton.setOnAction(e -> CommandHistoryDialog.show(this, platformName, textArea));
+        commandField.setRight(historyButton);
 
         // Сохраняем ссылку на TextArea в зависимости от разрядности
         if (bits == 32) {
@@ -709,7 +737,7 @@ public class RunYBase extends Application {
         // Создаём панель с кнопками
 
         VBox buttonPanel = createRunCopyButtons(textArea, platformName);
-        platformRow.getChildren().addAll(textArea, historyButton, buttonPanel);
+        platformRow.getChildren().addAll(commandField, buttonPanel);
         contentBox.getChildren().add(platformRow);
     }
 
