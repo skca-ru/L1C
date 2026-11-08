@@ -17,6 +17,7 @@ import javafx.scene.control.Tooltip;
  *   <li>{@link #createDialogButton(String)} — "нативная" кнопка диалогов (стиль Windows 11);</li>
  *   <li>{@link #createFlat(String)} — плоская кнопка;</li>
  *   <li>{@link #createSmall(String)} — компактная кнопка фиксированного размера;</li>
+ *   <li>{@link #createEllipsis(boolean)} — прозрачная кнопка «…» внутри поля вывода;</li>
  *   <li>{@link #createHelp()} — круглая кнопка-справка "?".</li>
  * </ul>
  *
@@ -46,6 +47,9 @@ public final class ButtonFactory {
 
     /** Скругление углов диалоговой кнопки, px */
     private static final int DIALOG_CORNER_RADIUS = 4;
+
+    /** Высота кнопки «…» (как у поля адреса), px */
+    private static final int ELLIPSIS_BUTTON_HEIGHT = 30;
 
     private ButtonFactory() {
         // Утилитный класс — инстанцирование запрещено
@@ -179,6 +183,38 @@ public final class ButtonFactory {
                 -fx-min-height: 22; -fx-max-height: 22;""",
                 AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_FG,
                 AppConstants.COLOR_BUTTON_BORDER, CORNER_RADIUS, CORNER_RADIUS));
+        return button;
+    }
+
+    /**
+     * Создаёт компактную кнопку «…» — иконку истории внутри поля вывода.
+     * Прозрачная, без рамки, растягивается по высоте поля, чтобы вместе
+     * с полем выглядеть единым контролом (как кнопка выбора базы у поля адреса).
+     *
+     * @param stretchHeight при {@code true} кнопка растягивается по высоте поля
+     * @return стилизованная кнопка фиксированной ширины
+     */
+    public static Button createEllipsis(boolean stretchHeight) {
+        Button button = new Button("…");
+        button.setStyle(String.format("""
+                -fx-background-color: transparent;
+                -fx-text-fill: %s;
+                -fx-font-size: 16px;
+                -fx-border-width: 0;
+                -fx-padding: 0;
+                -fx-min-width: %d; -fx-max-width: %d;
+                -fx-min-height: %d;""",
+                AppConstants.COLOR_TEXT_FG,
+                AppConstants.CHOICE_BUTTON_WIDTH, AppConstants.CHOICE_BUTTON_WIDTH,
+                ELLIPSIS_BUTTON_HEIGHT));
+        button.setFocusTraversable(false);
+        button.setCursor(Cursor.HAND);
+
+        if (stretchHeight) {
+            button.setMaxHeight(Double.MAX_VALUE);
+        } else {
+            button.setMaxHeight(ELLIPSIS_BUTTON_HEIGHT);
+        }
         return button;
     }
 
