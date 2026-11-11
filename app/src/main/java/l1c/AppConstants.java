@@ -57,7 +57,7 @@ public class AppConstants {
             + "File=\"C:\\1C\\Base\";  или  Srvr=\"127.0.0.1\";Ref=\"Base\";";
 
     // Режим запуска не найден в строке команды
-    public static final String MODE_NOT_SPECIFIED = "не указан";
+    public static final String MODE_NOT_SPECIFIED = "Режим неопределен";
 
     // Текст окна "О программе" (%s - версия приложения)
     public static final String ABOUT_TITLE = "О программе";

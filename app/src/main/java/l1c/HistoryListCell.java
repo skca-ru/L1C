@@ -7,6 +7,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -19,6 +22,13 @@ import javafx.scene.layout.Priority;
 public final class HistoryListCell extends ListCell<HistoryManager.CommandEntry> {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy в HH:mm");
 
+    // Ширина фиксированных колонок: база 180 + режим 160 + время 110
+    private static final double FIXED_COLUMNS_WIDTH = 180 + 160 + 110;
+    // Пространство между 4 элементами: 3 * 10
+    private static final double SPACING = 30;
+    // Отступ контейнера 5 * 2 + отступ клетки ~6 * 2 + ширина полосы прокрутки ~14
+    private static final double MARGIN_ALLOWANCE = 10 + 12 + 14;
+
     // @formatter:off
     private final HBox container      = new HBox(10);
     private final Label baseNameLabel = new Label();
@@ -26,6 +36,8 @@ public final class HistoryListCell extends ListCell<HistoryManager.CommandEntry>
     private final Label timeLabel     = new Label();
     private final Label modeLabel     = new Label();
     // @formatter oт
+
+    private final SimpleDoubleProperty commandMaxWidth = new SimpleDoubleProperty(500);
 
     public HistoryListCell() {
         baseNameLabel.setMinWidth(180);
@@ -39,11 +51,30 @@ public final class HistoryListCell extends ListCell<HistoryManager.CommandEntry>
         modeLabel.setMaxWidth(160);
 
         commandLabel.setWrapText(true);
-        commandLabel.setMaxWidth(500);
+        commandLabel.maxWidthProperty().bind(commandMaxWidth);
         HBox.setHgrow(commandLabel, Priority.ALWAYS);
 
         container.getChildren().addAll(baseNameLabel, modeLabel, commandLabel, timeLabel);
         container.setPadding(new Insets(5, 5, 5, 5));
+
+        // Привязка ширины команды к ширине ListView — горизонтальной прокрутки нет
+        listViewProperty().addListener((obs, oldLv, newLv) -> {
+            if (oldLv != null) {
+                commandMaxWidth.unbind();
+            }
+            if (newLv != null) {
+                // Вычисляем доступную ширину: ширина ListView минус фиксированные колонки,
+                // межэлементные отступы, отступы клетки и ScrollPane
+                DoubleBinding available = Bindings.createDoubleBinding(() ->
+                        Math.max(100, newLv.getWidth() - FIXED_COLUMNS_WIDTH - SPACING - MARGIN_ALLOWANCE),
+                        newLv.widthProperty());
+                commandMaxWidth.bind(available);
+                // После привязки обновляем ширину — принудительный пересчёт
+                newLv.widthProperty().addListener((obs2, old2, new2) -> {
+                    commandMaxWidth.set(Math.max(100, new2.doubleValue() - FIXED_COLUMNS_WIDTH - SPACING - MARGIN_ALLOWANCE));
+                });
+            }
+        });
     }
 
     @Override

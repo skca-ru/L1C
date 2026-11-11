@@ -648,7 +648,7 @@ public class RunYBase extends Application {
                 -fx-padding: 2 8 2 8;""",
                 AppConstants.COLOR_USER_HAS_CRED, "#6FA96F"));
 
-        Label modeBadge = new Label();
+        Label modeBadge = new Label(AppConstants.MODE_NOT_SPECIFIED);
         modeBadge.setStyle(String.format("""
                 -fx-background-color: %s;
                 -fx-text-fill: #000000;
@@ -1033,16 +1033,14 @@ public class RunYBase extends Application {
         UserCredentials cred = credentialsManager.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
             userCredentialsButton.setUserData(AppConstants.COLOR_USER_HAS_CRED);
-            userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + AppConstants.COLOR_USER_HAS_CRED));
-            userCredentialsButton
-                    .setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
+            userCredentialsButton.setStyle("-btn-base-color: " + AppConstants.COLOR_USER_HAS_CRED + ";");
+            userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
         } else {
             userCredentialsButton.setUserData(AppConstants.COLOR_USER_NO_CRED);
-            userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + AppConstants.COLOR_USER_NO_CRED));
+            userCredentialsButton.setStyle("-btn-base-color: " + AppConstants.COLOR_USER_NO_CRED + ";");
             userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_NO_CRED_TOOLTIP));
         }
+        userCredentialsButton.applyCss();
     }
 
     // -----------------------------------------------------------------
@@ -1701,11 +1699,11 @@ public class RunYBase extends Application {
             targetBaseBadge.setManaged(!base.isEmpty());
         }
 
-        String newModeText = mode.isEmpty() ? "" : "Режим: " + mode;
+        String newModeText = mode.isEmpty() ? AppConstants.MODE_NOT_SPECIFIED : mode;
         if (!newModeText.equals(targetModeBadge.getText())) {
             targetModeBadge.setText(newModeText);
-            targetModeBadge.setVisible(!mode.isEmpty());
-            targetModeBadge.setManaged(!mode.isEmpty());
+            targetModeBadge.setVisible(true);
+            targetModeBadge.setManaged(true);
         }
     }
 
