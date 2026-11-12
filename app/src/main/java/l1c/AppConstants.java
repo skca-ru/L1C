@@ -59,6 +59,23 @@ public class AppConstants {
     // Режим запуска не найден в строке команды
     public static final String MODE_NOT_SPECIFIED = "Режим неопределен";
 
+    // Рамка бейджа базы (зелёная палитра, сочетается с COLOR_USER_HAS_CRED)
+    public static final String COLOR_BADGE_BORDER_GREEN = "#6FA96F";
+
+    // Шаблон стиля бейджа базы/режима в заголовках блоков команд
+    // (%1$s - цвет заливки, %2$s - цвет рамки, %3$s - цвет текста)
+    public static final String BADGE_STYLE_TEMPLATE = """
+            -fx-background-color: %1$s;
+            -fx-text-fill: %3$s;
+            -fx-font-weight: bold;
+            -fx-font-size: 11px;
+            -fx-border-color: %2$s;
+            -fx-border-width: 1px;
+            -fx-border-radius: 10px;
+            -fx-background-radius: 10px;
+            -fx-padding: 2 8 2 8;
+            """;
+
     // Текст окна "О программе" (%s - версия приложения)
     public static final String ABOUT_TITLE = "О программе";
     public static final String ABOUT_TEXT  = """
