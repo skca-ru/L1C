@@ -19,7 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import l1c.ButtonFactory;
+import l1c.UiFactory;
 import l1c.RunYBase;
 import l1c.SavedUserEntry;
 import l1c.SavedUserListCell;
@@ -60,10 +60,10 @@ public final class SavedUsersDialog {
         ListView<SavedUserEntry> listView = new ListView<>(FXCollections.observableArrayList(savedUsers));
         listView.setCellFactory(lv -> new SavedUserListCell());
 
-        Button okButton = ButtonFactory.createDialogConfirmButton("В_ыбрать");
+        Button okButton = UiFactory.createDialogConfirmButton("В_ыбрать");
         okButton.setOnAction(e -> applySavedUser(owner, listView, dialog, address));
 
-        Button cancelButton = ButtonFactory.createDialogButton("Отмена");
+        Button cancelButton = UiFactory.createDialogButton("Отмена");
         cancelButton.setOnAction(e -> dialog.close());
 
         listView.setOnMouseClicked(e -> {

@@ -6,29 +6,31 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 
 /**
- * Фабрика создания и стилизации кнопок приложения.
+ * Фабрика создания и стилизации UI-элементов приложения (кнопки, бейджи).
  *
- * <p>Централизует все стили кнопок, которые раньше были разбросаны по коду:
+ * <p>Централизует стили контролов, которые раньше были разбросаны по коду:
  * <ul>
  *   <li>{@link #create(String)} — основная жёлтая кнопка с эффектами наведения и нажатия;</li>
  *   <li>{@link #createDialogButton(String)} — "нативная" кнопка диалогов (стиль Windows 11);</li>
  *   <li>{@link #createFlat(String)} — плоская кнопка;</li>
  *   <li>{@link #createSmall(String)} — компактная кнопка фиксированного размера;</li>
  *   <li>{@link #createEllipsis(boolean)} — прозрачная кнопка «…» внутри поля вывода;</li>
- *   <li>{@link #createHelp()} — круглая кнопка-справка "?".</li>
+ *   <li>{@link #createHelp()} — круглая кнопка-справка "?";</li>
+ *   <li>{@link #createBadge(String, String, String)} — стилизованная метка-бейдж.</li>
  * </ul>
  *
- * <p>Все методы возвращают готовую кнопку; дополнительные настройки
+ * <p>Все методы возвращают готовый контрол; дополнительные настройки
  * (размер, подсказка, обработчик) навешиваются fluent-методами:
  * <pre>{@code
- * Button run = ButtonFactory.create("Run")
+ * Button run = UiFactory.create("Run")
  *         .apply(b -> b.setPrefWidth(80));
  * }</pre>
  */
-public final class ButtonFactory {
+public final class UiFactory {
 
     /** Минимальная высота стандартной кнопки, px */
     private static final int MIN_BUTTON_HEIGHT = 30;
@@ -51,7 +53,7 @@ public final class ButtonFactory {
     /** Высота кнопки «…» (как у поля адреса), px */
     private static final int ELLIPSIS_BUTTON_HEIGHT = 30;
 
-    private ButtonFactory() {
+    private UiFactory() {
         // Утилитный класс — инстанцирование запрещено
     }
 
@@ -184,6 +186,26 @@ public final class ButtonFactory {
                 AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_FG,
                 AppConstants.COLOR_BUTTON_BORDER, CORNER_RADIUS, CORNER_RADIUS));
         return button;
+    }
+
+    /**
+     * Создаёт бейдж — стилизованную метку с заливкой и рамкой для выделения
+     * информации в заголовках (например, «База: …», «Режим неопределен»).
+     *
+     * @param text   текст бейджа ({@code null} трактуется как пустая строка)
+     * @param bg     цвет заливки (hex, например {@code #B2DAB2})
+     * @param border цвет рамки (hex)
+     * @return стилизованная метка-бейдж; пустой бейдж скрыт и не занимает места в раскладке
+     */
+    public static Label createBadge(String text, String bg, String border) {
+        Label badge = new Label(text == null ? "" : text);
+        badge.setStyle(String.format(AppConstants.BADGE_STYLE_TEMPLATE,
+                bg, border, AppConstants.COLOR_BUTTON_FG));
+        if (badge.getText().isEmpty()) {
+            badge.setVisible(false);
+            badge.setManaged(false);
+        }
+        return badge;
     }
 
     /**

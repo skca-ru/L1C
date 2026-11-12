@@ -337,7 +337,7 @@ public class RunYBase extends Application {
     }
 
     private Button createFlatButton(String text) {
-        return ButtonFactory.createFlat(text);
+        return UiFactory.createFlat(text);
     }
 
      private HBox createHelpOption(ComboBoxWithMenuButton option, TextField field, Button helpButton) {
@@ -381,7 +381,7 @@ public class RunYBase extends Application {
         VBox buttonPanel = new VBox(5);
         buttonPanel.setAlignment(Pos.CENTER);
 
-        Button copyButton = ButtonFactory.create("Copy");
+        Button copyButton = UiFactory.create("Copy");
         copyButton.setMinWidth(80);
         copyButton.setPrefWidth(80);
         copyButton.setMaxWidth(80);
@@ -389,7 +389,7 @@ public class RunYBase extends Application {
         copyButton.setOnAction(e -> copyToClipboard(textArea.getText(),
                 textArea.getScene() != null ? textArea.getScene().getWindow() : null));
 
-        Button runButton = ButtonFactory.create("Run");
+        Button runButton = UiFactory.create("Run");
         runButton.setMinWidth(80);
         runButton.setPrefWidth(80);
         runButton.setMaxWidth(80);
@@ -548,7 +548,7 @@ public class RunYBase extends Application {
         updateConfigRadio = new RadioButton("Обновление конфигурации (версия 2, сервер)");
         updateConfigRadio.setToggleGroup(modeGroup);
 
-        Button modeHelpButton = ButtonFactory.createHelp();
+        Button modeHelpButton = UiFactory.createHelp();
         modeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.APP_MODE_INFO));
         modeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: режимы запуска",
                 RunYBaseHelpTexts.APP_MODE_INFO));
@@ -564,7 +564,7 @@ public class RunYBase extends Application {
         debugProtocolCombo.setValue("по умолчанию");
         debugProtocolCombo.setTooltip(createTooltip(RunYBaseHelpTexts.DEBUG_PROTOCOL_INFO));
 
-        Button debugHelpButton = ButtonFactory.createHelp();
+        Button debugHelpButton = UiFactory.createHelp();
         debugHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.DEBUG_INFO));
         debugHelpButton.setOnAction(
                 e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Debug", RunYBaseHelpTexts.DEBUG_INFO));
@@ -572,7 +572,7 @@ public class RunYBase extends Application {
         priorityPlatformCheckbox = new CheckBox("Приоритет платформы");
         priorityPlatformCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.APP_ARCH_TOOLTIP));
 
-        Button helpButton = ButtonFactory.createHelp();
+        Button helpButton = UiFactory.createHelp();
         helpButton.setTooltip(createTooltip(RunYBaseHelpTexts.APP_ARCH_INFO));
         helpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /AppArch",
                 RunYBaseHelpTexts.APP_ARCH_INFO));
@@ -580,7 +580,7 @@ public class RunYBase extends Application {
         clearCacheCheckbox = new CheckBox("Очистка кэша (/ClearCache)");
         clearCacheCheckbox.setTooltip(createTooltip(RunYBaseHelpTexts.CLEAR_CACHE_TOOLTIP));
 
-        Button clearCacheHelpButton = ButtonFactory.createHelp();
+        Button clearCacheHelpButton = UiFactory.createHelp();
         clearCacheHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.CLEAR_CACHE_INFO));
         clearCacheHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /ClearCache",
                 RunYBaseHelpTexts.CLEAR_CACHE_INFO));
@@ -613,7 +613,7 @@ public class RunYBase extends Application {
             executeProcessingField.setVisible(newVal);
         });
 
-        Button executeHelpButton = ButtonFactory.createHelp();
+        Button executeHelpButton = UiFactory.createHelp();
         executeHelpButton.setTooltip(createTooltip(RunYBaseHelpTexts.EXECUTE_PROCESSING_INFO));
         executeHelpButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка: параметр /Execute",
                 RunYBaseHelpTexts.EXECUTE_PROCESSING_INFO));
@@ -646,31 +646,10 @@ public class RunYBase extends Application {
 
         // Бейджи базы и режима — выделены цветом и рамкой, чтобы
         // не сливаться с остальным текстом заголовка
-        Label baseBadge = new Label();
-        baseBadge.setStyle(String.format("""
-                -fx-background-color: %s;
-                -fx-text-fill: #000000;
-                -fx-font-weight: bold;
-                -fx-font-size: 11px;
-                -fx-border-color: %s;
-                -fx-border-width: 1px;
-                -fx-border-radius: 10px;
-                -fx-background-radius: 10px;
-                -fx-padding: 2 8 2 8;""",
-                AppConstants.COLOR_USER_HAS_CRED, "#6FA96F"));
-
-        Label modeBadge = new Label();
-        modeBadge.setStyle(String.format("""
-                -fx-background-color: %s;
-                -fx-text-fill: #000000;
-                -fx-font-weight: bold;
-                -fx-font-size: 11px;
-                -fx-border-color: %s;
-                -fx-border-width: 1px;
-                -fx-border-radius: 10px;
-                -fx-background-radius: 10px;
-                -fx-padding: 2 8 2 8;""",
-                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_BORDER));
+        Label baseBadge = UiFactory.createBadge("",
+                AppConstants.COLOR_USER_HAS_CRED, AppConstants.COLOR_BADGE_BORDER_GREEN);
+        Label modeBadge = UiFactory.createBadge(AppConstants.MODE_NOT_SPECIFIED,
+                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_BORDER);
 
         HBox headerRow = new HBox(8, platformLabel, baseBadge, modeBadge);
         headerRow.setAlignment(Pos.CENTER_LEFT);
@@ -728,7 +707,7 @@ public class RunYBase extends Application {
         }
 
         // Кнопка истории команд — пристыкована к правому краю, тянется по высоте поля
-        Button historyButton = ButtonFactory.createEllipsis(true);
+        Button historyButton = UiFactory.createEllipsis(true);
         historyButton.setTooltip(createTooltip("История команд для этой платформы (открыть окно)"));
         historyButton.setOnAction(e -> CommandHistoryDialog.show(this, platformName, textArea));
         commandField.setRight(historyButton);
@@ -783,7 +762,7 @@ public class RunYBase extends Application {
 
         setupAddressContextMenu();
 
-        userCredentialsButton = ButtonFactory.create("П_ользователь");
+        userCredentialsButton = UiFactory.create("П_ользователь");
         userCredentialsButton.setOnAction(e -> UserCredentialsDialog.show(this));
 
         // Создаём сплит-кнопку Сформировать (у кнопки будет меню)
@@ -1044,16 +1023,14 @@ public class RunYBase extends Application {
         UserCredentials cred = credentialsManager.get(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
             userCredentialsButton.setUserData(AppConstants.COLOR_USER_HAS_CRED);
-            userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + AppConstants.COLOR_USER_HAS_CRED));
-            userCredentialsButton
-                    .setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
+            userCredentialsButton.setStyle("-btn-base-color: " + AppConstants.COLOR_USER_HAS_CRED + ";");
+            userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
         } else {
             userCredentialsButton.setUserData(AppConstants.COLOR_USER_NO_CRED);
-            userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                    .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + AppConstants.COLOR_USER_NO_CRED));
+            userCredentialsButton.setStyle("-btn-base-color: " + AppConstants.COLOR_USER_NO_CRED + ";");
             userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_NO_CRED_TOOLTIP));
         }
+        userCredentialsButton.applyCss();
     }
 
     // -----------------------------------------------------------------
@@ -1712,11 +1689,11 @@ public class RunYBase extends Application {
             targetBaseBadge.setManaged(!base.isEmpty());
         }
 
-        String newModeText = mode.isEmpty() ? "" : "Режим: " + mode;
+        String newModeText = mode.isEmpty() ? AppConstants.MODE_NOT_SPECIFIED : mode;
         if (!newModeText.equals(targetModeBadge.getText())) {
             targetModeBadge.setText(newModeText);
-            targetModeBadge.setVisible(!mode.isEmpty());
-            targetModeBadge.setManaged(!mode.isEmpty());
+            targetModeBadge.setVisible(true);
+            targetModeBadge.setManaged(true);
         }
     }
 

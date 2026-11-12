@@ -16,7 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import l1c.BaseEntry;
-import l1c.ButtonFactory;
+import l1c.UiFactory;
 import l1c.BaseEntryListCell;
 import l1c.DatabaseListService;
 import l1c.RunYBase;
@@ -55,10 +55,10 @@ public final class DatabaseSelectionDialog {
             ListView<BaseEntry> listView = new ListView<>(FXCollections.observableArrayList(baseEntries));
             listView.setCellFactory(lv -> new BaseEntryListCell());
 
-            Button okButton = ButtonFactory.createDialogConfirmButton("OK");
+            Button okButton = UiFactory.createDialogConfirmButton("OK");
             okButton.setOnAction(e -> selectCurrentBase(owner, listView, dialog));
 
-            Button cancelButton = ButtonFactory.createDialogButton("Отмена");
+            Button cancelButton = UiFactory.createDialogButton("Отмена");
             cancelButton.setOnAction(e -> dialog.close());
 
             listView.setOnMouseClicked(e -> {
