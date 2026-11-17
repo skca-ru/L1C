@@ -151,6 +151,8 @@ public final class UiFactory {
      */
     public static Button createDialogCancelButton(String text) {
         Button button = createDialogButton(text);
+        // DIALOG_BUTTON_WIDTH объявлена как double, поэтому для неё используется %.0f:
+        // спецификатор %d с аргументом Double выбрасывает IllegalFormatConversionException
         button.setStyle(String.format("""
                 -fx-background-color: %s;
                 -fx-text-fill: %s;
@@ -159,7 +161,7 @@ public final class UiFactory {
                 -fx-border-width: 1px;
                 -fx-border-radius: %dpx;
                 -fx-background-radius: %dpx;
-                -fx-min-width: %dpx;
+                -fx-min-width: %.0fpx;
                 -fx-min-height: %dpx;""",
                 AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_TEXT_FG,
                 AppConstants.COLOR_BUTTON_BORDER, DIALOG_CORNER_RADIUS, DIALOG_CORNER_RADIUS,

@@ -126,7 +126,6 @@ public final class UserCredentialsDialog {
     }
 
     /**
-<<<<<<< HEAD
      * Создаёт поле имени пользователя со списком часто используемых имён.
      * Значение можно выбрать из раскрытого списка или ввести с клавиатуры.
      */
@@ -140,15 +139,28 @@ public final class UserCredentialsDialog {
         box.setPromptText("Имя пользователя");
         box.setMaxWidth(Double.MAX_VALUE);
 
-        // Фильтруем подсказки по мере ввода (без учёта регистра)
+        // Фильтруем подсказки по мере ввода (без учёта регистра).
+        // Важно: менять предикат FilteredList при закрытом списке нельзя — ComboBox
+        // при перестройке items обновляет отображаемое значение и затирает ввод,
+        // а его программный editor.setText() снова запускает фильтрацию, что даёт
+        // бесконечную рекурсию и StackOverflowError. Поэтому фильтруем только пока
+        // список раскрыт (тогда значение ещё не выбрано и текст не перезаписывается).
         box.getEditor().textProperty().addListener((obs, old, text) -> {
-            String filter = text == null ? "" : text.trim().toLowerCase(Locale.ROOT);
+            if (!box.isShowing()) {
+                return;
+            }
+            String typed = text == null ? "" : text.trim();
+            String selected = box.getValue() == null ? "" : box.getValue();
+            if (typed.equals(selected)) {
+                return;
+            }
+            String filter = typed.toLowerCase(Locale.ROOT);
             items.setPredicate(filter.isEmpty() ? s -> true : s -> s.toLowerCase(Locale.ROOT).contains(filter));
         });
         // При открытии списка показываем все имена, а не только отфильтрованные
         box.showingProperty().addListener((obs, was, isShown) -> {
-            if (isShown) {
-                items.setPredicate(s -> true);
+            if (isShown && items.getPredicate() != null) {
+                items.setPredicate(null);
             }
         });
 
@@ -293,7 +305,11 @@ public final class UserCredentialsDialog {
 
         Scene scene = new Scene(pane, 550, 380);
         dialog.setScene(scene);
-        dialog.showAndWait();
+        // Пункт меню вызывается из открытого ContextMenu. Пока popup закрывается,
+        // JavaFX ещё обрабатывает событие меню, и прямой showAndWait() может быть
+        // проигнорирован (окно не появляется). Открываем окно на следующем цикле
+        // событий, когда меню уже закрыто.
+        Platform.runLater(dialog::showAndWait);
     }
 
     // ========================================================================

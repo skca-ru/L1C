@@ -925,7 +925,9 @@ public class RunYBase extends Application {
 
         // Добавляем пункт меню "Заметка..."
         MenuItem noteItem = new MenuItem("_Заметка...");
-        noteItem.setOnAction(e -> NoteDialog.show(this));
+        // Диалоги открываем на следующем цикле событий: пока ContextMenu закрывается,
+        // прямой showAndWait() из обработчика пункта меню может быть проигнорирован
+        noteItem.setOnAction(e -> Platform.runLater(() -> NoteDialog.show(this)));
         addressControl.getContextMenu().getItems().add(noteItem);
 
         // Добавляем пункт меню "Добавить в список баз"
@@ -946,11 +948,11 @@ public class RunYBase extends Application {
         pasteCredsItem.setOnAction(e -> pasteCredentials());
 
         MenuItem savedUsersItem = new MenuItem("Скопировать из ...");
-        savedUsersItem.setOnAction(e -> SavedUsersDialog.show(this));
+        savedUsersItem.setOnAction(e -> Platform.runLater(() -> SavedUsersDialog.show(this)));
 
         // Прямой пункт управления списком пользователей адреса (несколько пользователей на базу)
         MenuItem manageUsersItem = new MenuItem("Пользователи базы...");
-        manageUsersItem.setOnAction(e -> UserCredentialsDialog.showManager(this));
+        manageUsersItem.setOnAction(e -> Platform.runLater(() -> UserCredentialsDialog.showManager(this)));
         addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem, savedUsersItem, manageUsersItem);
     }
 
@@ -1067,8 +1069,26 @@ public class RunYBase extends Application {
         userCredentialsButton.setText(text);
         userCredentialsButton.setTooltip(tooltip);
         userCredentialsButton.setUserData(bgColor);
-        userCredentialsButton.setStyle(userCredentialsButton.getStyle()
-                .replaceAll("-fx-background-color: #[A-Fa-f0-9]+", "-fx-background-color: " + bgColor));
+
+        // Инлайн-стиль кнопки задаёт цвет через looked-up переменную -btn-base-color
+        // (см. app.css: .main-button { -fx-background-color: -btn-base-color; }).
+        // UiFactory.create() записывает её как "-btn-base-color: #E6C878;" — с пробелом
+        // после двоеточия, поэтому при замене значения пробелы нужно допускать.
+        String currentStyle = userCredentialsButton.getStyle();
+        if (currentStyle == null) {
+            currentStyle = "";
+        }
+
+        String updatedStyle = currentStyle.replaceAll(
+                "-btn-base-color\\s*:\\s*[^;]+", "-btn-base-color: " + bgColor);
+        if (updatedStyle.equals(currentStyle)) {
+            // Переменной в стиле не было (или она записана нестандартно) — добавляем её
+            if (!updatedStyle.isEmpty() && !updatedStyle.trim().endsWith(";")) {
+                updatedStyle += ";";
+            }
+            updatedStyle += "-btn-base-color: " + bgColor + ";";
+        }
+        userCredentialsButton.setStyle(updatedStyle);
     }
 
     /**
