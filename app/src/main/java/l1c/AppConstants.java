@@ -27,9 +27,11 @@ public class AppConstants {
     // Цвета для интерфейса (белый фон + приглушённые жёлтые акценты)
     public static final String COLOR_BG              = "#FFFFFF";
     public static final String COLOR_BUTTON_BG       = "#E6C878";
-    public static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
+
     public static final String COLOR_BUTTON_FG       = "#000000";
     public static final String COLOR_BUTTON_BORDER   = "#C0A050";
+    /** Светло-жёлтый фон выделения (бейджи режима, заголовки таблиц, всплывающие уведомления). */
+    public static final String COLOR_HIGHLIGHT_BG    = "#F3E4BC";
     public static final String COLOR_ACCENT          = "#C8A046";
     public static final String COLOR_TEXT_FG         = "#000000";
     public static final String COLOR_INPUT_BG        = "#FFFFFF";

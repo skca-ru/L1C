@@ -650,7 +650,7 @@ public class RunYBase extends Application {
         Label baseBadge = UiFactory.createBadge("",
                 AppConstants.COLOR_USER_HAS_CRED, AppConstants.COLOR_BADGE_BORDER_GREEN);
         Label modeBadge = UiFactory.createBadge(AppConstants.MODE_NOT_SPECIFIED,
-                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_BORDER);
+                AppConstants.COLOR_HIGHLIGHT_BG, AppConstants.COLOR_BUTTON_BORDER);
 
         HBox headerRow = new HBox(8, platformLabel, baseBadge, modeBadge);
         headerRow.setAlignment(Pos.CENTER_LEFT);
@@ -1960,7 +1960,7 @@ public class RunYBase extends Application {
 
         VBox content = new VBox(4, header, textLabel);
         content.setPadding(new Insets(8, 12, 8, 12));
-        content.setStyle("-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG
+        content.setStyle("-fx-background-color: " + AppConstants.COLOR_HIGHLIGHT_BG
                 + "; -fx-border-color: " + AppConstants.COLOR_BUTTON_BORDER
                 + "; -fx-border-radius: 4px; -fx-background-radius: 4px;");
 

@@ -225,7 +225,9 @@ public final class UserCredentialsDialog {
         listView.setMaxWidth(Double.MAX_VALUE);
         listView.setPrefHeight(150);
 
-        // Кнопки управления
+        // Кнопки управления. Confirm-кнопки используют main-button из app.css,
+        // который теперь автоматически подключается к сцене диалога (UiFactory.attachAppStylesheet).
+        // Кнопка «Закрыть» — нативная (белая), а не жёлтая.
         Button mainButton = UiFactory.createDialogConfirmButton(RunYBaseHelpTexts.USER_LIST_SET_MAIN);
         Button removeButton = UiFactory.createDialogConfirmButton(RunYBaseHelpTexts.USER_LIST_DELETE);
         // Кнопка «Сделать главным» не нужна, если выбора нет или выбран уже главный.
@@ -285,7 +287,7 @@ public final class UserCredentialsDialog {
             refreshButtons.run();
         });
 
-        Button closeBtn = UiFactory.createDialogCancelButton(RunYBaseHelpTexts.USER_LIST_CLOSE);
+        Button closeBtn = UiFactory.createDialogButton(RunYBaseHelpTexts.USER_LIST_CLOSE);
         closeBtn.setOnAction(e -> {
             owner.getCredentialsManager().putUsers(address, new ArrayList<>(list));
             owner.updateUserButtonState();

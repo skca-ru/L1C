@@ -1,13 +1,19 @@
 package l1c;
 
+import java.net.URL;
 import java.util.Objects;
+
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+
+
 
 /**
  * Фабрика создания и стилизации UI-элементов приложения (кнопки, бейджи).
@@ -17,8 +23,7 @@ import javafx.scene.control.Tooltip;
  *   <li>{@link #create(String)} — основная жёлтая кнопка с эффектами наведения и нажатия;</li>
  *   <li>{@link #createDialogButton(String)} — "нативная" кнопка диалогов (стиль Windows 11);</li>
  *   <li>{@link #createFlat(String)} — плоская кнопка;</li>
- *   <li>{@link #createSmall(String)} — компактная кнопка фиксированного размера;</li>
- *   <li>{@link #createEllipsis(boolean)} — прозрачная кнопка «…» внутри поля вывода;</li>
+  *   <li>{@link #createEllipsis(boolean)} — прозрачная кнопка «…» внутри поля вывода;</li>
  *   <li>{@link #createHelp()} — круглая кнопка-справка "?";</li>
  *   <li>{@link #createBadge(String, String, String)} — стилизованная метка-бейдж.</li>
  * </ul>
@@ -53,8 +58,39 @@ public final class UiFactory {
     /** Высота кнопки «…» (как у поля адреса), px */
     private static final int ELLIPSIS_BUTTON_HEIGHT = 30;
 
+    /** URL стилевого файла приложения. */
+    private static final String APP_CSS_URL = resolveAppCssUrl();
+
+    private static String resolveAppCssUrl() {
+        URL css = UiFactory.class.getResource("/l1c/app.css");
+        return css == null ? null : css.toExternalForm();
+    }
+
     private UiFactory() {
         // Утилитный класс — инстанцирование запрещено
+    }
+
+    /**
+     * Подключает {@code app.css} к сцене, в которую попадает узел.
+     * Необходимо, чтобы CSS-классы (например {@code .main-button})
+     * работали не только в главном окне, но и в диалоговых.
+     */
+    private static void attachAppStylesheet(Node node) {
+        if (APP_CSS_URL == null) return;
+        if (node.getScene() != null) {
+            applyAppCss(node.getScene());
+        }
+        node.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                applyAppCss(newScene);
+            }
+        });
+    }
+
+    private static void applyAppCss(Scene scene) {
+        if (!scene.getStylesheets().contains(APP_CSS_URL)) {
+            scene.getStylesheets().add(APP_CSS_URL);
+        }
     }
 
     // ==================================================================
@@ -96,6 +132,10 @@ public final class UiFactory {
         button.getStyleClass().add("main-button");
         button.setMinHeight(MIN_BUTTON_HEIGHT);
 
+        // Подключаем app.css к сцене, чтобы стили .main-button работали в диалогах
+        attachAppStylesheet(button);
+
+
         // Базовый цвет фона — looked-up цвет, состояния расписаны в app.css
         button.setStyle("-btn-base-color: " + bgColor + ";");
 
@@ -105,7 +145,7 @@ public final class UiFactory {
     /**
      * Создаёт кнопку диалогов в "нативном" стиле Windows 11 (светлая тема):
      * белый фон со скруглением 4 px, более тёмный нижний край рамки,
-     * затемнение при наведении и нажатии.
+     * осветление при наведении и затемнение при нажатии.
      *
      * <p>Состояния читаются из свойств кнопки ({@code hover}/{@code pressed}),
      * а не из обработчиков мыши — иначе при уходе курсора во время нажатия
@@ -130,42 +170,15 @@ public final class UiFactory {
 
     /**
      * Кнопка подтверждения в диалогах (OK в выборе базы, Выбрать в истории).
-     * Основная кнопка в светлой жёлтой палитре
-     * ({@link AppConstants#COLOR_BUTTON_SMALL_BG}).
+     * Основная кнопка в жёлтой палитре
+     * ({@link AppConstants#COLOR_BUTTON_BG}).
      *
      * @param text текст кнопки
      * @return стилизованная кнопка
      */
     public static Button createDialogConfirmButton(String text) {
-        Button button = create(text, AppConstants.COLOR_BUTTON_SMALL_BG);
+        Button button = create(text, AppConstants.COLOR_BUTTON_BG);
         button.setMinWidth(DIALOG_BUTTON_WIDTH);
-        return button;
-    }
-
-    /**
-     * Кнопка отмены/закрытия в диалогах.
-     * Нейтральный серый стиль для отличия от кнопки подтверждения.
-     *
-     * @param text текст кнопки
-     * @return стилизованная кнопка
-     */
-    public static Button createDialogCancelButton(String text) {
-        Button button = createDialogButton(text);
-        // DIALOG_BUTTON_WIDTH объявлена как double, поэтому для неё используется %.0f:
-        // спецификатор %d с аргументом Double выбрасывает IllegalFormatConversionException
-        button.setStyle(String.format("""
-                -fx-background-color: %s;
-                -fx-text-fill: %s;
-                -fx-font-size: 12px;
-                -fx-border-color: %s;
-                -fx-border-width: 1px;
-                -fx-border-radius: %dpx;
-                -fx-background-radius: %dpx;
-                -fx-min-width: %.0fpx;
-                -fx-min-height: %dpx;""",
-                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_TEXT_FG,
-                AppConstants.COLOR_BUTTON_BORDER, DIALOG_CORNER_RADIUS, DIALOG_CORNER_RADIUS,
-                DIALOG_BUTTON_WIDTH, MIN_DIALOG_BUTTON_HEIGHT));
         return button;
     }
 
@@ -189,31 +202,6 @@ public final class UiFactory {
         return button;
     }
 
-    /**
-     * Создаёт компактную кнопку фиксированного размера (30x22)
-     * в светлой жёлтой палитре — например, кнопка истории "И...".
-     *
-     * @param text текст кнопки
-     * @return стилизованная кнопка
-     */
-    public static Button createSmall(String text) {
-        Button button = new Button(text);
-        button.setStyle(String.format("""
-                -fx-background-color: %s;
-                -fx-text-fill: %s;
-                -fx-font-weight: bold;
-                -fx-font-size: 11px;
-                -fx-border-color: %s;
-                -fx-border-width: 1px;
-                -fx-border-radius: %dpx;
-                -fx-background-radius: %dpx;
-                -fx-padding: 1 4 1 4;
-                -fx-min-width: 30; -fx-max-width: 30;
-                -fx-min-height: 22; -fx-max-height: 22;""",
-                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_FG,
-                AppConstants.COLOR_BUTTON_BORDER, CORNER_RADIUS, CORNER_RADIUS));
-        return button;
-    }
 
     /**
      * Создаёт бейдж — стилизованную метку с заливкой и рамкой для выделения
@@ -355,16 +343,21 @@ public final class UiFactory {
      * Палитра диалоговой кнопки Windows 11 (светлая тема).
      * Инлайновый CSS не умеет селекторы :hover/:pressed,
      * поэтому состояния раскрашиваются вручную.
+     *
+     * <p>Направление изменений совпадает с {@code .main-button} из app.css:
+     * при наведении фон осветляется, при нажатии — затемняется.
      */
     private static void applyNativeButtonStyle(Button button) {
         // @formatter:off
         String bg, side, bottom, text;
         if (button.isPressed()) {
-            bg = "#F5F5F5"; side = "#C4C4C4"; bottom = "#7A7A7A"; text = "#5F5F5F";
+            bg = "#F0F0F0"; side = "#C4C4C4"; bottom = "#7A7A7A"; text = "#5F5F5F";
         } else if (button.isHover()) {
-            bg = "#F9F9F9"; side = "#C9C9C9"; bottom = "#8C8C8C"; text = "#1A1A1A";
+            // Светлее покоящегося фона; рамку не затемняем, чтобы эффект
+            // читался именно как подсветка, а не как нажатие
+            bg = "#FFFFFF"; side = "#D8D8D8"; bottom = "#7A7A7A"; text = "#1A1A1A";
         } else {
-            bg = "#FDFDFD"; side = "#D8D8D8"; bottom = "#9A9A9A"; text = "#1A1A1A";
+            bg = "#E0E0E0"; side = "#D8D8D8"; bottom = "#7A7A7A"; text = "#1A1A1A";
         }
         // @formatter:on
         button.setStyle(String.format("""
@@ -374,7 +367,9 @@ public final class UiFactory {
                 -fx-border-width: 1;
                 -fx-border-radius: %d;
                 -fx-text-fill: %s;
-                -fx-font-size: 12px;""",
+                -fx-font-size: 12px;
+                -fx-translate-x: 1;
+                -fx-translate-y: 1;""",
                 bg, DIALOG_CORNER_RADIUS, side, side, bottom, side,
                 DIALOG_CORNER_RADIUS, text));
     }
