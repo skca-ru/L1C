@@ -20,7 +20,6 @@ public class AppConstants {
     // Часто используемые имена пользователей 1С — предлагаются к выбору в диалогах учётных данных
     public static final List<String> COMMON_USER_NAMES = List.of("Администратор", "Админ", "admin");
 
-
     // Цвета для рамки при фокусе
     public static final String FOCUS_BORDER_COLOR  = "#0078D7";
     public static final String NORMAL_BORDER_COLOR = "#a0a0a0";
@@ -28,9 +27,11 @@ public class AppConstants {
     // Цвета для интерфейса (белый фон + приглушённые жёлтые акценты)
     public static final String COLOR_BG              = "#FFFFFF";
     public static final String COLOR_BUTTON_BG       = "#E6C878";
-    public static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
+
     public static final String COLOR_BUTTON_FG       = "#000000";
     public static final String COLOR_BUTTON_BORDER   = "#C0A050";
+    /** Светло-жёлтый фон выделения (бейджи режима, заголовки таблиц, всплывающие уведомления). */
+    public static final String COLOR_HIGHLIGHT_BG    = "#F3E4BC";
     public static final String COLOR_ACCENT          = "#C8A046";
     public static final String COLOR_TEXT_FG         = "#000000";
     public static final String COLOR_INPUT_BG        = "#FFFFFF";
@@ -38,6 +39,7 @@ public class AppConstants {
     public static final String COLOR_PANEL_BG        = "#FFFFFF";
     public static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
     public static final String COLOR_USER_NO_CRED    = "#F3E4BC";
+    public static final String COLOR_USER_MULTI_CRED = "#A8C8E8";
 
     // Форматирование краткого адреса базы в команде запуска
     public static final String GENERATE_SHORT_ADDRESS_MENU_TEXT = "Адрес в виде /SСервер\\База или /FКаталог";

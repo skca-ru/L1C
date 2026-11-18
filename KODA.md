@@ -7,6 +7,7 @@
 **Язык:** Java 21 (компиляция для совместимости с Java 17)  
 **Система сборки:** Gradle 9.2.0  
 **Версия приложения:** 2026.06.11.005  
+**ОС разработки:** Windows  
 
 ### Назначение
 Приложение предназначено для удобного формирования команд запуска 1С:Предприятие 8 в различных режимах:
@@ -23,27 +24,61 @@
 
 ```
 ├── app/                          # Основной подпроект
-│   ├── build.gradle             # Конфигурация сборки JavaFX
+│   ├── build.gradle             # Конфигурация JavaFX, зависимости, сборка fat JAR
 │   └── src/
 │       ├── main/java/l1c/       # Исходный код
 │       │   ├── RunYBase.java            # Основное приложение (JavaFX UI)
 │       │   ├── AppConstants.java        # Константы (версия, пути, стили)
 │       │   ├── RunYBaseHelpTexts.java   # Тексты справки
+│       │   ├── CommandBuilder.java      # Построение/разбор команд запуска 1С
+│       │   ├── UiFactory.java           # Фабрика UI-элементов (кнопки, бейджи)
 │       │   ├── HistoryManager.java      # Управление историей адресов (XML)
+│       │   ├── HistoryListCell.java     # Отрисовка ячейки истории
 │       │   ├── CredentialsManager.java  # Управление учётными данными (шифрование)
-│       │   └── ComboBoxWithButton.java  # Кастомный компонент UI
+│       │   ├── UserCredentials.java     # Данные учётной записи
+│       │   ├── SavedUserEntry.java      # Запись сохранённого пользователя
+│       │   ├── SavedUserListCell.java   # Отрисовка ячейки сохранённых пользователей
+│       │   ├── BaseEntry.java           # Запись базы 1С (из ibases.v8i)
+│       │   ├── BaseEntryListCell.java   # Отрисовка ячейки списка баз
+│       │   ├── DatabaseListService.java # Чтение списка баз из файлов 1С
+│       │   ├── StringExtractor.java     # Утилита извлечения строк подключения
+│       │   ├── ComboBoxWithButton.java  # ComboBox с кнопкой
+│       │   ├── ComboBoxWithMenuButton.java # ComboBox с кнопкой меню
+│       │   └── dialogs/                 # Модальные диалоги
+│       │       ├── CommandHistoryDialog.java  # История команд
+│       │       ├── DatabaseSelectionDialog.java # Выбор базы из списка
+│       │       ├── NoteDialog.java            # Заметка о базе
+│       │       ├── SavedUsersDialog.java      # Список сохранённых пользователей
+│       │       └── UserCredentialsDialog.java # Учётные данные пользователя
+│       ├── main/resources/l1c/
+│       │   └── app.css # Стили JavaFX (цветовая схема 1С)
 │       └── test/java/l1c/       # Тесты (JUnit 5)
+│           ├── AppTest.java
+│           ├── CommandBuilderTest.java
+│           ├── CommandBuilderParseTest.java
+│           ├── CommandBuilderLaunchTest.java
+│           ├── ArgPrinter.java
+│           └── TempShortAddressProbeTest.java
 ├── gradle/                       # Конфигурация Gradle
-│   ├── libs.versions.toml       # Управление зависимостями (Version Catalog)
+│   ├── libs.versions.toml        # Управление зависимостями (Version Catalog)
 │   └── wrapper/
+│       ├── gradle-wrapper.jar
 │       └── gradle-wrapper.properties
 ├── .koda/                        # Конфигурация KODA
-│   ├── project-rules.md         # Правила проекта
-│   └── gradle-rules.md          # Правила Gradle
-├── gradlew / gradlew.bat        # Gradle Wrapper
-├── settings.gradle              # Настройки проекта
-├── run-app.bat                  # Скрипт запуска
-└── README.md
+│   └── project-rules.md         # Правила проекта
+├── .vscode/                       # Настройки VS Code
+│   ├── launch.json
+│   └── settings.json
+├── .continue/config.json          # Конфигурация Continue (AI)
+├── META-INF/MANIFEST.MF
+├── KODA.md
+├── README.md
+├── gradle.properties
+├── gradlew / gradlew.bat
+├── settings.gradle
+├── commit-with-version.ps1        # Скрипт обновления версии
+├── run-app.bat / run.bat          # Скрипты запуска
+└── run_output.txt
 ```
 
 ---
@@ -92,29 +127,6 @@ gradlew.bat clean build
 ```powershell
 java --module-path "lib\javafx-sdk-21.0.2\lib" --add-modules javafx.controls -jar app\build\libs\launcher1c-*.jar
 ```
-
----
-
-## 📁 Ключевые файлы
-
-### Исходный код
-
-| Файл | Описание |
-|------|----------|
-| `RunYBase.java` | Основное приложение (~1100 строк). Содержит UI, логику формирования команд, запуск 1С |
-| `AppConstants.java` | Константы: версия, пути данных, стили tooltips |
-| `RunYBaseHelpTexts.java` | Справочные тексты для параметров запуска 1С |
-| `HistoryManager.java` | Управление историей адресов (сохранение в XML в `%USERPROFILE%\.1c_launcher\history.xml`) |
-| `CredentialsManager.java` | Управление учётными данными пользователей (шифрование XOR + Base64) |
-| `ComboBoxWithButton.java` | Кастомный компонент: ComboBox с кнопкой выбора |
-
-### Конфигурация
-
-| Файл | Описание |
-|------|----------|
-| `build.gradle` | Конфигурация JavaFX, зависимости, сборка fat JAR |
-| `libs.versions.toml` | Version Catalog для зависимостей |
-| `settings.gradle` | Корневые настройки, имя проекта |
 
 ---
 
@@ -249,6 +261,8 @@ Tooltip:          #F3E4BC фон, #C0A050 граница
 
 ## 📌 Примечания для KODA
 
+- **Разработка ведется в Windows** — все команды и пути рассчитаны на Windows/PowerShell
+- **Python не установлен** — не пытаться использовать `python`/`pip`/скрипты на Python, не предлагать их как инструмент сборки или проверки
 - При добавлении нового функционала следовать существующим паттернам
 - Не добавлять copyright/license заголовки без запроса
 - Исправлять корневую причину проблем, а не симптомы

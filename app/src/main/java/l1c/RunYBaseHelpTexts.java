@@ -118,21 +118,6 @@ public final class RunYBaseHelpTexts {
             для файловой 'File="C:\\1C\\Base";' для серверной 'Srvr="127.0.0.1";Ref="Base";'
             """;
 
-    public static final String USER_CRED_HAS_CRED_TOOLTIP = """
-            Учётные данные сохранены: %s
-            """;
-
-    public static final String USER_CRED_NO_CRED_TOOLTIP = """
-            Нажмите чтобы задать учётные данные
-            """;
-
-    // --- Подсказка к полю имени пользователя (%s — список часто используемых имён) ---
-    public static final String USER_NAME_COMMON_TOOLTIP = """
-            Можно выбрать имя из списка часто используемых или ввести своё.
-            Часто используемые: %s
-            """;
-
-
     public static final String WARNING_NO_ADDRESS = """
             Введите адрес базы данных! Например:
 
@@ -165,6 +150,52 @@ public final class RunYBaseHelpTexts {
             """;
 
     public static final String NOTE_DIALOG_TITLE = "Заметка к базе";
+
+    // --- Состояния кнопки «Пользователь» ---
+    // Текст кнопки без счётчика (нет пользователей / один пользователь)
+    public static final String USER_BUTTON_TEXT = "П_ользователь";
+    // Текст кнопки при нескольких пользователях: %d — их количество
+    public static final String USER_BUTTON_TEXT_MULTI = "П_ользователь (%d)";
+
+    // --- Тултипы кнопки пользователя ---
+    public static final String USER_CRED_HAS_CRED_TOOLTIP = """
+            Учётные данные сохранены: %s
+            Добавить ещё пользователей — ПКМ по полю адреса → «Пользователи базы...»
+            """;
+    public static final String USER_CRED_NO_CRED_TOOLTIP = """
+            Пользователей нет — нажмите, чтобы добавить
+            Список пользователей — ПКМ по полю адреса → «Пользователи базы...»
+            """;
+    public static final String USER_CRED_MULTI_TOOLTIP = """
+            Главный: %s
+            Сохранено пользователей: %d
+            Управление списком — ПКМ по полю адреса → «Пользователи базы...»
+            """;
+
+    // --- Удаление главного пользователя ---
+    public static final String WARNING_MAIN_USER_IN_USE = """
+            Главный пользователь «%s» не удалён: у базы есть другие пользователи.
+            Сначала сделайте главным другого — ПКМ по полю адреса → «Пользователи базы...»
+            """;
+
+    // --- Подписи в диалогах пользователей ---
+    public static final String USER_DEFAULT_LABEL = " (главный)";
+    public static final String USER_NO_PASS_LABEL = " (без пароля)";
+    public static final String USER_HAS_PASS_LABEL = " (с паролем)";
+    public static final String USER_LIST_ADD = "Добавить";
+    public static final String USER_LIST_EDIT = "Изменить";
+    public static final String USER_LIST_DELETE = "Удалить";
+    public static final String USER_LIST_SET_MAIN = "Сделать главным";
+    public static final String USER_LIST_CLOSE = "Закрыть";
+
+    // --- Заголовок блока пользователей в попапе кнопки «Сформировать» ---
+    public static final String GENERATE_WITH_USER_HEADER = "Сформировать с пользователем:";
+
+    // --- Подсказка к полю имени пользователя (%s — список часто используемых имён) ---
+    public static final String USER_NAME_COMMON_TOOLTIP = """
+            Можно выбрать имя из списка часто используемых или ввести своё.
+            Часто используемые: %s
+            """;
 
     private RunYBaseHelpTexts() {
         // Конструктор для предотвращения создания экземпляров

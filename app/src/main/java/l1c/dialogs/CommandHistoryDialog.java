@@ -44,7 +44,7 @@ public final class CommandHistoryDialog {
         // Заголовки колонок истории
         HBox headerRow = new HBox(10);
         headerRow.setPadding(new Insets(5, 5, 5, 5));
-        headerRow.setStyle("-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
+        headerRow.setStyle("-fx-background-color: " + AppConstants.COLOR_HIGHLIGHT_BG + "; -fx-font-weight: bold; -fx-font-size: 12px;");
         Label hdrBase = new Label("База");
         hdrBase.setMinWidth(180); hdrBase.setMaxWidth(180);
         Label hdrMode = new Label("Режим");

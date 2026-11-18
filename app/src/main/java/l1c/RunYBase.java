@@ -10,6 +10,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.scene.input.*;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
@@ -71,6 +73,14 @@ public class RunYBase extends Application {
 
     private Button userCredentialsButton;
     private static final String CREDENTIALS_CLIPBOARD_PREFIX = "L1C_CREDENTIALS_V1:";
+
+    // Кнопка «Сформировать»: её попап содержит динамические пункты с пользователями адреса
+    private SplitMenuButton generateMenuButton;
+    // Динамически добавляемые пункты попапа (заголовок + пользователи)
+    private final List<MenuItem> generateUserMenuItems = new ArrayList<>();
+    // Позиция вставки динамических пунктов — после «Без данных пользователя»
+    private static final int GENERATE_USER_ITEMS_INDEX = 2;
+
 
     // Label для отображения имени БД и заметки под полем адреса
     private Label baseNameLabel;
@@ -267,9 +277,9 @@ public class RunYBase extends Application {
             showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет адреса для копирования учётных данных!");
             return;
         }
-        UserCredentials cred = credentialsManager.get(address);
+        UserCredentials cred = credentialsManager.getMain(address);
         if (cred == null || cred.getUsername().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Для этого адреса нет сохранённых учётных данных!");
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", "Нет сохранённых учётных данных для этого адреса!");
             return;
         }
         ClipboardContent clipboardContent = new ClipboardContent();
@@ -295,7 +305,7 @@ public class RunYBase extends Application {
             return;
         }
         // Проверяем, не совпадает ли адрес с исходным (можно и не проверять)
-        UserCredentials existing = credentialsManager.get(address);
+        UserCredentials existing = credentialsManager.getMain(address);
         if (existing != null && existing.getUsername().equals(copiedCredentials.getUsername())) {
             // Если уже такие же данные, можно предупредить
             // int answer = showConfirmation("Учётные данные уже совпадают. Всё равно
@@ -304,6 +314,8 @@ public class RunYBase extends Application {
         }
         credentialsManager.put(address,
                 new UserCredentials(copiedCredentials.getUsername(), copiedCredentials.getPassword()));
+        // Вставленные данные становятся основным пользователем адреса (как раньше)
+        credentialsManager.setMainUser(address, copiedCredentials.getUsername());
         updateUserButtonState();
         showAutoClosingAlert("Учётные данные вставлены для адреса:\n" + address, "Вставка", 3);
     }
@@ -649,7 +661,7 @@ public class RunYBase extends Application {
         Label baseBadge = UiFactory.createBadge("",
                 AppConstants.COLOR_USER_HAS_CRED, AppConstants.COLOR_BADGE_BORDER_GREEN);
         Label modeBadge = UiFactory.createBadge(AppConstants.MODE_NOT_SPECIFIED,
-                AppConstants.COLOR_BUTTON_SMALL_BG, AppConstants.COLOR_BUTTON_BORDER);
+                AppConstants.COLOR_HIGHLIGHT_BG, AppConstants.COLOR_BUTTON_BORDER);
 
         HBox headerRow = new HBox(8, platformLabel, baseBadge, modeBadge);
         headerRow.setAlignment(Pos.CENTER_LEFT);
@@ -762,11 +774,11 @@ public class RunYBase extends Application {
 
         setupAddressContextMenu();
 
-        userCredentialsButton = UiFactory.create("П_ользователь");
+        userCredentialsButton = UiFactory.create(RunYBaseHelpTexts.USER_BUTTON_TEXT);
         userCredentialsButton.setOnAction(e -> UserCredentialsDialog.show(this));
 
         // Создаём сплит-кнопку Сформировать (у кнопки будет меню)
-        SplitMenuButton generateMenuButton = new SplitMenuButton();
+        generateMenuButton = new SplitMenuButton();
         generateMenuButton.setText("С_формировать");
         generateMenuButton.getStyleClass().add("flat-split-button"); // см. l1c/app.css
         generateMenuButton.setMnemonicParsing(true); // для ускорителя Alt+С
@@ -792,6 +804,10 @@ public class RunYBase extends Application {
         MenuItem generateWithUnlockCodeItem = new MenuItem(AppConstants.GENERATE_UNLOCK_CODE_MENU_TEXT);
         generateWithUnlockCodeItem.setOnAction(e -> handleGenerateCommandWithUnlockCode());
         generateMenuButton.getItems().add(generateWithUnlockCodeItem);
+
+        // Плоские пункты «Сформировать с пользователем» для текущего адреса
+        refreshGenerateWithUserItems();
+
 
         String bgColor = AppConstants.COLOR_BUTTON_BG;
         // Базовые цвета передаются как looked-up цвета; вся геометрия и состояния
@@ -920,7 +936,9 @@ public class RunYBase extends Application {
 
         // Добавляем пункт меню "Заметка..."
         MenuItem noteItem = new MenuItem("_Заметка...");
-        noteItem.setOnAction(e -> NoteDialog.show(this));
+        // Диалоги открываем на следующем цикле событий: пока ContextMenu закрывается,
+        // прямой showAndWait() из обработчика пункта меню может быть проигнорирован
+        noteItem.setOnAction(e -> Platform.runLater(() -> NoteDialog.show(this)));
         addressControl.getContextMenu().getItems().add(noteItem);
 
         // Добавляем пункт меню "Добавить в список баз"
@@ -941,8 +959,12 @@ public class RunYBase extends Application {
         pasteCredsItem.setOnAction(e -> pasteCredentials());
 
         MenuItem savedUsersItem = new MenuItem("Скопировать из ...");
-        savedUsersItem.setOnAction(e -> SavedUsersDialog.show(this));
-        addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem, savedUsersItem);
+        savedUsersItem.setOnAction(e -> Platform.runLater(() -> SavedUsersDialog.show(this)));
+
+        // Прямой пункт управления списком пользователей адреса (несколько пользователей на базу)
+        MenuItem manageUsersItem = new MenuItem("Пользователи базы...");
+        manageUsersItem.setOnAction(e -> Platform.runLater(() -> UserCredentialsDialog.showManager(this)));
+        addressControl.getContextMenu().getItems().addAll(copyCredsItem, pasteCredsItem, savedUsersItem, manageUsersItem);
     }
 
     /**
@@ -1016,21 +1038,169 @@ public class RunYBase extends Application {
         return tooltip;
     }
 
+    /**
+     * Обновляет состояние кнопки пользователя:
+     * userCredentialsButton — для редактирования учётных данных (открывает диалог управления).
+     * <p>Вид кнопки различает три состояния: нет сохранённых пользователей,
+     * один пользователь, несколько пользователей.
+     */
     public void updateUserButtonState() {
         if (userCredentialsButton == null)
             return;
         String address = getCurrentAddress();
-        UserCredentials cred = credentialsManager.get(address);
-        if (cred != null && !cred.getUsername().isEmpty()) {
-            userCredentialsButton.setUserData(AppConstants.COLOR_USER_HAS_CRED);
-            userCredentialsButton.setStyle("-btn-base-color: " + AppConstants.COLOR_USER_HAS_CRED + ";");
-            userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
+        UserCredentials cred = credentialsManager.getMain(address);
+        List<UserCredentials> users = credentialsManager.getUsers(address);
+
+        if (cred == null || cred.getUsername().isEmpty()) {
+            applyUserButtonLook(AppConstants.COLOR_USER_NO_CRED, RunYBaseHelpTexts.USER_BUTTON_TEXT,
+                    createTooltip(RunYBaseHelpTexts.USER_CRED_NO_CRED_TOOLTIP));
+        } else if (users.size() <= 1) {
+            applyUserButtonLook(AppConstants.COLOR_USER_HAS_CRED, RunYBaseHelpTexts.USER_BUTTON_TEXT,
+                    createTooltip(RunYBaseHelpTexts.USER_CRED_HAS_CRED_TOOLTIP, cred.getUsername()));
         } else {
-            userCredentialsButton.setUserData(AppConstants.COLOR_USER_NO_CRED);
-            userCredentialsButton.setStyle("-btn-base-color: " + AppConstants.COLOR_USER_NO_CRED + ";");
-            userCredentialsButton.setTooltip(createTooltip(RunYBaseHelpTexts.USER_CRED_NO_CRED_TOOLTIP));
+            // Несколько пользователей: количество показываем в подписи, чтобы состояние
+            // было различимо не только цветом
+            applyUserButtonLook(AppConstants.COLOR_USER_MULTI_CRED,
+                    String.format(RunYBaseHelpTexts.USER_BUTTON_TEXT_MULTI, users.size()),
+                    createTooltip(RunYBaseHelpTexts.USER_CRED_MULTI_TOOLTIP, cred.getUsername(), users.size()));
         }
-        userCredentialsButton.applyCss();
+
+        // Список пользователей адреса мог измениться — обновляем пункты попапа «Сформировать»
+        refreshGenerateWithUserItems();
+    }
+
+    /**
+     * Задаёт вид кнопки пользователя для одного из состояний: фон, подпись и тултип.
+     *
+     * @param bgColor базовый цвет фона (сохраняется в userData для эффекта наведения)
+     * @param text    подпись кнопки
+     * @param tooltip тултип с пояснением состояния
+     */
+    private void applyUserButtonLook(String bgColor, String text, Tooltip tooltip) {
+        userCredentialsButton.setText(text);
+        userCredentialsButton.setTooltip(tooltip);
+        userCredentialsButton.setUserData(bgColor);
+
+        // Инлайн-стиль кнопки задаёт цвет через looked-up переменную -btn-base-color
+        // (см. app.css: .main-button { -fx-background-color: -btn-base-color; }).
+        // UiFactory.create() записывает её как "-btn-base-color: #E6C878;" — с пробелом
+        // после двоеточия, поэтому при замене значения пробелы нужно допускать.
+        String currentStyle = userCredentialsButton.getStyle();
+        if (currentStyle == null) {
+            currentStyle = "";
+        }
+
+        String updatedStyle = currentStyle.replaceAll(
+                "-btn-base-color\\s*:\\s*[^;]+", "-btn-base-color: " + bgColor);
+        if (updatedStyle.equals(currentStyle)) {
+            // Переменной в стиле не было (или она записана нестандартно) — добавляем её
+            if (!updatedStyle.isEmpty() && !updatedStyle.trim().endsWith(";")) {
+                updatedStyle += ";";
+            }
+            updatedStyle += "-btn-base-color: " + bgColor + ";";
+        }
+        userCredentialsButton.setStyle(updatedStyle);
+    }
+
+    /**
+     * Перестраивает плоские пункты попапа кнопки «Сформировать» со списком
+     * сохранённых пользователей текущего адреса.
+     * <p>Подменю (Menu) внутри SplitMenuButton не раскрывается, поэтому
+     * пользователи выводятся пунктами верхнего уровня под заголовком.
+     */
+    private void refreshGenerateWithUserItems() {
+        if (generateMenuButton == null) {
+            return;
+        }
+
+        generateMenuButton.getItems().removeAll(generateUserMenuItems);
+        generateUserMenuItems.clear();
+
+        String address = getCurrentAddress();
+        if (address.isEmpty()) {
+            return;
+        }
+
+        List<UserCredentials> users = credentialsManager.getUsers(address);
+        if (users.isEmpty()) {
+            return;
+        }
+
+        MenuItem header = new MenuItem(RunYBaseHelpTexts.GENERATE_WITH_USER_HEADER);
+        header.setMnemonicParsing(false);
+        header.setDisable(true);
+        generateUserMenuItems.add(header);
+
+        for (UserCredentials user : users) {
+            String mark = user.isMain() ? "★ " : "  ";
+            String pass = user.getPassword().isEmpty() ? RunYBaseHelpTexts.USER_NO_PASS_LABEL
+                    : RunYBaseHelpTexts.USER_HAS_PASS_LABEL;
+            MenuItem item = new MenuItem(mark + user.getUsername() + pass);
+            item.setMnemonicParsing(false);
+            final UserCredentials cred = user;
+            item.setOnAction(e -> handleGenerateCommandWithUser(cred));
+            generateUserMenuItems.add(item);
+        }
+
+        generateMenuButton.getItems().addAll(GENERATE_USER_ITEMS_INDEX, generateUserMenuItems);
+    }
+
+    /**
+     * Формирует строку запуска с указанным пользователем (выбран из попапа кнопки).
+     */
+    private void handleGenerateCommandWithUser(UserCredentials user) {
+        handleGenerateCommandWithUser(user, null);
+    }
+
+    /**
+     * Формирует строку запуска с указанным пользователем и кодом разблокировки.
+     */
+    private void handleGenerateCommandWithUser(UserCredentials user, String unlockCode) {
+        String text = getCurrentAddress();
+        if (text.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Предупреждение", RunYBaseHelpTexts.WARNING_NO_ADDRESS);
+            return;
+        }
+
+        if (!designerRadio.isSelected() && executeProcessingCheckbox.isSelected()) {
+            String processingPath = executeProcessingField.getText();
+            if (processingPath == null || processingPath.trim().isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Предупреждение", "Укажите путь к внешней обработке (.epf/.erf)!");
+                return;
+            }
+            addProcessingToHistory(processingPath);
+        }
+
+        addToHistory(text);
+
+        outputArea86.setText("");
+        outputArea.setText("");
+
+        String escaped = text.replace("\"", "\"\"");
+
+        boolean isDesigner = designerRadio.isSelected();
+        boolean isUpdate = updateConfigRadio.isSelected();
+
+        CommandBuilder builder86 = newCommandBuilder(getRunMode())
+                .connectionString(escaped)
+                .credentials(user);
+        String cmd86 = builder86.platform(CommandBuilder.PATH_1CESTART_X86, CommandBuilder.ARCH_X86).build();
+
+        CommandBuilder builder64 = newCommandBuilder(getRunMode())
+                .connectionString(escaped)
+                .credentials(user);
+        String cmd64 = builder64.platform(CommandBuilder.PATH_1CESTART_X64, CommandBuilder.ARCH_X64).build();
+
+        if (unlockCode != null && !unlockCode.isEmpty()) {
+            cmd86 += " /UC \"" + unlockCode + "\"";
+            cmd64 += " /UC \"" + unlockCode + "\"";
+        }
+
+        outputArea86.setText(cmd86);
+        outputArea.setText(cmd64);
+
+        if (debugArea != null && SHOW_DEBUG_PANEL)
+            debugArea.setText("");
     }
 
     // -----------------------------------------------------------------
@@ -1038,7 +1208,7 @@ public class RunYBase extends Application {
     // -----------------------------------------------------------------
 
     private void askAndRunWithCredentials(String address, String baseCommand) {
-        UserCredentials cred = credentialsManager.get(address);
+        UserCredentials cred = credentialsManager.getMain(address);
         if (cred != null && !cred.getUsername().isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Запуск с учётными данными");
@@ -1365,7 +1535,7 @@ public class RunYBase extends Application {
             addProcessingToHistory(processingPath);
         }
 
-        UserCredentials cred = credentialsManager.get(text);
+        UserCredentials cred = credentialsManager.getMain(text);
 
         // Вариант «без данных пользователя»: исключаем /N и /P из команды.
         // Если сохранённых данных нет — сообщим, что строка и так сформирована без них.
@@ -1463,7 +1633,7 @@ public class RunYBase extends Application {
             outputArea86.setText("");
             outputArea.setText("");
 
-            UserCredentials cred = credentialsManager.get(base.connect);
+            UserCredentials cred = credentialsManager.getMain(base.connect);
 
             CommandBuilder builder = newCommandBuilder(getRunMode())
                     .ibName(base.name)
@@ -1503,7 +1673,7 @@ public class RunYBase extends Application {
         }
 
         // Учётные данные ищутся по исходному адресу, как в основном режиме
-        UserCredentials cred = credentialsManager.get(text);
+        UserCredentials cred = credentialsManager.getMain(text);
 
         addToHistory(text);
 
@@ -1801,7 +1971,7 @@ public class RunYBase extends Application {
 
         VBox content = new VBox(4, header, textLabel);
         content.setPadding(new Insets(8, 12, 8, 12));
-        content.setStyle("-fx-background-color: " + AppConstants.COLOR_BUTTON_SMALL_BG
+        content.setStyle("-fx-background-color: " + AppConstants.COLOR_HIGHLIGHT_BG
                 + "; -fx-border-color: " + AppConstants.COLOR_BUTTON_BORDER
                 + "; -fx-border-radius: 4px; -fx-background-radius: 4px;");
 

@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -106,16 +107,19 @@ public final class SavedUsersDialog {
      */
     private static List<SavedUserEntry> collectSavedUsers(RunYBase owner, String currentAddress) {
         List<SavedUserEntry> savedUsers = new ArrayList<>();
-        for (Map.Entry<String, UserCredentials> entry : owner.getCredentialsManager().getAllCredentials().entrySet()) {
-            UserCredentials cred = entry.getValue();
-            if (cred == null || cred.getUsername().isEmpty())
-                continue;
-            savedUsers.add(new SavedUserEntry(
-                    cred.getUsername(),
-                    cred.getPassword(),
-                    entry.getKey(),
-                    owner.getRegisteredAddressMap().get(entry.getKey()),
-                    entry.getKey().equals(currentAddress)));
+        for (Map.Entry<String, List<UserCredentials>> entry : owner.getCredentialsManager().getAllUsers().entrySet()) {
+            String addr = entry.getKey();
+            String baseName = owner.getRegisteredAddressMap().get(addr);
+            for (UserCredentials cred : entry.getValue()) {
+                if (cred == null || cred.getUsername().isEmpty())
+                    continue;
+                savedUsers.add(new SavedUserEntry(
+                        cred.getUsername(),
+                        cred.getPassword(),
+                        addr,
+                        baseName,
+                        addr.equals(currentAddress)));
+            }
         }
         savedUsers.sort(Comparator.comparing((SavedUserEntry e) -> e.address, String.CASE_INSENSITIVE_ORDER)
                 .thenComparing(e -> e.username, String.CASE_INSENSITIVE_ORDER));
@@ -133,6 +137,8 @@ public final class SavedUsersDialog {
             return;
         }
         owner.getCredentialsManager().put(address, new UserCredentials(selected.username, selected.password));
+        // Выбранный пользователь становится основным для адреса (как раньше)
+        owner.getCredentialsManager().setMainUser(address, selected.username);
         owner.updateUserButtonState();
         dialog.close();
         owner.showAutoClosingAlert("Пользователь '" + selected.username + "' сохранён для адреса:\n" + address,

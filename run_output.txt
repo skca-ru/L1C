@@ -1,20 +1,7 @@
-﻿> Task :app:compileJava UP-TO-DATE
-> Task :app:processResources NO-SOURCE
+> Task :app:compileJava UP-TO-DATE
+> Task :app:processResources UP-TO-DATE
 > Task :app:classes UP-TO-DATE
-
 > Task :app:run
-.\gradlew : ���. 16, 2026 6:39:02 PM javafx.css.CssParser term
-строка:1 знак:1
-+ .\gradlew run --no-configuration-cache 2>&1 | Out-File -FilePath run_ ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (���. 16, 2026 6....CssParser term:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
-WARNING: CSS Error parsing '*{-fx-background-color: #E6C878;
--fx-text-fill: #000000;
--fx-font-weight: bold;
--fx-font-size: 11px;
--fx-border-color: #C0A050;
--fx-border-width: 1px;
--fx-border-radius: 3px;
--fx-background-radius: 3px-fx-background-color: #F3E4BC;}: Unexpected token ':' at [8,46]
+
+BUILD SUCCESSFUL in 1m 45s
+3 actionable tasks: 1 executed, 2 up-to-date
