@@ -30,6 +30,7 @@ public class HistoryManager {
     
     private ObservableList<String> historyList;
     private ObservableList<String> processingHistoryList;
+    private ObservableList<String> prefixHistoryList;
     private Map<String, ObservableList<CommandEntry>> commandHistoryLists;
     private Map<String, String> notesMap;  // адрес -> заметка
     
@@ -68,6 +69,7 @@ public class HistoryManager {
     public HistoryManager() {
         historyList = FXCollections.observableArrayList(loadHistoryList());
         processingHistoryList = FXCollections.observableArrayList(loadProcessingHistoryList());
+        prefixHistoryList = FXCollections.observableArrayList(loadPrefixHistoryList());
         commandHistoryLists = new HashMap<>();
         commandHistoryLists.put("x86", FXCollections.observableArrayList(loadCommandHistoryList("x86")));
         commandHistoryLists.put("x64", FXCollections.observableArrayList(loadCommandHistoryList("x64")));
@@ -87,6 +89,28 @@ public class HistoryManager {
      */
     public ObservableList<String> getProcessingHistoryList() {
         return processingHistoryList;
+    }
+
+    /**
+     * Получить список истории префиксов идентификаторов для ComboBox.
+     */
+    public ObservableList<String> getPrefixHistoryList() {
+        return prefixHistoryList;
+    }
+
+    /**
+     * Добавить префикс в историю. Пустые значения игнорируются.
+     * Дубликаты перемещаются в начало списка.
+     */
+    public void addPrefixToHistory(String prefix) {
+        if (prefix == null || prefix.trim().isEmpty()) return;
+        String value = prefix.trim();
+        prefixHistoryList.remove(value);
+        prefixHistoryList.add(0, value);
+        while (prefixHistoryList.size() > MAX_HISTORY_SIZE) {
+            prefixHistoryList.remove(prefixHistoryList.size() - 1);
+        }
+        saveHistoryToXml();
     }
 
     /**
@@ -269,6 +293,35 @@ public class HistoryManager {
         return list;
     }
 
+    /**
+     * Загрузить историю префиксов идентификаторов из XML файла.
+     */
+    private static List<String> loadPrefixHistoryList() {
+        List<String> list = new ArrayList<>();
+        Path path = getHistoryPath();
+        if (!Files.exists(path)) {
+            createDefaultHistoryFile(path);
+            return list;
+        }
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(path.toFile());
+            NodeList prefixNodes = doc.getElementsByTagName("prefix");
+            for (int i = 0; i < prefixNodes.getLength(); i++) {
+                Element prefixElem = (Element) prefixNodes.item(i);
+                String prefix = getDirectTextContent(prefixElem);
+                if (prefix != null && !prefix.trim().isEmpty() && !list.contains(prefix.trim())) {
+                    list.add(prefix.trim());
+                }
+            }
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            System.err.println("Ошибка загрузки истории префиксов из XML.");
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     private static List<CommandEntry> loadCommandHistoryList(String platform) {
         List<CommandEntry> list = new ArrayList<>();
         Path path = getHistoryPath();
@@ -413,6 +466,15 @@ public class HistoryManager {
                 processingFiles.appendChild(fileElem);
             }
 
+            Element prefixes = doc.createElement("prefixes");
+            root.appendChild(prefixes);
+
+            for (String prefix : prefixHistoryList) {
+                Element prefixElem = doc.createElement("prefix");
+                prefixElem.setTextContent(prefix);
+                prefixes.appendChild(prefixElem);
+            }
+
             Element commands = doc.createElement("commands");
             root.appendChild(commands);
             for (String platform : List.of("x86", "x64")) {
@@ -461,6 +523,9 @@ public class HistoryManager {
 
             Element processingFiles = doc.createElement("processingFiles");
             root.appendChild(processingFiles);
+
+            Element prefixes = doc.createElement("prefixes");
+            root.appendChild(prefixes);
 
             Element commands = doc.createElement("commands");
             root.appendChild(commands);

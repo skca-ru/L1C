@@ -6,7 +6,7 @@ public class AppConstants {
     
     // Версия приложения
     // Формат: год.месяц.день.порядковый номер
-    public static final String VERSION = "2026.11.18.24";
+    public static final String VERSION = "2026.11.24.25";
     
     // @formatter:off
     public static final String APP_DATA_DIR        = ".1c_launcher";
@@ -35,6 +35,7 @@ public class AppConstants {
     public static final String COLOR_ACCENT          = "#C8A046";
     public static final String COLOR_TEXT_FG         = "#000000";
     public static final String COLOR_INPUT_BG        = "#FFFFFF";
+    public static final String COLOR_BUTTON_SMALL_BG = "#F3E4BC";
     public static final String COLOR_OUTPUT_BG       = "#FAFAFA";
     public static final String COLOR_PANEL_BG        = "#FFFFFF";
     public static final String COLOR_USER_HAS_CRED   = "#B2DAB2";
